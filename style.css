@@ -160,6 +160,24 @@ input[type="number"]:focus, select:focus {
 .weather-info .wx-flightcat.ifr, .weather-info .wx-flightcat.lifr { color: var(--bad); }
 .weather-info .wx-raw { font-family: var(--mono); font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; display: block; word-break: break-all; }
 .weather-info .wx-stale { color: var(--warn-text); }
+.weather-info .wx-breakdown { display: block; margin-top: 6px; font-size: 0.74rem; color: var(--text-dim); }
+.weather-info .wx-breakdown code { font-family: var(--mono); font-size: 0.72rem; }
+.weather-info .wx-note { display: block; margin-top: 4px; font-size: 0.72rem; font-style: italic; }
+
+.runway-field { margin-top: 8px; }
+
+.wind-calc {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  display: none;
+}
+.wind-calc.shown { display: block; }
+.wind-calc .wc-head { font-weight: 600; color: var(--text); }
+.wind-calc .wc-head.tailwind { color: var(--bad); }
 
 .subhead {
   font-size: 0.85rem;

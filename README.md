@@ -51,6 +51,8 @@ data.js            All digitized chart data, embedded as a JS object
                     duplicates data/*.json" below)
 airports.js         Bundled offline airport database (10,110 airports),
                     embedded as a JS object for the same file:// reason
+runways.js          Bundled offline runway-ends database (22,113 runway
+                    ends across 8,231 airports), same reason
 manifest.json       PWA manifest (installable home-screen app)
 sw.js               Service worker for offline caching (no-ops on file://)
 icon-192.png / icon-512.png / apple-touch-icon.png   App icons
@@ -145,14 +147,36 @@ runway (length + surface) from a bundled offline database (`airports.js`) —
 see "Data source" below for its provenance. Field elevation immediately
 fills in as a standard-day pressure altitude guess.
 
-About half a second later, it also fetches **live current METAR** for that
-airport (temperature, altimeter setting, wind, flight category, raw text,
-and observation age) and upgrades the departure airport's pressure altitude
-to a real altimeter-corrected value (`field elevation + (29.92 − altimeter) ×
-1000`), and fills in outside air temperature from departure's METAR. Wind is
-shown but never auto-applied to the wind-component field — that needs a
-headwind/crosswind judgment call against whichever runway you'll actually
-use, which this tool has no way to know.
+A runway dropdown also appears, listing every runway end at that airport
+(e.g. "Rwy 34R (340°) — 11,901 ft asphalt/concrete") sourced from the same
+bundled database. Each runway's magnetic heading is derived from its own
+number (Rwy 34 ≈ 340° magnetic, Rwy 16 ≈ 160°) rather than true heading —
+that's deliberate: it's the same convention pilots already use for
+eyeballing crosswind, and it avoids needing separate magnetic-declination
+data per airport.
+
+About half a second after a valid ICAO is entered, the app also fetches
+**live current METAR** for that airport (temperature, altimeter setting,
+wind, flight category, raw text, and observation age) and:
+- upgrades pressure altitude from the standard-day elevation guess to a real
+  altimeter-corrected value, showing the exact arithmetic inline (e.g.
+  `433 ft elev + (29.92 − 30.07) × 1000 = 280 ft`)
+- shows density altitude the same way, for situational awareness — but see
+  the note below, it is **not** what the calculator actually uses
+- fills in outside air temperature, from departure's METAR only (OAT is a
+  single shared field across the whole calculator)
+- once a runway is picked, computes the real headwind/crosswind component
+  by trigonometry against that runway's heading and the live wind, and
+  auto-fills the wind-component field (still editable afterward if you want
+  to override it)
+
+**Pressure altitude vs. density altitude:** this calculator's underlying POH
+charts are indexed by pressure altitude and OAT directly (that's how Piper
+drew them), not density altitude. Density altitude is computed and displayed
+purely as a pilot-familiar reference number (the standard rule-of-thumb
+approximation: `DA = PA + 120 × (OAT − ISA temperature at that PA)`, ISA
+temp = `15 − 2 × (PA / 1000)` °C) — it is never fed into any calculation
+here.
 
 **Why this needed a proxy, and what it is:** the free NOAA Aviation Weather
 Center API (`aviationweather.gov`) has real-time METAR/TAF data but sends no
@@ -198,10 +222,15 @@ Piper PA-30 Twin Comanche Pilot's Operating Handbook, Section 5
 (3600 lb max gross weight, no tip tanks). Scanned chart images are in
 `reference/` for direct comparison against the digitized model.
 
-Airport data (`airports.js`, also mirrored as `data/airports.json`) comes from
+Airport data (`airports.js`, also mirrored as `data/airports.json`) and
+runway data (`runways.js` / `data/runways.json`) come from
 [OurAirports](https://ourairports.com/data/), a public-domain (CC0) dataset
-maintained by volunteers, downloaded 2026-10-01. It's filtered to the 10,110
-small/medium/large airports worldwide that have a 4-letter ICAO identifier,
-each with name, municipality, country, coordinates, field elevation, and
-longest-runway length/surface (closed runways excluded). It is a static
-snapshot — re-download from OurAirports if you want fresher data.
+maintained by volunteers, downloaded 2026-10-01. Airports are filtered to the
+10,110 small/medium/large airports worldwide that have a 4-letter ICAO
+identifier, each with name, municipality, country, coordinates, field
+elevation, and longest-runway length/surface. Runways are every non-closed
+runway end at those same airports (22,113 of them) with length, width,
+surface, and a magnetic heading derived from the runway's own number (not
+OurAirports' true-heading column — see "Airport lookup" above for why). Both
+are static snapshots — re-download from OurAirports if you want fresher
+data.

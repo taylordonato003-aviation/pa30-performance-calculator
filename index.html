@@ -38,16 +38,26 @@
         <label for="depIcao">Departure airport (ICAO)</label>
         <input type="text" id="depIcao" value="" maxlength="4" placeholder="e.g. KSEA" autocapitalize="characters" autocomplete="off" spellcheck="false">
         <div class="airport-info" id="depInfo"></div>
+        <div class="field runway-field" id="depRwyField" hidden>
+          <label for="depRunway">Departure runway</label>
+          <select id="depRunway"><option value="">— select —</option></select>
+        </div>
         <div class="weather-info" id="depWx"></div>
+        <div class="wind-calc" id="depWindCalc"></div>
       </div>
       <div class="field">
         <label for="destIcao">Destination airport (ICAO)</label>
         <input type="text" id="destIcao" value="" maxlength="4" placeholder="e.g. KPAE" autocapitalize="characters" autocomplete="off" spellcheck="false">
         <div class="airport-info" id="destInfo"></div>
+        <div class="field runway-field" id="destRwyField" hidden>
+          <label for="destRunway">Landing runway</label>
+          <select id="destRunway"><option value="">— select —</option></select>
+        </div>
         <div class="weather-info" id="destWx"></div>
+        <div class="wind-calc" id="destWindCalc"></div>
       </div>
     </div>
-    <p class="hint">Looking up an airport fills in its field elevation, then live METAR (when available) upgrades departure pressure altitude to a true altimeter-corrected value and fills in outside air temperature. Wind is shown but not auto-applied — the wind component field needs a headwind/crosswind judgment call against whichever runway you'll actually use, which this tool doesn't know. Runway length/surface/weather are reference only; always verify against current charts and a real briefing, as this is a convenience lookup, not NOTAMs or an official briefing.</p>
+    <p class="hint">Looking up an airport fills in its field elevation, then live METAR (when available) upgrades pressure altitude to a true altimeter-corrected value, fills in OAT (from departure), and — once you pick a runway — computes the actual headwind/crosswind component from live wind direction and speed against that runway's magnetic heading (derived from its own number, e.g. Rwy 34 ≈ 340°). Runway length/surface/weather are reference only; always verify against current charts and a real briefing, as this is a convenience lookup, not NOTAMs or an official briefing.</p>
   </section>
 
   <section class="card">
@@ -80,8 +90,12 @@
         <input type="number" id="ldgWeight" value="" step="50" max="3600" min="1500" placeholder="defaults to takeoff weight">
       </div>
       <div class="field">
-        <label for="wind">Wind component (mph)</label>
-        <input type="number" id="wind" value="0" step="1">
+        <label for="depWind">Departure wind component (mph)</label>
+        <input type="number" id="depWind" value="0" step="1">
+      </div>
+      <div class="field">
+        <label for="destWind">Destination wind component (mph)</label>
+        <input type="number" id="destWind" value="0" step="1">
       </div>
       <div class="field">
         <label for="power">Cruise power (%)</label>
@@ -96,7 +110,7 @@
         <input type="number" id="cg" value="" step="0.1" placeholder="e.g. 88.5">
       </div>
     </div>
-    <p class="hint">Positive wind = headwind, negative = tailwind. Weights are capped at 3600 lb (standard, non tip-tank gross weight). Leave landing weight blank to use takeoff weight (e.g. a short local flight with negligible fuel burn).</p>
+    <p class="hint">Positive wind = headwind, negative = tailwind. Picking a runway above computes these automatically from live wind — editing them by hand overrides that until you change the runway or airport again. Weights are capped at 3600 lb (standard, non tip-tank gross weight). Leave landing weight blank to use takeoff weight (e.g. a short local flight with negligible fuel burn).</p>
   </section>
 
   <section class="card">
@@ -254,6 +268,7 @@
 
 <script src="data.js"></script>
 <script src="airports.js"></script>
+<script src="runways.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -33,6 +33,14 @@
 
   function cToF(c) { return c * 9 / 5 + 32; }
 
+  // Standard rule-of-thumb density altitude: DA = PA + 120 * (OAT - ISA temp at PA),
+  // using the standard lapse rate of 2 degrees C per 1000 ft from a 15 degree C sea-level
+  // baseline. This is the same approximation taught in FAA ground school material; it is
+  // for pilot situational awareness only -- the POH ladder charts in this calculator take
+  // pressure altitude and OAT directly, not density altitude.
+  function isaTempC(paFt) { return 15 - 2 * (paFt / 1000); }
+  function densityAltitude(paFt, oatC) { return paFt + 120 * (oatC - isaTempC(paFt)); }
+
   // ---------- ladder (takeoff / landing distance) model ----------
   // See README.md "How the numbers are computed" for the full explanation.
 
@@ -157,11 +165,12 @@
     var toWeight = clamp(parseFloat($('toWeight').value) || 3600, 1500, 3600);
     var ldgWeightRaw = parseFloat($('ldgWeight').value);
     var ldgWeight = isNaN(ldgWeightRaw) ? toWeight : clamp(ldgWeightRaw, 1500, 3600);
-    var wind = parseFloat($('wind').value) || 0;
+    var depWind = parseFloat($('depWind').value) || 0;
+    var destWind = parseFloat($('destWind').value) || 0;
     var power = clamp(parseFloat($('power').value) || 65, 45, 75);
     var fuel = clamp(parseFloat($('fuel').value) || 84, 0, 84);
     var cg = parseFloat($('cg').value);
-    return { depAltFt: depAltFt, destAltFt: destAltFt, oatF: oatF, toWeight: toWeight, ldgWeight: ldgWeight, wind: wind, power: power, fuel: fuel, cg: cg };
+    return { depAltFt: depAltFt, destAltFt: destAltFt, oatF: oatF, toWeight: toWeight, ldgWeight: ldgWeight, depWind: depWind, destWind: destWind, power: power, fuel: fuel, cg: cg };
   }
 
   function fmt(n, unit) {
@@ -176,18 +185,18 @@
   function render() {
     var inp = readInputs();
 
-    // Takeoff (at departure pressure altitude)
-    $('toGroundRun').textContent = fmt(ladderResult('fig5-06', inp.depAltFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
-    $('toDist50').textContent = fmt(ladderResult('fig5-07', inp.depAltFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
-    $('accelStop').textContent = fmt(ladderResult('fig5-08', inp.depAltFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
+    // Takeoff (at departure pressure altitude/wind)
+    $('toGroundRun').textContent = fmt(ladderResult('fig5-06', inp.depAltFt, inp.oatF, inp.toWeight, inp.depWind), 'ft');
+    $('toDist50').textContent = fmt(ladderResult('fig5-07', inp.depAltFt, inp.oatF, inp.toWeight, inp.depWind), 'ft');
+    $('accelStop').textContent = fmt(ladderResult('fig5-08', inp.depAltFt, inp.oatF, inp.toWeight, inp.depWind), 'ft');
 
-    // Takeoff - immediate return & land (landing charts at departure altitude, at takeoff weight)
-    $('irGroundRoll').textContent = fmt(ladderResult('fig5-15', inp.depAltFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
-    $('irDist50').textContent = fmt(ladderResult('fig5-16', inp.depAltFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
+    // Takeoff - immediate return & land (landing charts at departure altitude/wind, at takeoff weight)
+    $('irGroundRoll').textContent = fmt(ladderResult('fig5-15', inp.depAltFt, inp.oatF, inp.toWeight, inp.depWind), 'ft');
+    $('irDist50').textContent = fmt(ladderResult('fig5-16', inp.depAltFt, inp.oatF, inp.toWeight, inp.depWind), 'ft');
 
-    // Landing (at destination pressure altitude, destination landing weight)
-    $('ldgGroundRoll').textContent = fmt(ladderResult('fig5-15', inp.destAltFt, inp.oatF, inp.ldgWeight, inp.wind), 'ft');
-    $('ldgDist50').textContent = fmt(ladderResult('fig5-16', inp.destAltFt, inp.oatF, inp.ldgWeight, inp.wind), 'ft');
+    // Landing (at destination pressure altitude/wind, destination landing weight)
+    $('ldgGroundRoll').textContent = fmt(ladderResult('fig5-15', inp.destAltFt, inp.oatF, inp.ldgWeight, inp.destWind), 'ft');
+    $('ldgDist50').textContent = fmt(ladderResult('fig5-16', inp.destAltFt, inp.oatF, inp.ldgWeight, inp.destWind), 'ft');
 
     // Go-around / balked landing (clean-config climb reference, at destination altitude/landing weight)
     var vvDest = vxvy(inp.destAltFt);
@@ -303,8 +312,17 @@
   var WEATHER_PROXY = 'https://pa30-avwx-airport-info-proxy.taylordonato003.workers.dev';
   var wxTimers = {};
   var wxRequestSeq = {};
+  var lastWind = {}; // keyed by prefix ('dep'/'dest') -> { dirDeg, speedKt } | null
 
   function hpaToInHg(hpa) { return hpa / 33.8639; }
+
+  // Normalize an angle difference to (-180, 180].
+  function angleDiff(a, b) {
+    var d = (a - b) % 360;
+    if (d <= -180) d += 360;
+    if (d > 180) d -= 360;
+    return d;
+  }
 
   function clearWeather(wxElId) {
     wxRequestSeq[wxElId] = (wxRequestSeq[wxElId] || 0) + 1; // invalidate any in-flight fetch
@@ -314,7 +332,75 @@
     el.innerHTML = '';
   }
 
-  function fetchWeather(icao, wxElId, paFieldId, elevFt, applyOat) {
+  function populateRunways(icao, rwySelectId, rwyFieldWrapId) {
+    var RUNWAYS = window.PA30_RUNWAYS || {};
+    var select = $(rwySelectId);
+    var wrap = $(rwyFieldWrapId);
+    select.innerHTML = '<option value="">— select —</option>';
+    var ends = RUNWAYS[icao];
+    if (!ends || !ends.length) {
+      wrap.hidden = true;
+      return;
+    }
+    ends.forEach(function (e) {
+      var opt = document.createElement('option');
+      opt.value = e.hdg + '|' + e.id;
+      var label = 'Rwy ' + e.id + ' (' + e.hdg + '°) — ' + e.len.toLocaleString() + ' ft';
+      if (e.srf) label += ' ' + (SURFACE_NAMES[e.srf] || e.srf);
+      opt.textContent = label;
+      select.appendChild(opt);
+    });
+    wrap.hidden = false;
+  }
+
+  function computeWindComponent(prefix) {
+    var windCalcEl = $(prefix + 'WindCalc');
+    var select = $(prefix + 'Runway');
+    var windFieldId = prefix + 'Wind';
+    var wind = lastWind[prefix];
+    var selVal = select.value;
+
+    if (!selVal) {
+      windCalcEl.className = 'wind-calc';
+      windCalcEl.innerHTML = '';
+      return;
+    }
+    if (!wind) {
+      windCalcEl.className = 'wind-calc shown';
+      windCalcEl.innerHTML = 'Waiting on live wind data for this runway’s headwind/crosswind — enter the wind component manually below if weather doesn’t load.';
+      return;
+    }
+
+    var rwyHdg = parseInt(selVal.split('|')[0], 10);
+    var rwyId = selVal.split('|')[1];
+    var diff, headwindKt, crosswindKt;
+    if (wind.dirDeg === null) { // reported calm or variable
+      headwindKt = 0;
+      crosswindKt = 0;
+      diff = 0;
+    } else {
+      diff = angleDiff(wind.dirDeg, rwyHdg);
+      var rad = diff * Math.PI / 180;
+      headwindKt = wind.speedKt * Math.cos(rad);
+      crosswindKt = wind.speedKt * Math.sin(rad);
+    }
+    var headwindMph = headwindKt * 1.15078;
+    var crosswindMph = Math.abs(crosswindKt) * 1.15078;
+    var side = crosswindKt > 0.5 ? 'from the right' : (crosswindKt < -0.5 ? 'from the left' : '');
+
+    $(windFieldId).value = Math.round(headwindMph);
+
+    var headClass = headwindMph < 0 ? 'wc-head tailwind' : 'wc-head';
+    var headLabel = headwindMph < 0 ? 'Tailwind' : 'Headwind';
+    var html = '<span class="' + headClass + '">' + headLabel + ': ' + Math.abs(Math.round(headwindMph)) + ' mph</span>' +
+      ' &middot; Crosswind: ' + Math.round(crosswindMph) + ' mph' + (side ? ' ' + side : '') +
+      '<br><span class="wx-note">Rwy ' + rwyId + ' (' + rwyHdg + '°) vs wind ' +
+      (wind.dirDeg === null ? 'calm/variable' : wind.dirDeg + '°') + ' @ ' + Math.round(wind.speedKt) + ' kt — applied to the wind component field below, editable if you want to override.</span>';
+    windCalcEl.className = 'wind-calc shown';
+    windCalcEl.innerHTML = html;
+  }
+
+  function fetchWeather(icao, prefix, wxElId, paFieldId, elevFt, applyOat) {
     var wxEl = $(wxElId);
     var seq = (wxRequestSeq[wxElId] = (wxRequestSeq[wxElId] || 0) + 1);
     wxEl.className = 'weather-info shown';
@@ -346,40 +432,63 @@
         if (m.fltCat) bits.push('<span class="wx-flightcat ' + m.fltCat.toLowerCase() + '">' + m.fltCat + '</span>');
         if (tempF !== null) bits.push(Math.round(tempF) + '°F (' + Math.round(tempC) + '°C)');
         if (altimInHg !== null) bits.push(altimInHg.toFixed(2) + ' inHg');
-        if (typeof m.wspd === 'number') {
-          var dirTxt = (!m.wdir && m.wdir !== 0) ? '' : (m.wdir === 0 ? 'variable ' : Math.round(m.wdir) + '° ');
-          bits.push('wind ' + dirTxt + '@ ' + Math.round(m.wspd) + ' kt');
+        var windKnown = typeof m.wspd === 'number';
+        if (windKnown) {
+          var dirTxt = (!m.wdir && m.wdir !== 0) ? 'calm' : (m.wdir === 0 ? 'variable' : Math.round(m.wdir) + '°');
+          bits.push('wind ' + dirTxt + ' @ ' + Math.round(m.wspd) + ' kt');
         }
         var ageTxt = ageMin !== null ? (ageMin <= 1 ? 'just now' : Math.round(ageMin) + ' min ago') : '';
         var html = bits.join(' &middot; ');
         if (ageTxt) html += ' <span class="' + (stale ? 'wx-stale' : '') + '">(' + ageTxt + (stale ? ' — may be stale' : '') + ')</span>';
+
+        // Pressure altitude: field elevation corrected for the actual altimeter setting.
+        var pa = null;
+        if (typeof elevFt === 'number' && altimInHg !== null) {
+          pa = Math.round(elevFt + (29.92 - altimInHg) * 1000);
+          $(paFieldId).value = pa;
+          html += '<span class="wx-breakdown">Pressure altitude = <code>' + elevFt + ' ft elev + (29.92 − ' +
+            altimInHg.toFixed(2) + ') × 1000</code> = <strong>' + pa + ' ft</strong> (applied below)</span>';
+        }
+        // Density altitude: rule-of-thumb, reference only -- the POH charts use PA + OAT
+        // directly, not DA, so this is shown for situational awareness, not applied anywhere.
+        if (pa !== null && tempC !== null) {
+          var isaC = isaTempC(pa);
+          var da = Math.round(densityAltitude(pa, tempC));
+          html += '<span class="wx-breakdown">Density altitude &asymp; <code>' + pa + ' ft PA + 120 × (' +
+            Math.round(tempC) + '°C − ' + isaC.toFixed(1) + '°C ISA)</code> = <strong>' + da +
+            ' ft</strong> <span class="wx-note">(reference only — the POH charts below use pressure altitude + OAT directly, not density altitude)</span></span>';
+        }
         if (m.rawOb) html += '<span class="wx-raw">' + m.rawOb + '</span>';
         wxEl.innerHTML = html;
 
-        // Upgrade pressure altitude from the standard-day elevation guess to a real
-        // altimeter-corrected value: PA = field elevation + (29.92 - altimeter) * 1000.
-        if (typeof elevFt === 'number' && altimInHg !== null) {
-          $(paFieldId).value = Math.round(elevFt + (29.92 - altimInHg) * 1000);
-        }
         if (applyOat && tempC !== null) {
           $('oatUnit').value = 'C';
           $('oat').value = Math.round(tempC * 10) / 10;
         }
+
+        lastWind[prefix] = windKnown ? { dirDeg: (m.wdir === 0 ? null : m.wdir), speedKt: m.wspd } : null;
+        computeWindComponent(prefix);
         render();
       })
       .catch(function () {
         clearTimeout(timeoutId);
         if (seq !== wxRequestSeq[wxElId]) return;
         wxEl.innerHTML = 'Live weather unavailable right now — using field elevation / manual entry instead.';
+        lastWind[prefix] = null;
+        computeWindComponent(prefix);
       });
   }
 
-  function lookupAirport(icaoFieldId, infoElId, paFieldId, wxElId, applyOat) {
+  function lookupAirport(prefix, icaoFieldId, infoElId, paFieldId, wxElId, rwySelectId, rwyFieldWrapId, applyOat) {
     var AIRPORTS = window.PA30_AIRPORTS || {};
     var raw = $(icaoFieldId).value.trim().toUpperCase();
     $(icaoFieldId).value = raw;
     var infoEl = $(infoElId);
     clearWeather(wxElId);
+    lastWind[prefix] = null;
+    $(rwyFieldWrapId).hidden = true;
+    $(rwySelectId).innerHTML = '<option value="">— select —</option>';
+    computeWindComponent(prefix);
     if (!raw) { infoEl.innerHTML = ''; return; }
     if (raw.length !== 4) {
       infoEl.innerHTML = '<span class="bad">ICAO identifiers are 4 letters (e.g. KSEA).</span>';
@@ -402,8 +511,9 @@
       $(paFieldId).value = apt.elev;
       render();
     }
+    populateRunways(raw, rwySelectId, rwyFieldWrapId);
     wxTimers[wxElId] = setTimeout(function () {
-      fetchWeather(raw, wxElId, paFieldId, apt.elev, applyOat);
+      fetchWeather(raw, prefix, wxElId, paFieldId, apt.elev, applyOat);
     }, 500);
   }
 
@@ -421,13 +531,20 @@
     renderPowerTable();
     render();
     runVerification();
+    var skipGenericBinding = { depIcao: 1, destIcao: 1, depRunway: 1, destRunway: 1 };
     document.querySelectorAll('input, select').forEach(function (el) {
-      if (el.id === 'depIcao' || el.id === 'destIcao') return;
+      if (skipGenericBinding[el.id]) return;
       el.addEventListener('input', render);
       el.addEventListener('change', render);
     });
-    $('depIcao').addEventListener('input', function () { lookupAirport('depIcao', 'depInfo', 'depPressureAlt', 'depWx', true); });
-    $('destIcao').addEventListener('input', function () { lookupAirport('destIcao', 'destInfo', 'destPressureAlt', 'destWx', false); });
+    $('depIcao').addEventListener('input', function () {
+      lookupAirport('dep', 'depIcao', 'depInfo', 'depPressureAlt', 'depWx', 'depRunway', 'depRwyField', true);
+    });
+    $('destIcao').addEventListener('input', function () {
+      lookupAirport('dest', 'destIcao', 'destInfo', 'destPressureAlt', 'destWx', 'destRunway', 'destRwyField', false);
+    });
+    $('depRunway').addEventListener('change', function () { computeWindComponent('dep'); render(); });
+    $('destRunway').addEventListener('change', function () { computeWindComponent('dest'); render(); });
 
     if ('serviceWorker' in navigator && (location.protocol === 'http:' || location.protocol === 'https:')) {
       navigator.serviceWorker.register('sw.js').catch(function () { /* offline caching is a nice-to-have, never block the app on it */ });

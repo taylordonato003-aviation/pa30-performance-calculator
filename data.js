@@ -39,13 +39,13 @@ window.PA30_DATA = {
       "0":    { "t0": 950,  "t120": 1835 },
       "2000": { "t0": 1150, "t120": 2238 },
       "4000": { "t0": 1500, "t120": 2864 },
-      "6000": { "t0": 2915, "t120": 3535 },
+      "6000": { "t0": 2650, "t120": 3240 },
       "8000": { "t0": 2900, "t120": 5370 }
     },
-    "weightExponent": 1.24,
-    "windKPerMph": 0.0097,
+    "weightExponent": 0.642,
+    "windKPerMph": 0.0055,
     "tailwindMultiplier": 2.0,
-    "exampleCheck": { "pa": 6000, "oatF": 65, "weightLb": 3100, "windMph": 10, "chartReading": 2440 },
+    "exampleCheck": { "pa": 6000, "oatF": 70, "weightLb": 3200, "windMph": 30, "chartReading": 2318 },
     "unverifiedAltitudes": ["0", "2000", "4000", "8000"]
   },
   "fig5-08": {
@@ -76,16 +76,17 @@ window.PA30_DATA = {
     "source": "reference/fig5-15-landing-ground-roll.png",
     "model": "ladder",
     "altitudeCurves": {
-      "0":    { "t0": 380, "t120": 700 },
-      "2000": { "t0": 430, "t120": 800 },
-      "4000": { "t0": 500, "t120": 900 },
-      "6000": { "t0": 580, "t120": 1000 },
-      "8000": { "t0": 680, "t120": 1150 }
+      "0":    { "t0": 621, "t120": 784 },
+      "2000": { "t0": 679, "t120": 842 },
+      "4000": { "t0": 722, "t120": 865 },
+      "6000": { "t0": 780, "t120": 969 },
+      "8000": { "t0": 837, "t120": 1052 }
     },
-    "weightExponent": 1.2,
-    "windKPerMph": 0.02,
+    "weightExponent": 0.935,
+    "windKPerMph": 0.00833,
     "tailwindMultiplier": 2.0,
-    "exampleCheck": { "pa": 6000, "oatF": 65, "weightLb": 3100, "windMph": 10, "chartReading": 520 }
+    "exampleCheck": { "pa": 4000, "oatF": 70, "weightLb": 3100, "windMph": 30, "chartReading": 525 },
+    "unverifiedAltitudes": ["0", "2000", "6000", "8000"]
   },
   "fig5-16": {
     "figure": "5-16",
@@ -95,16 +96,17 @@ window.PA30_DATA = {
     "source": "reference/fig5-16-landing-distance-50ft.png",
     "model": "ladder",
     "altitudeCurves": {
-      "0":    { "t0": 1050, "t120": 1786 },
-      "2000": { "t0": 1200, "t120": 2027 },
-      "4000": { "t0": 1400, "t120": 2364 },
-      "6000": { "t0": 1650, "t120": 2750 },
-      "8000": { "t0": 1950, "t120": 3300 }
+      "0":    { "t0": 1945, "t120": 2260 },
+      "2000": { "t0": 2037, "t120": 2393 },
+      "4000": { "t0": 2156, "t120": 2475 },
+      "6000": { "t0": 2269, "t120": 2670 },
+      "8000": { "t0": 2391, "t120": 2834 }
     },
-    "weightExponent": 0.9,
-    "windKPerMph": 0.014,
+    "weightExponent": 0.666,
+    "windKPerMph": 0.00583,
     "tailwindMultiplier": 2.0,
-    "exampleCheck": { "pa": 6000, "oatF": 65, "weightLb": 3100, "windMph": 10, "chartReading": 1750 }
+    "exampleCheck": { "pa": 2000, "oatF": 65, "weightLb": 3200, "windMph": 30, "chartReading": 1700 },
+    "unverifiedAltitudes": ["0", "4000", "6000", "8000"]
   },
   "fig5-09": {
     "figure": "5-09",
@@ -114,9 +116,9 @@ window.PA30_DATA = {
     "source": "reference/fig5-09-multi-engine-roc.png",
     "model": "linear-by-weight",
     "weightCurves": {
-      "2800": { "seaLevel": 1850, "daAtZero": 27000 },
-      "3200": { "seaLevel": 1550, "daAtZero": 23000 },
-      "3600": { "seaLevel": 1300, "daAtZero": 20500 }
+      "2800": { "seaLevel": 1895, "daAtZero": 22025 },
+      "3200": { "seaLevel": 1566, "daAtZero": 21080 },
+      "3600": { "seaLevel": 1337, "daAtZero": 20060 }
     }
   },
   "fig5-10": {
@@ -127,9 +129,9 @@ window.PA30_DATA = {
     "source": "reference/fig5-10-single-engine-roc.png",
     "model": "linear-by-weight",
     "weightCurves": {
-      "2800": { "seaLevel": 480, "daAtZero": 11500 },
-      "3200": { "seaLevel": 300, "daAtZero": 9000 },
-      "3600": { "seaLevel": 150, "daAtZero": 6500 }
+      "2800": { "seaLevel": 520, "daAtZero": 11400 },
+      "3200": { "seaLevel": 373, "daAtZero": 9100 },
+      "3600": { "seaLevel": 260, "daAtZero": 6925 }
     }
   },
   "fig5-11": {
@@ -140,13 +142,13 @@ window.PA30_DATA = {
     "source": "reference/fig5-11-vx-vy.png",
     "model": "linear-vxvy",
     "multiEngine": {
-      "vx": { "seaLevel": 90, "at15000": 100 },
-      "vy": { "seaLevel": 105, "at15000": 90 }
+      "vx": { "seaLevel": 90, "at15000": 94 },
+      "vy": { "seaLevel": 112, "at15000": 99 }
     },
     "singleEngine": {
-      "ceilingDa": 7000,
-      "vx": { "seaLevel": 84, "atCeiling": 80 },
-      "vy": { "seaLevel": 96, "atCeiling": 85 }
+      "ceilingDa": 7189,
+      "vx": { "seaLevel": 94, "atCeiling": 98 },
+      "vy": { "seaLevel": 105, "atCeiling": 98 }
     }
   },
   "fig5-12": {
@@ -157,10 +159,10 @@ window.PA30_DATA = {
     "source": "reference/fig5-12-true-airspeed.png",
     "model": "linear-by-power",
     "powerCurves": {
-      "45": { "seaLevel": 140, "at16000": 150 },
-      "55": { "seaLevel": 158, "at16000": 168 },
-      "65": { "seaLevel": 172, "at16000": 183 },
-      "75": { "seaLevel": 185, "at16000": 205 }
+      "45": { "seaLevel": 143.6, "at16000": 152.5 },
+      "55": { "seaLevel": 156.6, "at16000": 159.3 },
+      "65": { "seaLevel": 167.9, "at16000": 169.0 },
+      "75": { "seaLevel": 176.7, "at16000": 192.5 }
     }
   },
   "fig5-13": {
@@ -172,10 +174,10 @@ window.PA30_DATA = {
     "model": "linear-by-power",
     "fuelGal": 84,
     "powerCurves": {
-      "45": { "seaLevel": 970, "at16000": 1010 },
-      "55": { "seaLevel": 930, "at16000": 1000 },
-      "65": { "seaLevel": 870, "at16000": 990 },
-      "75": { "seaLevel": 700, "at16000": 980 }
+      "45": { "seaLevel": 997, "at16000": 1045 },
+      "55": { "seaLevel": 961, "at16000": 1011 },
+      "65": { "seaLevel": 928, "at16000": 956 },
+      "75": { "seaLevel": 868, "at16000": 880 }
     }
   },
   "fig5-14": {
@@ -187,10 +189,10 @@ window.PA30_DATA = {
     "model": "linear-by-power",
     "fuelGal": 84,
     "powerCurves": {
-      "45": { "seaLevel": 5.8, "at16000": 6.8 },
-      "55": { "seaLevel": 5.0, "at16000": 6.0 },
-      "65": { "seaLevel": 4.5, "at16000": 5.5 },
-      "75": { "seaLevel": 4.0, "at16000": 5.0 }
+      "45": { "seaLevel": 5.85, "at16000": 6.3 },
+      "55": { "seaLevel": 5.14, "at16000": 5.5 },
+      "65": { "seaLevel": 4.56, "at16000": 4.7 },
+      "75": { "seaLevel": 4.0, "at16000": 4.5 }
     }
   },
   "fig6-01": {

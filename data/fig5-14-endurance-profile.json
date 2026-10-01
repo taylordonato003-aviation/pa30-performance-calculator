@@ -7,9 +7,25 @@
   "model": "linear-by-power",
   "fuelGal": 84,
   "powerCurves": {
-    "45": { "seaLevel": 5.8, "at16000": 6.8 },
-    "55": { "seaLevel": 5.0, "at16000": 6.0 },
-    "65": { "seaLevel": 4.5, "at16000": 5.5 },
-    "75": { "seaLevel": 4.0, "at16000": 5.0 }
+    "45": { "seaLevel": 5.85, "at16000": 6.3 },
+    "55": { "seaLevel": 5.14, "at16000": 5.5 },
+    "65": { "seaLevel": 4.56, "at16000": 4.7 },
+    "75": { "seaLevel": 4.0, "at16000": 4.5 }
+  },
+  "verification": {
+    "note": "Re-measured pixel-by-pixel against reference/fig5-14-endurance-profile.png on 2026-10-01 (BASIC FUEL 84 gal solid curves only). The original at16000 values (all exactly +1.0 hr above seaLevel for every curve) look like an assumed uniform rise rather than a measured one -- the real per-curve rises are much smaller and uneven (0.25 to 0.5 hr), and like fig 5-12/5-13, not every curve reaches 16000 ft.",
+    "realCeilings": {
+      "75": { "ft": 8000, "hr": 4.25, "note": "Clean sharp termination at 8000 ft, unambiguous." },
+      "65": { "ft": 12000, "hr": 4.67, "note": "Clean sharp termination at 12000 ft, unambiguous." },
+      "55": { "ft": 15000, "hr": 5.49, "note": "Terminates close to but not exactly at 16000 ft." },
+      "45": { "ft": 15000, "hr": 6.3, "note": "LOWER CONFIDENCE: this curve runs close beside the 55% curve and briefly overlaps/crosses it near the top of the chart, which made the two hard to separate pixel-by-pixel. The seaLevel value (5.85) is solid, but the top-end value is a best estimate, not a clean independent read. Worth a second look with a higher-res source scan if this number matters." }
+    },
+    "correctionVsOriginal": "seaLevel values were already close to accurate in the original (45: 5.8 vs 5.85, 55: 5.0 vs 5.14, 65: 4.5 vs 4.56, 75: 4.0 vs 4.0 exactly). The at16000 values were the main correction -- the original's uniform +1.0 hr assumption overstated every curve's altitude benefit, especially 75% (claimed 5.0, real extrapolated value ~4.5) and 65% (claimed 5.5, real ~4.7).",
+    "confidence": {
+      "75": "high",
+      "65": "high",
+      "55": "medium-high",
+      "45": "medium - seaLevel point solid, ceiling point approximate (see realCeilings note)"
+    }
   }
 }

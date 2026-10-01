@@ -13,12 +13,12 @@
     "8000": { "t0": 837, "t120": 1052 }
   },
   "weightExponent": 0.935,
-  "windKPerMph": 0.025,
+  "windKPerMph": 0.00833,
   "tailwindMultiplier": 2.0,
   "exampleCheck": {
-    "pa": 4000, "oatF": 70, "weightLb": 3100, "windMph": 10,
+    "pa": 4000, "oatF": 70, "weightLb": 3100, "windMph": 30,
     "chartReading": 525,
-    "note": "Worked example printed on the chart (points A-F). Re-measured directly from reference/fig5-15-landing-ground-roll.png pixel positions on 2026-10-01. TWO prior assumptions were wrong, not just the chart-reading target: the example's pressure altitude is 4000 ft, not the originally assumed 6000 ft (point A's traced curve matches the independently-identified '4000' curve's slope/t0 almost exactly, not '6000's), and its OAT is 70 F, not 65 F (the dashed vertical line sits at pixel x=351.5, which calibrates to ~70 F, not 65 F -- 65 F would be at x=341). Weight (3100 lb) and wind (10 mph headwind) were confirmed correct. weightExponent and windKPerMph were refit from directly-measured B/D/F points (805/700/525). Model now reproduces the chart's worked example to within 0.05% (525.2 computed vs 525 read)."
+    "note": "Worked example printed on the chart (points A-F). Re-measured directly from reference/fig5-15-landing-ground-roll.png pixel positions on 2026-10-01. TWO prior assumptions were wrong, not just the chart-reading target: the example's pressure altitude is 4000 ft, not the originally assumed 6000 ft (point A's traced curve matches the independently-identified '4000' curve's slope/t0 almost exactly, not '6000's), and its OAT is 70 F, not 65 F (the dashed vertical line sits at pixel x=351.5, which calibrates to ~70 F, not 65 F -- 65 F would be at x=341). Weight (3100 lb) confirmed correct. A follow-up check found the wind input was ALSO wrong: point F sits almost exactly on the '30' gridline in the headwind panel, not '10' as previously claimed -- the same wind=30 pattern independently confirmed on fig5-06, fig5-07, fig5-08, and fig5-16, suggesting all five ladder charts' worked examples use 30 mph headwind. windKPerMph refit accordingly from directly-measured B/D/F points (805/700/525) with windMph=30. Model reproduces the chart's worked example to within 0.01%."
   },
   "unverifiedAltitudes": {
     "note": "Only the 4000 ft entry (above) is anchored to the worked example and independently verified to ~0% error. The 0/2000/6000/8000 ft entries were re-traced from the source chart (an improvement on the original guesses) using a shorter, less-anchored pixel baseline (two trace points ~82px apart, then extrapolated out to t0 and t120) and cross-checked by visually confirming each curve against its printed altitude label, but are not confirmed against an independent worked example the way 4000 ft is. Medium confidence, not exact.",

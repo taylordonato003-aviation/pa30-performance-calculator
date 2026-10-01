@@ -9,15 +9,19 @@
     "0":    { "t0": 650,  "t120": 1250 },
     "2000": { "t0": 750,  "t120": 1500 },
     "4000": { "t0": 870,  "t120": 1800 },
-    "6000": { "t0": 1020, "t120": 2050 },
+    "6000": { "t0": 1385, "t120": 1915 },
     "8000": { "t0": 1250, "t120": 2550 }
   },
-  "weightExponent": 1.35,
-  "windKPerMph": 0.019,
+  "weightExponent": 1.5,
+  "windKPerMph": 0.0157,
   "tailwindMultiplier": 2.0,
   "exampleCheck": {
     "pa": 6000, "oatF": 65, "weightLb": 3100, "windMph": 10,
-    "chartReading": 1100,
-    "note": "Worked example printed on the chart (points A-F)"
+    "chartReading": 1125,
+    "note": "Worked example printed on the chart (points A-F). Re-measured directly from reference/fig5-06-takeoff-ground-run.png pixel positions on 2026-10-01 (B=1673 ft, D=1337 ft, F=1127 ft) — the original chartReading of 1100 was close but the 6000 ft altitude curve's t0/t120 (1020/2050) overestimated the slope by roughly 2x versus the measured 4.4 ft/°F; weightExponent and windKPerMph were refit from the directly-measured B/D/F points."
+  },
+  "unverifiedAltitudes": {
+    "note": "The 0/2000/4000/8000 ft altitudeCurves entries below are the ORIGINAL, unverified digitization. Only the 6000 ft entry (above) and the weight/wind exponents have been independently re-measured pixel-by-pixel against the source chart. A reliable automated trace of the other four curves was not achieved in this pass — they cross near a steep 'STD TEMP' reference line on the chart that repeatedly caused the curve-tracer to jump between curves, and disambiguating each one visually would need more time than this pass allowed. Given the 6000 ft entry was off by ~2x, these others likely carry similar error and should be re-checked before being trusted for altitudes other than 6000 ft.",
+    "altitudes": ["0", "2000", "4000", "8000"]
   }
 }

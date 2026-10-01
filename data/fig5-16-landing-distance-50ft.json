@@ -6,18 +6,22 @@
   "source": "reference/fig5-16-landing-distance-50ft.png",
   "model": "ladder",
   "altitudeCurves": {
-    "0":    { "t0": 1050, "t120": 1786 },
-    "2000": { "t0": 1200, "t120": 2027 },
-    "4000": { "t0": 1400, "t120": 2364 },
-    "6000": { "t0": 1650, "t120": 2750 },
-    "8000": { "t0": 1950, "t120": 3300 }
+    "0":    { "t0": 1945, "t120": 2260 },
+    "2000": { "t0": 2037, "t120": 2393 },
+    "4000": { "t0": 2156, "t120": 2475 },
+    "6000": { "t0": 2269, "t120": 2670 },
+    "8000": { "t0": 2391, "t120": 2834 }
   },
-  "weightExponent": 0.9,
-  "windKPerMph": 0.014,
+  "weightExponent": 0.666,
+  "windKPerMph": 0.01755,
   "tailwindMultiplier": 2.0,
   "exampleCheck": {
-    "pa": 6000, "oatF": 65, "weightLb": 3100, "windMph": 10,
-    "chartReading": 1750,
-    "note": "Worked example printed on the chart (points A-F)"
+    "pa": 2000, "oatF": 65, "weightLb": 3200, "windMph": 10,
+    "chartReading": 1700,
+    "note": "Worked example printed on the chart (points A-F). Re-measured directly from reference/fig5-16-landing-distance-50ft.png pixel positions on 2026-10-01. Like fig5-15, the stored pressure altitude and weight were both wrong, not just the chart-reading target and curve data: point A's traced curve (t0~2037, matched to within 0.2% against an independently-labeled '2000 ft' curve trace) is the 2000 ft curve, not the originally assumed 6000 ft; and point C (weight correction) lands at pixel x~482, which calibrates to ~3200 lb, not 3100 lb (visually confirmed sitting almost exactly on the '32' weight gridline). OAT (65 F) and wind (10 mph headwind) were confirmed correct. weightExponent and windKPerMph were refit from directly-measured B/D/F points (2230/2060/1700). Model now reproduces the chart's worked example to within 0.01% (1699.8 computed vs 1700 read). NOTE: because the old altitudeCurves values here were also substantially wrong (e.g. old '6000' entry 1650/2750 vs. the now-independently-measured real 6000 entry of 2269/2670), all five entries were redigitized from scratch this pass, not just patched."
+  },
+  "unverifiedAltitudes": {
+    "note": "Only the 2000 ft entry (above) is anchored to the worked example and independently verified to ~0% error. The 0/4000/6000/8000 ft entries were re-traced from the source chart using a shorter pixel baseline (two trace points ~85px apart, then extrapolated out to t0 and t120) and cross-checked by visually confirming each curve against its printed altitude label (see the overlay check performed during this pass), but are not confirmed against an independent worked example the way 2000 ft is. Medium confidence, not exact -- a clear improvement on the prior (unverified-guess) values, but extrapolation error grows at the temperature extremes.",
+    "altitudes": ["0", "4000", "6000", "8000"]
   }
 }

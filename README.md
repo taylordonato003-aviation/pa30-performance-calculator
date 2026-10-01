@@ -49,6 +49,8 @@ app.js             Calculation engine + UI wiring
 data.js            All digitized chart data, embedded as a JS object
                     (index.html loads this directly — see "Why data.js
                     duplicates data/*.json" below)
+airports.js         Bundled offline airport database (10,110 airports),
+                    embedded as a JS object for the same file:// reason
 manifest.json       PWA manifest (installable home-screen app)
 sw.js               Service worker for offline caching (no-ops on file://)
 icon-192.png / icon-512.png / apple-touch-icon.png   App icons
@@ -56,6 +58,9 @@ data/*.json         The same datasets as plain, human-readable JSON —
                     edit these if you want to hand-correct a value
 reference/*.png     The 13 original scanned POH chart pages this tool
                     was digitized from, for comparison
+cloudflare-worker/  The CORS proxy that fetches live METAR (see
+metar-proxy.js       "Airport lookup" below) — not deployed as part of
+                    this static site, lives separately on Cloudflare
 ```
 
 ## How the numbers are computed
@@ -135,28 +140,31 @@ you hand-correct a digitized value there, make the same edit in `data.js`.
 ## Airport lookup
 
 Type an ICAO identifier (e.g. `KSEA`) into the Departure or Destination field
-and the app fills in that airport's field elevation as pressure altitude,
-plus shows its name and longest runway (length + surface) for reference.
-This uses a bundled offline database (`airports.js`), not a live API call —
-see "Data source" below for why, and for the data's provenance.
+and the app looks up that airport's name, field elevation, and longest
+runway (length + surface) from a bundled offline database (`airports.js`) —
+see "Data source" below for its provenance. Field elevation immediately
+fills in as a standard-day pressure altitude guess.
 
-Field elevation is only a *standard-day* stand-in for pressure altitude
-(true pressure altitude = field elevation adjusted for the actual altimeter
-setting: roughly ±1000 ft per inch of Hg away from 29.92). Adjust the
-pressure altitude field manually if you know the actual altimeter setting —
-the airport lookup is a convenient starting point, not a substitute for a
-real weather briefing.
+About half a second later, it also fetches **live current METAR** for that
+airport (temperature, altimeter setting, wind, flight category, raw text,
+and observation age) and upgrades the departure airport's pressure altitude
+to a real altimeter-corrected value (`field elevation + (29.92 − altimeter) ×
+1000`), and fills in outside air temperature from departure's METAR. Wind is
+shown but never auto-applied to the wind-component field — that needs a
+headwind/crosswind judgment call against whichever runway you'll actually
+use, which this tool has no way to know.
 
-**Why this isn't live data:** live weather (METAR/TAF, current altimeter
-and temperature) would need a server to fetch, since the free NOAA
-Aviation Weather Center API (`aviationweather.gov`) does not send the
-CORS headers required for a browser to call it directly from a static
-site like this one — confirmed by testing, not assumed. A live-METAR
-version of this feature would need either a small proxy backend (which
-breaks the "free, zero-maintenance, static site" design this project
-deliberately keeps) or a different data source. Static reference data
-like field elevation and runway length changes rarely enough that
-bundling it works well instead.
+**Why this needed a proxy, and what it is:** the free NOAA Aviation Weather
+Center API (`aviationweather.gov`) has real-time METAR/TAF data but sends no
+CORS headers, so a browser blocks a static site from calling it directly
+(confirmed by testing, not assumed). Rather than add a backend server, this
+uses a small Cloudflare Worker (`cloudflare-worker/metar-proxy.js`) — a
+serverless function, free tier (100k requests/day, no credit card), that
+fetches aviationweather.gov server-side (no CORS applies server-to-server)
+and re-serves it with CORS headers scoped to this project's own GitHub Pages
+origin. If live weather is ever unreachable (offline, Worker down, airport
+has no reporting station), the UI says so and falls back to the field
+elevation already filled in — it never blocks manual entry.
 
 ## Install on iPhone
 

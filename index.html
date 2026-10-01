@@ -38,14 +38,16 @@
         <label for="depIcao">Departure airport (ICAO)</label>
         <input type="text" id="depIcao" value="" maxlength="4" placeholder="e.g. KSEA" autocapitalize="characters" autocomplete="off" spellcheck="false">
         <div class="airport-info" id="depInfo"></div>
+        <div class="weather-info" id="depWx"></div>
       </div>
       <div class="field">
         <label for="destIcao">Destination airport (ICAO)</label>
         <input type="text" id="destIcao" value="" maxlength="4" placeholder="e.g. KPAE" autocapitalize="characters" autocomplete="off" spellcheck="false">
         <div class="airport-info" id="destInfo"></div>
+        <div class="weather-info" id="destWx"></div>
       </div>
     </div>
-    <p class="hint">Looking up an airport fills in its field elevation as pressure altitude below (standard-day approximation — adjust for the actual altimeter setting if you know it). Runway length/surface shown for reference only; always verify against current charts, as this is a static reference database, not live NOTAMs.</p>
+    <p class="hint">Looking up an airport fills in its field elevation, then live METAR (when available) upgrades departure pressure altitude to a true altimeter-corrected value and fills in outside air temperature. Wind is shown but not auto-applied — the wind component field needs a headwind/crosswind judgment call against whichever runway you'll actually use, which this tool doesn't know. Runway length/surface/weather are reference only; always verify against current charts and a real briefing, as this is a convenience lookup, not NOTAMs or an official briefing.</p>
   </section>
 
   <section class="card">

@@ -144,6 +144,23 @@ input[type="number"]:focus, select:focus {
 .airport-info .ok { color: var(--text); }
 .airport-info .bad { color: var(--bad); }
 
+.weather-info {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-top: 4px;
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  display: none;
+}
+.weather-info.shown { display: block; }
+.weather-info .wx-flightcat { font-weight: 600; }
+.weather-info .wx-flightcat.vfr { color: var(--ok); }
+.weather-info .wx-flightcat.mvfr { color: #3b82f6; }
+.weather-info .wx-flightcat.ifr, .weather-info .wx-flightcat.lifr { color: var(--bad); }
+.weather-info .wx-raw { font-family: var(--mono); font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; display: block; word-break: break-all; }
+.weather-info .wx-stale { color: var(--warn-text); }
+
 .subhead {
   font-size: 0.85rem;
   text-transform: uppercase;

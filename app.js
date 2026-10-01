@@ -300,11 +300,86 @@
     GRAVEL: 'gravel', WAT: 'water', DIRT: 'dirt', SAND: 'sand', SNOW: 'snow/ice'
   };
 
-  function lookupAirport(icaoFieldId, infoElId, paFieldId) {
+  var WEATHER_PROXY = 'https://pa30-avwx-airport-info-proxy.taylordonato003.workers.dev';
+  var wxTimers = {};
+  var wxRequestSeq = {};
+
+  function hpaToInHg(hpa) { return hpa / 33.8639; }
+
+  function clearWeather(wxElId) {
+    wxRequestSeq[wxElId] = (wxRequestSeq[wxElId] || 0) + 1; // invalidate any in-flight fetch
+    clearTimeout(wxTimers[wxElId]);
+    var el = $(wxElId);
+    el.className = 'weather-info';
+    el.innerHTML = '';
+  }
+
+  function fetchWeather(icao, wxElId, paFieldId, elevFt, applyOat) {
+    var wxEl = $(wxElId);
+    var seq = (wxRequestSeq[wxElId] = (wxRequestSeq[wxElId] || 0) + 1);
+    wxEl.className = 'weather-info shown';
+    wxEl.textContent = 'Fetching live weather…';
+
+    var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var timeoutId = setTimeout(function () { if (controller) controller.abort(); }, 8000);
+
+    fetch(WEATHER_PROXY + '/metar?ids=' + encodeURIComponent(icao), { signal: controller ? controller.signal : undefined })
+      .then(function (resp) {
+        clearTimeout(timeoutId);
+        if (!resp.ok) throw new Error('bad status');
+        return resp.json();
+      })
+      .then(function (data) {
+        if (seq !== wxRequestSeq[wxElId]) return; // superseded by a newer lookup
+        if (!Array.isArray(data) || data.length === 0) {
+          wxEl.innerHTML = 'No current METAR for ' + icao + ' — it may not be a reporting station.';
+          return;
+        }
+        var m = data[0];
+        var tempC = (typeof m.temp === 'number') ? m.temp : null;
+        var tempF = (tempC !== null) ? cToF(tempC) : null;
+        var altimInHg = (typeof m.altim === 'number') ? hpaToInHg(m.altim) : null;
+        var ageMin = m.obsTime ? Math.round(Date.now() / 1000 - m.obsTime) / 60 : null;
+        var stale = ageMin !== null && ageMin > 90;
+
+        var bits = [];
+        if (m.fltCat) bits.push('<span class="wx-flightcat ' + m.fltCat.toLowerCase() + '">' + m.fltCat + '</span>');
+        if (tempF !== null) bits.push(Math.round(tempF) + '°F (' + Math.round(tempC) + '°C)');
+        if (altimInHg !== null) bits.push(altimInHg.toFixed(2) + ' inHg');
+        if (typeof m.wspd === 'number') {
+          var dirTxt = (!m.wdir && m.wdir !== 0) ? '' : (m.wdir === 0 ? 'variable ' : Math.round(m.wdir) + '° ');
+          bits.push('wind ' + dirTxt + '@ ' + Math.round(m.wspd) + ' kt');
+        }
+        var ageTxt = ageMin !== null ? (ageMin <= 1 ? 'just now' : Math.round(ageMin) + ' min ago') : '';
+        var html = bits.join(' &middot; ');
+        if (ageTxt) html += ' <span class="' + (stale ? 'wx-stale' : '') + '">(' + ageTxt + (stale ? ' — may be stale' : '') + ')</span>';
+        if (m.rawOb) html += '<span class="wx-raw">' + m.rawOb + '</span>';
+        wxEl.innerHTML = html;
+
+        // Upgrade pressure altitude from the standard-day elevation guess to a real
+        // altimeter-corrected value: PA = field elevation + (29.92 - altimeter) * 1000.
+        if (typeof elevFt === 'number' && altimInHg !== null) {
+          $(paFieldId).value = Math.round(elevFt + (29.92 - altimInHg) * 1000);
+        }
+        if (applyOat && tempC !== null) {
+          $('oatUnit').value = 'C';
+          $('oat').value = Math.round(tempC * 10) / 10;
+        }
+        render();
+      })
+      .catch(function () {
+        clearTimeout(timeoutId);
+        if (seq !== wxRequestSeq[wxElId]) return;
+        wxEl.innerHTML = 'Live weather unavailable right now — using field elevation / manual entry instead.';
+      });
+  }
+
+  function lookupAirport(icaoFieldId, infoElId, paFieldId, wxElId, applyOat) {
     var AIRPORTS = window.PA30_AIRPORTS || {};
     var raw = $(icaoFieldId).value.trim().toUpperCase();
     $(icaoFieldId).value = raw;
     var infoEl = $(infoElId);
+    clearWeather(wxElId);
     if (!raw) { infoEl.innerHTML = ''; return; }
     if (raw.length !== 4) {
       infoEl.innerHTML = '<span class="bad">ICAO identifiers are 4 letters (e.g. KSEA).</span>';
@@ -327,6 +402,9 @@
       $(paFieldId).value = apt.elev;
       render();
     }
+    wxTimers[wxElId] = setTimeout(function () {
+      fetchWeather(raw, wxElId, paFieldId, apt.elev, applyOat);
+    }, 500);
   }
 
   function runVerification() {
@@ -348,8 +426,8 @@
       el.addEventListener('input', render);
       el.addEventListener('change', render);
     });
-    $('depIcao').addEventListener('input', function () { lookupAirport('depIcao', 'depInfo', 'depPressureAlt'); });
-    $('destIcao').addEventListener('input', function () { lookupAirport('destIcao', 'destInfo', 'destPressureAlt'); });
+    $('depIcao').addEventListener('input', function () { lookupAirport('depIcao', 'depInfo', 'depPressureAlt', 'depWx', true); });
+    $('destIcao').addEventListener('input', function () { lookupAirport('destIcao', 'destInfo', 'destPressureAlt', 'destWx', false); });
 
     if ('serviceWorker' in navigator && (location.protocol === 'http:' || location.protocol === 'https:')) {
       navigator.serviceWorker.register('sw.js').catch(function () { /* offline caching is a nice-to-have, never block the app on it */ });

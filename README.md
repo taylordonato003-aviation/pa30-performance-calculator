@@ -53,6 +53,10 @@ airports.js         Bundled offline airport database (10,110 airports),
                     embedded as a JS object for the same file:// reason
 runways.js          Bundled offline runway-ends database (22,113 runway
                     ends across 8,231 airports), same reason
+navaids.js          Bundled offline VOR/NDB database (10,399 entries),
+                    same reason
+fixes.js            Bundled offline 5-letter RNAV/GPS fix database
+                    (65,388 fixes, from the FAA, not OurAirports)
 manifest.json       PWA manifest (installable home-screen app)
 sw.js               Service worker for offline caching (no-ops on file://)
 icon-192.png / icon-512.png / apple-touch-icon.png   App icons
@@ -60,9 +64,15 @@ data/*.json         The same datasets as plain, human-readable JSON —
                     edit these if you want to hand-correct a value
 reference/*.png     The 13 original scanned POH chart pages this tool
                     was digitized from, for comparison
-cloudflare-worker/  The CORS proxy that fetches live METAR (see
-metar-proxy.js       "Airport lookup" below) — not deployed as part of
-                    this static site, lives separately on Cloudflare
+cloudflare-worker/  The CORS proxy that fetches live METAR/winds-aloft
+metar-proxy.js       (see "Airport lookup" below) — not deployed as part
+                    of this static site, lives separately on Cloudflare
+scripts/            Data pipeline(s) -- refresh_data.py rebuilds all
+refresh_data.py       four bundled datasets above from their live
+                    sources (see "Data source" below)
+.github/workflows/  Scheduled automation
+refresh-data.yml      Runs refresh_data.py monthly and auto-commits any
+                    changes -- see "Data source" below
 ```
 
 ## How the numbers are computed
@@ -222,15 +232,28 @@ Piper PA-30 Twin Comanche Pilot's Operating Handbook, Section 5
 (3600 lb max gross weight, no tip tanks). Scanned chart images are in
 `reference/` for direct comparison against the digitized model.
 
-Airport data (`airports.js`, also mirrored as `data/airports.json`) and
-runway data (`runways.js` / `data/runways.json`) come from
-[OurAirports](https://ourairports.com/data/), a public-domain (CC0) dataset
-maintained by volunteers, downloaded 2026-10-01. Airports are filtered to the
-10,110 small/medium/large airports worldwide that have a 4-letter ICAO
-identifier, each with name, municipality, country, coordinates, field
-elevation, and longest-runway length/surface. Runways are every non-closed
-runway end at those same airports (22,113 of them) with length, width,
-surface, and a magnetic heading derived from the runway's own number (not
-OurAirports' true-heading column — see "Airport lookup" above for why). Both
-are static snapshots — re-download from OurAirports if you want fresher
-data.
+Airport data (`airports.js`, also mirrored as `data/airports.json`), runway
+data (`runways.js` / `data/runways.json`), and navaid data (`navaids.js` /
+`data/navaids.json`) come from [OurAirports](https://ourairports.com/data/),
+a public-domain (CC0) dataset maintained by volunteers. Airports are filtered
+to the 10,110 small/medium/large airports worldwide with a 4-letter ICAO
+identifier (name, municipality, country, coordinates, field elevation,
+longest-runway length/surface). Runways are every non-closed runway end at
+those airports (22,113) with length, width, surface, and a magnetic heading
+derived from the runway's own number (not OurAirports' true-heading column —
+see "Airport lookup" above for why). Navaids are VOR/VOR-DME/VORTAC/NDB/
+NDB-DME stations (10,399 of them, 5,718 unique identifiers — navaid idents
+are *not* globally unique the way ICAO airport codes are, so the same
+identifier can resolve to multiple real-world stations).
+
+Fix data (`fixes.js` / `data/fixes.json`) comes from the FAA's 28-day NASR
+subscription data — the authoritative, free, public-domain source for every
+named 5-letter RNAV/GPS fix in the US National Airspace System (65,388 of
+them, military-only fixes excluded). This updates on an AIRAC-aligned 28-day
+cycle, which is faster-moving than OurAirports' data.
+
+**All four datasets refresh automatically** via a scheduled GitHub Actions
+workflow (`.github/workflows/refresh-data.yml`, runs monthly, also runnable
+on demand from the Actions tab) that re-runs `scripts/refresh_data.py` — the
+exact same pipeline described above — and commits any changes. No manual
+re-downloading needed; this is genuinely "set and forget."

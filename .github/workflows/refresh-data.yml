@@ -1,0 +1,39 @@
+name: Refresh bundled reference data
+
+# Keeps data/*.json and the matching *.js files (airports, runways, navaids,
+# fixes) current without any manual work. Sources are OurAirports (changes
+# slowly) and the FAA's 28-day NASR cycle (fixes) -- monthly comfortably
+# covers both. Can also be run on demand from the Actions tab.
+on:
+  schedule:
+    - cron: '0 10 1 * *' # 10:00 UTC on the 1st of every month
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Run data refresh pipeline
+        run: python3 scripts/refresh_data.py
+
+      - name: Commit changes if any
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/airports.json data/runways.json data/navaids.json data/fixes.json \
+                  airports.js runways.js navaids.js fixes.js
+          if git diff --cached --quiet; then
+            echo "No changes -- data is already current."
+          else
+            git commit -m "Scheduled refresh of bundled airport/runway/navaid/fix data"
+            git push
+          fi

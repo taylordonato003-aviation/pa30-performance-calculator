@@ -1,0 +1,13 @@
+{
+  "figure": "5-10",
+  "title": "Single-Engine Rate of Climb vs Density Altitude and Weight",
+  "units": "ft/min",
+  "conditions": "Left engine inoperative, left propeller feathered, right engine full throttle, right propeller max RPM, mixture adjusted for smooth operation, gear and wing flaps retracted, optimum airspeed, cowl flaps open",
+  "source": "reference/fig5-10-single-engine-roc.png",
+  "model": "linear-by-weight",
+  "weightCurves": {
+    "2800": { "seaLevel": 480, "daAtZero": 11500 },
+    "3200": { "seaLevel": 300, "daAtZero": 9000 },
+    "3600": { "seaLevel": 150, "daAtZero": 6500 }
+  }
+}

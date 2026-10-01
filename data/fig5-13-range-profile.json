@@ -1,0 +1,15 @@
+{
+  "figure": "5-13",
+  "title": "Range Profile",
+  "units": "statute miles",
+  "conditions": "Basic fuel 84 US gal, weight 3600 lb at start, gear and flaps retracted, mixture best economy cruise. No allowance for wind or navigation errors beyond the 45-minute reserve already baked into the chart.",
+  "source": "reference/fig5-13-range-profile.png",
+  "model": "linear-by-power",
+  "fuelGal": 84,
+  "powerCurves": {
+    "45": { "seaLevel": 970, "at16000": 1010 },
+    "55": { "seaLevel": 930, "at16000": 1000 },
+    "65": { "seaLevel": 870, "at16000": 990 },
+    "75": { "seaLevel": 700, "at16000": 980 }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "figure": "5-11",
+  "title": "Vx and Vy vs Density Altitude",
+  "units": "mph IAS",
+  "conditions": "Gross weight 3600 lb, landing gear retracted, full throttle and max RPM, wing flaps retracted, mixture adjusted for smooth operation, cowl flaps open",
+  "source": "reference/fig5-11-vx-vy.png",
+  "model": "linear-vxvy",
+  "multiEngine": {
+    "vx": { "seaLevel": 90, "at15000": 100 },
+    "vy": { "seaLevel": 105, "at15000": 90 }
+  },
+  "singleEngine": {
+    "ceilingDa": 7000,
+    "vx": { "seaLevel": 84, "atCeiling": 80 },
+    "vy": { "seaLevel": 96, "atCeiling": 85 }
+  }
+}

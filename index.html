@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PA-30 Performance Calculator</title>
+<meta name="description" content="Interactive Piper PA-30 Twin Comanche performance calculator, digitized from the POH Section 5/6 charts.">
+
+<meta name="theme-color" content="#2f6d4f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="PA-30 Calc">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>PA-30 Performance Calculator</h1>
+    <p class="subtitle">Piper Twin Comanche PA-30 &middot; Standard configuration, 3600 lb max gross weight</p>
+  </header>
+
+  <div class="disclaimer">
+    <strong>Simulation / training use only — not valid for flight dispatch.</strong>
+    All figures here were manually digitized from scanned Piper PA-30 POH chart images by approximate visual curve-tracing,
+    then fit to simple interpolation models. They are reasonable approximations, not certified performance data.
+    Always verify against the actual, current, aircraft-specific POH before any real flight planning or dispatch decision.
+  </div>
+
+  <section class="card">
+    <h2>Conditions</h2>
+    <div class="input-grid">
+      <div class="field">
+        <label for="pressureAlt">Pressure altitude (ft)</label>
+        <input type="number" id="pressureAlt" value="2000" step="100">
+      </div>
+      <div class="field">
+        <label for="oat">Outside air temperature</label>
+        <div class="row">
+          <input type="number" id="oat" value="70" step="1">
+          <select id="oatUnit" style="max-width:80px">
+            <option value="F" selected>&deg;F</option>
+            <option value="C">&deg;C</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="weight">Weight (lb, max 3600)</label>
+        <input type="number" id="weight" value="3400" step="50" max="3600" min="1500">
+      </div>
+      <div class="field">
+        <label for="wind">Wind component (mph)</label>
+        <input type="number" id="wind" value="0" step="1">
+      </div>
+      <div class="field">
+        <label for="power">Cruise power (%)</label>
+        <input type="number" id="power" value="65" step="5" min="45" max="75">
+      </div>
+      <div class="field">
+        <label for="fuel">Usable fuel on board (gal, max 84)</label>
+        <input type="number" id="fuel" value="84" step="1" max="84" min="0">
+      </div>
+      <div class="field">
+        <label for="cg">Loaded C.G. (in aft of datum, optional)</label>
+        <input type="number" id="cg" value="" step="0.1" placeholder="e.g. 88.5">
+      </div>
+    </div>
+    <p class="hint">Positive wind = headwind, negative = tailwind. Weight is capped at 3600 lb (standard, non tip-tank gross weight).</p>
+  </section>
+
+  <section class="card">
+    <h2>Takeoff</h2>
+    <div class="results-grid">
+      <div class="result">
+        <div class="label">Ground run <span class="fig">Fig 5-06</span></div>
+        <div class="value" id="toGroundRun">—</div>
+      </div>
+      <div class="result">
+        <div class="label">Distance over 50 ft obstacle <span class="fig">Fig 5-07</span></div>
+        <div class="value" id="toDist50">—</div>
+      </div>
+      <div class="result">
+        <div class="label">Accelerate-stop distance <span class="fig">Fig 5-08</span></div>
+        <div class="value" id="accelStop">—</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Landing</h2>
+    <div class="results-grid">
+      <div class="result">
+        <div class="label">Ground roll <span class="fig">Fig 5-15</span></div>
+        <div class="value" id="ldgGroundRoll">—</div>
+      </div>
+      <div class="result">
+        <div class="label">Distance over 50 ft obstacle <span class="fig">Fig 5-16</span></div>
+        <div class="value" id="ldgDist50">—</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Climb</h2>
+    <div class="results-grid">
+      <div class="result">
+        <div class="label">V<sub>X</sub> / V<sub>Y</sub>, both engines <span class="fig">Fig 5-11</span></div>
+        <div class="value"><span id="vxMulti">—</span> / <span id="vyMulti">—</span></div>
+      </div>
+      <div class="result">
+        <div class="label">V<sub>X</sub> / V<sub>Y</sub>, single engine <span class="fig">Fig 5-11</span></div>
+        <div class="value"><span id="vxSingle">—</span> / <span id="vySingle">—</span></div>
+      </div>
+      <div class="result">
+        <div class="label">Rate of climb, both engines <span class="fig">Fig 5-09</span></div>
+        <div class="value" id="rocMulti">—</div>
+      </div>
+      <div class="result">
+        <div class="label">Rate of climb, single engine <span class="fig">Fig 5-10</span></div>
+        <div class="value" id="rocSingle">—</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Cruise</h2>
+    <div class="results-grid">
+      <div class="result">
+        <div class="label">True airspeed <span class="fig">Fig 5-12</span></div>
+        <div class="value" id="tas">—</div>
+      </div>
+      <div class="result">
+        <div class="label">Range on fuel entered <span class="fig">Fig 5-13</span></div>
+        <div class="value" id="range">—</div>
+      </div>
+      <div class="result">
+        <div class="label">Endurance on fuel entered <span class="fig">Fig 5-14</span></div>
+        <div class="value" id="endurance">—</div>
+      </div>
+    </div>
+    <p class="hint">Range/endurance are scaled from the 84-gal basic-fuel chart by the fuel you entered; both already include the chart's built-in 45-minute reserve and give no credit for wind.</p>
+  </section>
+
+  <section class="card">
+    <h2>Weight &amp; Balance <span class="fig">Fig 6-01</span></h2>
+    <div class="cg-wrap">
+      <svg id="cgSvg" viewBox="0 0 500 360" role="img" aria-label="C.G. envelope plot"></svg>
+    </div>
+    <div class="cg-status" id="cgStatus"></div>
+  </section>
+
+  <section class="card">
+    <h2>Power Setting Table <span class="fig">Fig 5-17</span></h2>
+    <p class="hint">Lycoming IO-320-B, 160 HP normally aspirated. Manifold pressure (in. Hg) by pressure altitude and RPM.</p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th rowspan="2">Pressure Alt.</th>
+            <th rowspan="2">Std Temp F/C</th>
+            <th colspan="4">55% (~104 HP)</th>
+            <th colspan="4">65% (~104 HP)</th>
+            <th colspan="3">75% (~120 HP)</th>
+          </tr>
+          <tr>
+            <th>2100</th><th>2200</th><th>2300</th><th>2400</th>
+            <th>2100</th><th>2200</th><th>2300</th><th>2400</th>
+            <th>2200</th><th>2300</th><th>2400</th>
+          </tr>
+        </thead>
+        <tbody id="powerTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Data source: Piper PA-30 Twin Comanche POH, Section 5 (Performance) and Section 6 (Weight &amp; Balance), standard 3600&nbsp;lb configuration (no tip tanks).
+    Scanned chart pages are kept in <code>reference/</code> for comparison. See <code>README.md</code> for how each number is computed.
+  </footer>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "figure": "5-09",
+  "title": "Multi-Engine Rate of Climb vs Density Altitude and Weight",
+  "units": "ft/min",
+  "conditions": "Cowl flaps open, full throttle and max RPM, landing gear retracted, mixture adjusted for smooth operation, optimum airspeed, wing flaps retracted",
+  "source": "reference/fig5-09-multi-engine-roc.png",
+  "model": "linear-by-weight",
+  "weightCurves": {
+    "2800": { "seaLevel": 1850, "daAtZero": 27000 },
+    "3200": { "seaLevel": 1550, "daAtZero": 23000 },
+    "3600": { "seaLevel": 1300, "daAtZero": 20500 }
+  }
+}

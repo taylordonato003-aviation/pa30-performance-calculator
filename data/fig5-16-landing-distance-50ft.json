@@ -1,0 +1,23 @@
+{
+  "figure": "5-16",
+  "title": "Landing Distance Over a 50 Ft Obstacle",
+  "units": "feet",
+  "conditions": "Wing flaps 27°, paved/level/dry runway, maximum braking effort, approach speed = 90 MPH IAS",
+  "source": "reference/fig5-16-landing-distance-50ft.png",
+  "model": "ladder",
+  "altitudeCurves": {
+    "0":    { "t0": 1050, "t120": 1786 },
+    "2000": { "t0": 1200, "t120": 2027 },
+    "4000": { "t0": 1400, "t120": 2364 },
+    "6000": { "t0": 1650, "t120": 2750 },
+    "8000": { "t0": 1950, "t120": 3300 }
+  },
+  "weightExponent": 0.9,
+  "windKPerMph": 0.014,
+  "tailwindMultiplier": 2.0,
+  "exampleCheck": {
+    "pa": 6000, "oatF": 65, "weightLb": 3100, "windMph": 10,
+    "chartReading": 1750,
+    "note": "Worked example printed on the chart (points A-F)"
+  }
+}

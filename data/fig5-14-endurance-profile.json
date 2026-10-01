@@ -1,0 +1,15 @@
+{
+  "figure": "5-14",
+  "title": "Endurance Profile",
+  "units": "hours",
+  "conditions": "Basic fuel 84 US gal, weight 3600 lb at start, gear and flaps retracted, mixture best economy cruise. No allowance for wind beyond the 45-minute reserve already baked into the chart.",
+  "source": "reference/fig5-14-endurance-profile.png",
+  "model": "linear-by-power",
+  "fuelGal": 84,
+  "powerCurves": {
+    "45": { "seaLevel": 5.8, "at16000": 6.8 },
+    "55": { "seaLevel": 5.0, "at16000": 6.0 },
+    "65": { "seaLevel": 4.5, "at16000": 5.5 },
+    "75": { "seaLevel": 4.0, "at16000": 5.0 }
+  }
+}

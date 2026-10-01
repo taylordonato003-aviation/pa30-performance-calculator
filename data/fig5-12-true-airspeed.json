@@ -1,0 +1,14 @@
+{
+  "figure": "5-12",
+  "title": "True Airspeed vs Density Altitude",
+  "units": "mph TAS",
+  "conditions": "Gross weight 3600 lb, gear and wing flaps retracted, mixture best power cruise, cowl flaps closed",
+  "source": "reference/fig5-12-true-airspeed.png",
+  "model": "linear-by-power",
+  "powerCurves": {
+    "45": { "seaLevel": 140, "at16000": 150 },
+    "55": { "seaLevel": 158, "at16000": 168 },
+    "65": { "seaLevel": 172, "at16000": 183 },
+    "75": { "seaLevel": 185, "at16000": 205 }
+  }
+}

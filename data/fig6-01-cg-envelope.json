@@ -1,0 +1,17 @@
+{
+  "figure": "6-01",
+  "title": "Approved C.G. Range and Weight",
+  "units": "inches aft of datum / lb",
+  "conditions": "Standard (non tip-tank) configuration, max gross weight 3600 lb",
+  "source": "reference/fig6-01-cg-envelope.png",
+  "model": "polygon",
+  "forwardLimitLabel": "7.0% MAC",
+  "aftLimitLabel": "26.3% MAC",
+  "polygon": [
+    [81.0, 2300],
+    [81.0, 2460],
+    [87.3, 3200],
+    [92.0, 3600],
+    [92.0, 2300]
+  ]
+}

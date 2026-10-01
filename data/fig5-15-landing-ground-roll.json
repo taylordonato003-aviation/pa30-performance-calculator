@@ -1,0 +1,23 @@
+{
+  "figure": "5-15",
+  "title": "Landing Ground Roll Distance",
+  "units": "feet",
+  "conditions": "Wing flaps 27°, paved/level/dry runway, throttles closed, maximum braking effort, approach speed = 90 MPH IAS, touchdown speed = 70 MPH IAS",
+  "source": "reference/fig5-15-landing-ground-roll.png",
+  "model": "ladder",
+  "altitudeCurves": {
+    "0":    { "t0": 380, "t120": 700 },
+    "2000": { "t0": 430, "t120": 800 },
+    "4000": { "t0": 500, "t120": 900 },
+    "6000": { "t0": 580, "t120": 1000 },
+    "8000": { "t0": 680, "t120": 1150 }
+  },
+  "weightExponent": 1.2,
+  "windKPerMph": 0.02,
+  "tailwindMultiplier": 2.0,
+  "exampleCheck": {
+    "pa": 6000, "oatF": 65, "weightLb": 3100, "windMph": 10,
+    "chartReading": 520,
+    "note": "Worked example printed on the chart (points A-F)"
+  }
+}

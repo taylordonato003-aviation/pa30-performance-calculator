@@ -1,0 +1,23 @@
+{
+  "figure": "5-06",
+  "title": "Takeoff Ground Run Distance",
+  "units": "feet",
+  "conditions": "Wing flaps 15°, paved/level/dry runway, full throttle and max RPM, takeoff speed = 80 MPH IAS",
+  "source": "reference/fig5-06-takeoff-ground-run.png",
+  "model": "ladder",
+  "altitudeCurves": {
+    "0":    { "t0": 650,  "t120": 1250 },
+    "2000": { "t0": 750,  "t120": 1500 },
+    "4000": { "t0": 870,  "t120": 1800 },
+    "6000": { "t0": 1020, "t120": 2050 },
+    "8000": { "t0": 1250, "t120": 2550 }
+  },
+  "weightExponent": 1.35,
+  "windKPerMph": 0.019,
+  "tailwindMultiplier": 2.0,
+  "exampleCheck": {
+    "pa": 6000, "oatF": 65, "weightLb": 3100, "windMph": 10,
+    "chartReading": 1100,
+    "note": "Worked example printed on the chart (points A-F)"
+  }
+}

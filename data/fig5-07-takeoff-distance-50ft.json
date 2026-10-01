@@ -1,0 +1,23 @@
+{
+  "figure": "5-07",
+  "title": "Takeoff Distance Over a 50 Ft Obstacle",
+  "units": "feet",
+  "conditions": "Wing flaps 15°, paved/level/dry runway, full throttle and max RPM, attain 91 MPH at 50 ft AGL",
+  "source": "reference/fig5-07-takeoff-distance-50ft.png",
+  "model": "ladder",
+  "altitudeCurves": {
+    "0":    { "t0": 950,  "t120": 1835 },
+    "2000": { "t0": 1150, "t120": 2238 },
+    "4000": { "t0": 1500, "t120": 2864 },
+    "6000": { "t0": 2000, "t120": 3850 },
+    "8000": { "t0": 2900, "t120": 5370 }
+  },
+  "weightExponent": 1.0,
+  "windKPerMph": 0.013,
+  "tailwindMultiplier": 2.0,
+  "exampleCheck": {
+    "pa": 6000, "oatF": 65, "weightLb": 3100, "windMph": 10,
+    "chartReading": 2350,
+    "note": "Worked example printed on the chart (points A-F)"
+  }
+}

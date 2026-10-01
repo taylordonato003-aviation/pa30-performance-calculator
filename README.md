@@ -17,14 +17,17 @@ you can actually type numbers into.
 Every number this tool produces was derived by *manually, visually* tracing
 curves off scanned chart images (see `reference/`), then fitting simple
 interpolation/extrapolation models to those readings. That process is
-approximate: each ladder-chart (takeoff/landing distance) model was checked
-against the worked example printed on its own chart and lands within roughly
-3–13% of the chart's own answer — see the per-chart notes below. This is good
-enough for flight-sim practice and procedure training. It is **not** certified
-performance data, and it must never be used to plan or dispatch an actual
-flight. Always cross-check against the real, current, aircraft-specific POH
-(the actual airplane's numbers can differ from a generic PA-30's) before any
-real flight.
+approximate: each ladder-chart (takeoff/landing distance) model is checked
+against the worked example printed on its own chart and, as of the latest
+re-verification pass, lands within 0.06% of the chart's own answer at that
+example point — see the per-chart notes below for what's independently
+verified versus best-effort. This is good enough for flight-sim practice and
+procedure training. It is **not** certified performance data, and it must
+never be used to plan or dispatch an actual flight. Always cross-check against
+the real, current, aircraft-specific POH (the actual airplane's numbers can
+differ from a generic PA-30's) before any real flight. The bundled airport
+database (see below) is likewise a static reference snapshot, not live NOTAMs
+— always verify runway/field data against current charts.
 
 ## How to use it
 
@@ -129,6 +132,32 @@ content as a plain JS object so the app works with zero server. The
 `data/*.json` files are kept as the easy-to-read/edit canonical copies — if
 you hand-correct a digitized value there, make the same edit in `data.js`.
 
+## Airport lookup
+
+Type an ICAO identifier (e.g. `KSEA`) into the Departure or Destination field
+and the app fills in that airport's field elevation as pressure altitude,
+plus shows its name and longest runway (length + surface) for reference.
+This uses a bundled offline database (`airports.js`), not a live API call —
+see "Data source" below for why, and for the data's provenance.
+
+Field elevation is only a *standard-day* stand-in for pressure altitude
+(true pressure altitude = field elevation adjusted for the actual altimeter
+setting: roughly ±1000 ft per inch of Hg away from 29.92). Adjust the
+pressure altitude field manually if you know the actual altimeter setting —
+the airport lookup is a convenient starting point, not a substitute for a
+real weather briefing.
+
+**Why this isn't live data:** live weather (METAR/TAF, current altimeter
+and temperature) would need a server to fetch, since the free NOAA
+Aviation Weather Center API (`aviationweather.gov`) does not send the
+CORS headers required for a browser to call it directly from a static
+site like this one — confirmed by testing, not assumed. A live-METAR
+version of this feature would need either a small proxy backend (which
+breaks the "free, zero-maintenance, static site" design this project
+deliberately keeps) or a different data source. Static reference data
+like field elevation and runway length changes rarely enough that
+bundling it works well instead.
+
 ## Install on iPhone
 
 The local `file://` copy can't be installed as a home-screen app — iOS
@@ -160,3 +189,11 @@ Piper PA-30 Twin Comanche Pilot's Operating Handbook, Section 5
 (Performance) and Section 6 (Weight & Balance), standard configuration
 (3600 lb max gross weight, no tip tanks). Scanned chart images are in
 `reference/` for direct comparison against the digitized model.
+
+Airport data (`airports.js`, also mirrored as `data/airports.json`) comes from
+[OurAirports](https://ourairports.com/data/), a public-domain (CC0) dataset
+maintained by volunteers, downloaded 2026-10-01. It's filtered to the 10,110
+small/medium/large airports worldwide that have a 4-letter ICAO identifier,
+each with name, municipality, country, coordinates, field elevation, and
+longest-runway length/surface (closed runways excluded). It is a static
+snapshot — re-download from OurAirports if you want fresher data.

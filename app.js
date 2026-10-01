@@ -148,7 +148,8 @@
   var $ = function (id) { return document.getElementById(id); };
 
   function readInputs() {
-    var altFt = parseFloat($('pressureAlt').value) || 0;
+    var depAltFt = parseFloat($('depPressureAlt').value) || 0;
+    var destAltFt = parseFloat($('destPressureAlt').value) || 0;
     var oatRaw = parseFloat($('oat').value);
     if (isNaN(oatRaw)) oatRaw = 59;
     var oatUnit = $('oatUnit').value;
@@ -160,7 +161,7 @@
     var power = clamp(parseFloat($('power').value) || 65, 45, 75);
     var fuel = clamp(parseFloat($('fuel').value) || 84, 0, 84);
     var cg = parseFloat($('cg').value);
-    return { altFt: altFt, oatF: oatF, toWeight: toWeight, ldgWeight: ldgWeight, wind: wind, power: power, fuel: fuel, cg: cg };
+    return { depAltFt: depAltFt, destAltFt: destAltFt, oatF: oatF, toWeight: toWeight, ldgWeight: ldgWeight, wind: wind, power: power, fuel: fuel, cg: cg };
   }
 
   function fmt(n, unit) {
@@ -175,42 +176,43 @@
   function render() {
     var inp = readInputs();
 
-    // Takeoff
-    $('toGroundRun').textContent = fmt(ladderResult('fig5-06', inp.altFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
-    $('toDist50').textContent = fmt(ladderResult('fig5-07', inp.altFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
-    $('accelStop').textContent = fmt(ladderResult('fig5-08', inp.altFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
+    // Takeoff (at departure pressure altitude)
+    $('toGroundRun').textContent = fmt(ladderResult('fig5-06', inp.depAltFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
+    $('toDist50').textContent = fmt(ladderResult('fig5-07', inp.depAltFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
+    $('accelStop').textContent = fmt(ladderResult('fig5-08', inp.depAltFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
 
-    // Takeoff - immediate return & land (landing charts evaluated AT TAKEOFF WEIGHT)
-    $('irGroundRoll').textContent = fmt(ladderResult('fig5-15', inp.altFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
-    $('irDist50').textContent = fmt(ladderResult('fig5-16', inp.altFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
+    // Takeoff - immediate return & land (landing charts at departure altitude, at takeoff weight)
+    $('irGroundRoll').textContent = fmt(ladderResult('fig5-15', inp.depAltFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
+    $('irDist50').textContent = fmt(ladderResult('fig5-16', inp.depAltFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
 
-    // Landing (at destination landing weight)
-    $('ldgGroundRoll').textContent = fmt(ladderResult('fig5-15', inp.altFt, inp.oatF, inp.ldgWeight, inp.wind), 'ft');
-    $('ldgDist50').textContent = fmt(ladderResult('fig5-16', inp.altFt, inp.oatF, inp.ldgWeight, inp.wind), 'ft');
+    // Landing (at destination pressure altitude, destination landing weight)
+    $('ldgGroundRoll').textContent = fmt(ladderResult('fig5-15', inp.destAltFt, inp.oatF, inp.ldgWeight, inp.wind), 'ft');
+    $('ldgDist50').textContent = fmt(ladderResult('fig5-16', inp.destAltFt, inp.oatF, inp.ldgWeight, inp.wind), 'ft');
 
-    // Go-around / balked landing (clean-config climb reference, at landing weight)
-    var vv = vxvy(inp.altFt);
-    $('gaVxMulti').textContent = fmt(vv.multiVx, 'mph');
-    $('gaVyMulti').textContent = fmt(vv.multiVy, 'mph');
-    $('gaVxSingle').textContent = fmt(vv.singleVx, 'mph') + (vv.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
-    $('gaVySingle').textContent = fmt(vv.singleVy, 'mph') + (vv.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
-    $('gaRocMulti').textContent = fmt(rocFromCurves(DATA['fig5-09'].weightCurves, inp.altFt, inp.ldgWeight), 'ft/min');
-    var gaRocSingle = rocFromCurves(DATA['fig5-10'].weightCurves, inp.altFt, inp.ldgWeight);
+    // Go-around / balked landing (clean-config climb reference, at destination altitude/landing weight)
+    var vvDest = vxvy(inp.destAltFt);
+    $('gaVxMulti').textContent = fmt(vvDest.multiVx, 'mph');
+    $('gaVyMulti').textContent = fmt(vvDest.multiVy, 'mph');
+    $('gaVxSingle').textContent = fmt(vvDest.singleVx, 'mph') + (vvDest.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
+    $('gaVySingle').textContent = fmt(vvDest.singleVy, 'mph') + (vvDest.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
+    $('gaRocMulti').textContent = fmt(rocFromCurves(DATA['fig5-09'].weightCurves, inp.destAltFt, inp.ldgWeight), 'ft/min');
+    var gaRocSingle = rocFromCurves(DATA['fig5-10'].weightCurves, inp.destAltFt, inp.ldgWeight);
     $('gaRocSingle').textContent = fmt(gaRocSingle, 'ft/min') + (gaRocSingle <= 0 ? ' — at or above single-engine service ceiling' : '');
 
-    // Climb (at takeoff weight — initial climb-out performance)
-    $('vxMulti').textContent = fmt(vv.multiVx, 'mph');
-    $('vyMulti').textContent = fmt(vv.multiVy, 'mph');
-    $('vxSingle').textContent = fmt(vv.singleVx, 'mph') + (vv.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
-    $('vySingle').textContent = fmt(vv.singleVy, 'mph') + (vv.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
-    $('rocMulti').textContent = fmt(rocFromCurves(DATA['fig5-09'].weightCurves, inp.altFt, inp.toWeight), 'ft/min');
-    var rocSingle = rocFromCurves(DATA['fig5-10'].weightCurves, inp.altFt, inp.toWeight);
+    // Climb (at departure altitude/takeoff weight — initial climb-out performance)
+    var vvDep = vxvy(inp.depAltFt);
+    $('vxMulti').textContent = fmt(vvDep.multiVx, 'mph');
+    $('vyMulti').textContent = fmt(vvDep.multiVy, 'mph');
+    $('vxSingle').textContent = fmt(vvDep.singleVx, 'mph') + (vvDep.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
+    $('vySingle').textContent = fmt(vvDep.singleVy, 'mph') + (vvDep.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
+    $('rocMulti').textContent = fmt(rocFromCurves(DATA['fig5-09'].weightCurves, inp.depAltFt, inp.toWeight), 'ft/min');
+    var rocSingle = rocFromCurves(DATA['fig5-10'].weightCurves, inp.depAltFt, inp.toWeight);
     $('rocSingle').textContent = fmt(rocSingle, 'ft/min') + (rocSingle <= 0 ? ' — at or above single-engine service ceiling' : '');
 
-    // Cruise
-    $('tas').textContent = fmt(byPower(DATA['fig5-12'].powerCurves, inp.altFt, inp.power), 'mph TAS');
-    var fullRange = byPower(DATA['fig5-13'].powerCurves, inp.altFt, inp.power);
-    var fullEndurance = byPower(DATA['fig5-14'].powerCurves, inp.altFt, inp.power);
+    // Cruise (referenced to departure altitude as the climb-out continues from there)
+    $('tas').textContent = fmt(byPower(DATA['fig5-12'].powerCurves, inp.depAltFt, inp.power), 'mph TAS');
+    var fullRange = byPower(DATA['fig5-13'].powerCurves, inp.depAltFt, inp.power);
+    var fullEndurance = byPower(DATA['fig5-14'].powerCurves, inp.depAltFt, inp.power);
     var fuelFraction = inp.fuel / DATA['fig5-13'].fuelGal;
     $('range').textContent = fmt(fullRange * fuelFraction, 'sm');
     $('endurance').textContent = fmt1(fullEndurance * fuelFraction, 'hr');
@@ -290,6 +292,43 @@
     tbody.innerHTML = rows;
   }
 
+  // ---------- airport lookup ----------
+
+  var SURFACE_NAMES = {
+    ASP: 'asphalt', 'ASPH-G': 'asphalt/gravel', 'ASPH-CONC-G': 'asphalt/concrete/gravel',
+    CON: 'concrete', PEM: 'asphalt/concrete', GRS: 'grass', TURF: 'turf', GRE: 'gravel',
+    GRAVEL: 'gravel', WAT: 'water', DIRT: 'dirt', SAND: 'sand', SNOW: 'snow/ice'
+  };
+
+  function lookupAirport(icaoFieldId, infoElId, paFieldId) {
+    var AIRPORTS = window.PA30_AIRPORTS || {};
+    var raw = $(icaoFieldId).value.trim().toUpperCase();
+    $(icaoFieldId).value = raw;
+    var infoEl = $(infoElId);
+    if (!raw) { infoEl.innerHTML = ''; return; }
+    if (raw.length !== 4) {
+      infoEl.innerHTML = '<span class="bad">ICAO identifiers are 4 letters (e.g. KSEA).</span>';
+      return;
+    }
+    var apt = AIRPORTS[raw];
+    if (!apt) {
+      infoEl.innerHTML = '<span class="bad">Not found in the bundled airport database. Enter pressure altitude manually below.</span>';
+      return;
+    }
+    var bits = [];
+    bits.push('<span class="ok">' + apt.n + (apt.c ? ', ' + apt.c : '') + (apt.co ? ' (' + apt.co + ')' : '') + '</span>');
+    if (apt.elev !== undefined) bits.push('Field elevation: ' + apt.elev + ' ft');
+    if (apt.rwy) {
+      var srf = apt.srf ? (SURFACE_NAMES[apt.srf] || apt.srf) : null;
+      bits.push('Longest runway: ' + apt.rwy.toLocaleString() + ' ft' + (srf ? ' (' + srf + ')' : ''));
+    }
+    infoEl.innerHTML = bits.join('<br>');
+    if (apt.elev !== undefined) {
+      $(paFieldId).value = apt.elev;
+      render();
+    }
+  }
+
   function runVerification() {
     var ids = ['fig5-06', 'fig5-07', 'fig5-08', 'fig5-15', 'fig5-16'];
     var lines = ids.map(function (id) {
@@ -305,9 +344,12 @@
     render();
     runVerification();
     document.querySelectorAll('input, select').forEach(function (el) {
+      if (el.id === 'depIcao' || el.id === 'destIcao') return;
       el.addEventListener('input', render);
       el.addEventListener('change', render);
     });
+    $('depIcao').addEventListener('input', function () { lookupAirport('depIcao', 'depInfo', 'depPressureAlt'); });
+    $('destIcao').addEventListener('input', function () { lookupAirport('destIcao', 'destInfo', 'destPressureAlt'); });
 
     if ('serviceWorker' in navigator && (location.protocol === 'http:' || location.protocol === 'https:')) {
       navigator.serviceWorker.register('sw.js').catch(function () { /* offline caching is a nice-to-have, never block the app on it */ });

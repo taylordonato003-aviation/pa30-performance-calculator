@@ -3,12 +3,13 @@
 // registration accordingly, so this file is simply never loaded when the
 // app is opened directly from disk.
 
-var CACHE_NAME = 'pa30-calc-v1';
+var CACHE_NAME = 'pa30-calc-v2';
 var ASSETS = [
   './index.html',
   './style.css',
   './app.js',
   './data.js',
+  './airports.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',

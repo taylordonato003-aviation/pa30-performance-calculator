@@ -32,11 +32,32 @@
   </div>
 
   <section class="card">
+    <h2>Airports</h2>
+    <div class="input-grid">
+      <div class="field">
+        <label for="depIcao">Departure airport (ICAO)</label>
+        <input type="text" id="depIcao" value="" maxlength="4" placeholder="e.g. KSEA" autocapitalize="characters" autocomplete="off" spellcheck="false">
+        <div class="airport-info" id="depInfo"></div>
+      </div>
+      <div class="field">
+        <label for="destIcao">Destination airport (ICAO)</label>
+        <input type="text" id="destIcao" value="" maxlength="4" placeholder="e.g. KPAE" autocapitalize="characters" autocomplete="off" spellcheck="false">
+        <div class="airport-info" id="destInfo"></div>
+      </div>
+    </div>
+    <p class="hint">Looking up an airport fills in its field elevation as pressure altitude below (standard-day approximation — adjust for the actual altimeter setting if you know it). Runway length/surface shown for reference only; always verify against current charts, as this is a static reference database, not live NOTAMs.</p>
+  </section>
+
+  <section class="card">
     <h2>Conditions</h2>
     <div class="input-grid">
       <div class="field">
-        <label for="pressureAlt">Pressure altitude (ft)</label>
-        <input type="number" id="pressureAlt" value="2000" step="100">
+        <label for="depPressureAlt">Departure pressure altitude (ft)</label>
+        <input type="number" id="depPressureAlt" value="2000" step="100">
+      </div>
+      <div class="field">
+        <label for="destPressureAlt">Destination pressure altitude (ft)</label>
+        <input type="number" id="destPressureAlt" value="2000" step="100">
       </div>
       <div class="field">
         <label for="oat">Outside air temperature</label>
@@ -230,6 +251,7 @@
 </div>
 
 <script src="data.js"></script>
+<script src="airports.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

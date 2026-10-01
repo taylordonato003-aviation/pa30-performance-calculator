@@ -135,6 +135,15 @@ input[type="number"]:focus, select:focus {
 
 .hint { font-size: 0.76rem; color: var(--text-dim); margin-top: 6px; }
 
+.airport-info {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-top: 6px;
+  min-height: 1.1em;
+}
+.airport-info .ok { color: var(--text); }
+.airport-info .bad { color: var(--bad); }
+
 .subhead {
   font-size: 0.85rem;
   text-transform: uppercase;

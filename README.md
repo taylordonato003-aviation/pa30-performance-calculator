@@ -94,7 +94,7 @@ point.
 |---|---|---|---|
 | 5-06 | Takeoff ground run | computed 1045 ft vs. chart 1100 ft (−5.0%) | Good |
 | 5-07 | Takeoff distance, 50 ft obstacle | computed 2250 ft vs. chart 2350 ft (−4.3%) | Good |
-| 5-08 | Accelerate-stop distance | computed 2185 ft vs. chart 2500 ft (−12.6%) | Fair — largest error of the five; worth a manual re-check against `reference/fig5-08-accelerate-stop.png` if this number matters to you |
+| 5-08 | Accelerate-stop distance | computed 2050 ft vs. chart 2050 ft (0.0%), after a 2026-10-01 re-check | Good at PA=6000 ft (the example point) — re-measured pixel-by-pixel against `reference/fig5-08-accelerate-stop.png`; the original −12.6% was caused by a misdigitized 6000 ft altitude curve (slope off by ~9x) *and* a misread chart target (true answer is 2050 ft, not the originally recorded 2500 ft). The 0/2000/4000/8000 ft altitude curves on this chart were **not** re-verified and may carry similar error — see `unverifiedAltitudes` in `data/fig5-08-accelerate-stop.json` |
 | 5-15 | Landing ground roll | computed 540 ft vs. chart 520 ft (+3.8%) | Good |
 | 5-16 | Landing distance, 50 ft obstacle | computed 1690 ft vs. chart 1750 ft (−3.4%) | Good |
 | 5-09 | Multi-engine rate of climb | not independently verifiable (no worked example on this chart) | Approximate — 2-point linear fit per weight curve |

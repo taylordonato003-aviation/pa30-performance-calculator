@@ -57,13 +57,14 @@ window.PA30_DATA = {
       "0":    { "t0": 850,  "t120": 2595 },
       "2000": { "t0": 1000, "t120": 3142 },
       "4000": { "t0": 1250, "t120": 3893 },
-      "6000": { "t0": 1550, "t120": 4780 },
+      "6000": { "t0": 2600, "t120": 2970 },
       "8000": { "t0": 2200, "t120": 5830 }
     },
-    "weightExponent": 1.35,
-    "windKPerMph": 0.019,
+    "weightExponent": 0.89,
+    "windKPerMph": 0.0163,
     "tailwindMultiplier": 2.0,
-    "exampleCheck": { "pa": 6000, "oatF": 65, "weightLb": 3100, "windMph": 10, "chartReading": 2500 }
+    "exampleCheck": { "pa": 6000, "oatF": 65, "weightLb": 3100, "windMph": 10, "chartReading": 2050 },
+    "unverifiedAltitudes": ["0", "2000", "4000", "8000"]
   },
   "fig5-15": {
     "figure": "5-15",

@@ -200,6 +200,40 @@ origin. If live weather is ever unreachable (offline, Worker down, airport
 has no reporting station), the UI says so and falls back to the field
 elevation already filled in — it never blocks manual entry.
 
+## Route planning (winds/temps aloft)
+
+Type waypoints into the Route card — a 4-letter ICAO airport, a VOR/NDB
+identifier, or a 5-letter RNAV/GPS fix (press Enter/Tab to resolve each one).
+If an identifier matches more than one real-world station (navaid idents
+aren't globally unique the way ICAO codes are), a dropdown lets you pick the
+right one by name/country. Add as many waypoints as the route needs.
+
+Set a cruise altitude and an altimeter setting (defaults to standard, 29.92)
+to get cruise pressure altitude. For each leg, the app computes true course
+and distance from the waypoints' coordinates, finds the nearest winds-aloft
+forecast station to that leg's midpoint, interpolates its forecast to your
+cruise altitude, and shows the resulting headwind/tailwind and crosswind
+component along that leg's course.
+
+**This is forecast data, not an observation** — NOAA's winds/temps-aloft
+product ("FD") is valid for a ~6-hour window and only exists at a sparse
+network of ~170 stations nationwide (not every airport), so distance to the
+nearest station is shown alongside each result — treat it as a planning
+estimate, not a substitute for a real weather briefing. It's fetched through
+the same Cloudflare Worker proxy as METAR (a `/windtemp` endpoint added
+alongside `/metar` and `/taf`), for the same CORS reason. Winds aloft are
+reported in **true** heading by NOAA convention (unlike METAR surface wind,
+which is magnetic) — course is computed in true heading too, so the
+comparison is apples-to-apples with no conversion needed.
+
+The FD text format itself is a fixed-width bulletin with some real quirks
+handled here: a station can report wind with no temperature at low altitude,
+"light and variable" wind can still carry a temperature, and wind speeds at
+or above 100 kt use a different encoding (add 50 to the coded direction,
+100 to the coded speed) that only shows up at upper altitudes. All of this
+was verified against the live production bulletin, not just documentation,
+before being trusted.
+
 ## Install on iPhone
 
 The local `file://` copy can't be installed as a home-screen app — iOS

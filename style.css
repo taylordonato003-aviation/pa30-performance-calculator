@@ -179,6 +179,69 @@ input[type="number"]:focus, select:focus {
 .wind-calc .wc-head { font-weight: 600; color: var(--text); }
 .wind-calc .wc-head.tailwind { color: var(--bad); }
 
+.route-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.route-row:last-child { border-bottom: none; }
+.route-row .route-wp-input {
+  width: 110px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.95rem;
+  text-transform: uppercase;
+}
+.route-row .route-wp-disambig {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.82rem;
+  max-width: 260px;
+}
+.route-row .route-wp-info { font-size: 0.8rem; color: var(--text-dim); flex: 1; min-width: 140px; }
+.route-row .route-wp-info .bad { color: var(--bad); }
+.route-row .route-wp-remove {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+.route-row .route-wp-remove:hover { color: var(--bad); border-color: var(--bad); }
+
+.btn-add {
+  margin-top: 10px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px dashed var(--border);
+  background: none;
+  color: var(--accent);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.btn-add:hover { background: var(--surface-2); }
+
+.leg-table { width: 100%; margin-top: 14px; font-size: 0.82rem; border-collapse: collapse; }
+.leg-table th, .leg-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; }
+.leg-table th { color: var(--text-dim); font-weight: 600; font-size: 0.74rem; text-transform: uppercase; }
+.leg-table .leg-head { font-weight: 600; }
+.leg-table .leg-head.tailwind { color: var(--bad); }
+.route-status { font-size: 0.82rem; color: var(--text-dim); margin-top: 10px; }
+.route-status.bad { color: var(--bad); }
+
 .subhead {
   font-size: 0.85rem;
   text-transform: uppercase;

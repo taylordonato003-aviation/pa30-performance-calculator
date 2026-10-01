@@ -229,6 +229,30 @@
   </section>
 
   <section class="card">
+    <h2>Route</h2>
+    <div id="routeWaypoints"></div>
+    <button type="button" class="btn-add" id="addWaypoint">+ Add waypoint</button>
+
+    <div class="input-grid" style="margin-top:14px">
+      <div class="field">
+        <label for="cruiseAlt">Cruise altitude (ft MSL)</label>
+        <input type="number" id="cruiseAlt" value="6500" step="500">
+      </div>
+      <div class="field">
+        <label for="cruiseAltimeter">Altimeter setting for cruise PA (inHg)</label>
+        <input type="number" id="cruiseAltimeter" value="29.92" step="0.01">
+      </div>
+      <div class="field">
+        <label>Cruise pressure altitude</label>
+        <div class="value" id="cruisePA" style="font-size:1.1rem">—</div>
+      </div>
+    </div>
+    <p class="hint">Waypoints accept a 4-letter ICAO airport, a VOR/NDB identifier, or a 5-letter RNAV/GPS fix — type one and press Enter or Tab. If more than one navaid shares that identifier, you'll get a dropdown to pick the right one by name/country. Winds/temps aloft are a forecast product (not a live observation) from the same live-data source as METAR, interpolated to your cruise altitude from the nearest reporting station to each leg — a convenience estimate for situational awareness, not a substitute for a real weather briefing.</p>
+
+    <div id="routeLegs"></div>
+  </section>
+
+  <section class="card">
     <h2>Weight &amp; Balance <span class="fig">Fig 6-01</span></h2>
     <div class="cg-wrap">
       <svg id="cgSvg" viewBox="0 0 500 360" role="img" aria-label="C.G. envelope plot"></svg>
@@ -269,6 +293,8 @@
 <script src="data.js"></script>
 <script src="airports.js"></script>
 <script src="runways.js"></script>
+<script src="navaids.js"></script>
+<script src="fixes.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

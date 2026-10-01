@@ -517,6 +517,337 @@
     }, 500);
   }
 
+  // ---------- route: geo math ----------
+
+  var NM_PER_RAD = 3440.065;
+
+  function toRad(d) { return d * Math.PI / 180; }
+  function toDeg(r) { return r * 180 / Math.PI; }
+
+  function haversineNm(lat1, lon1, lat2, lon2) {
+    var dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return NM_PER_RAD * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  function initialBearingDeg(lat1, lon1, lat2, lon2) {
+    var y = Math.sin(toRad(lon2 - lon1)) * Math.cos(toRad(lat2));
+    var x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
+      Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(toRad(lon2 - lon1));
+    return (toDeg(Math.atan2(y, x)) + 360) % 360;
+  }
+
+  function midpoint(lat1, lon1, lat2, lon2) {
+    var bx = Math.cos(toRad(lat2)) * Math.cos(toRad(lon2 - lon1));
+    var by = Math.cos(toRad(lat2)) * Math.sin(toRad(lon2 - lon1));
+    var lat3 = Math.atan2(Math.sin(toRad(lat1)) + Math.sin(toRad(lat2)),
+      Math.sqrt((Math.cos(toRad(lat1)) + bx) * (Math.cos(toRad(lat1)) + bx) + by * by));
+    var lon3 = toRad(lon1) + Math.atan2(by, Math.cos(toRad(lat1)) + bx);
+    return { lat: toDeg(lat3), lon: toDeg(lon3) };
+  }
+
+  function lerpAngleDeg(a, b, t) {
+    var ax = Math.cos(toRad(a)), ay = Math.sin(toRad(a));
+    var bx = Math.cos(toRad(b)), by = Math.sin(toRad(b));
+    var x = ax + (bx - ax) * t, y = ay + (by - ay) * t;
+    return (toDeg(Math.atan2(y, x)) + 360) % 360;
+  }
+
+  // ---------- route: waypoint resolution ----------
+
+  function resolveWaypointQuery(raw) {
+    var q = (raw || '').trim().toUpperCase();
+    if (!q) return [];
+    var out = [];
+    var AIRPORTS = window.PA30_AIRPORTS || {};
+    var NAVAIDS = window.PA30_NAVAIDS || {};
+    var FIXES = window.PA30_FIXES || {};
+    if (q.length === 4 && AIRPORTS[q]) {
+      var a = AIRPORTS[q];
+      out.push({ label: q + ' — ' + a.n + (a.c ? ', ' + a.c : ''), lat: a.lat, lon: a.lon });
+    }
+    if (q.length === 5 && FIXES[q]) {
+      var f = FIXES[q];
+      out.push({ label: q + ' (RNAV/GPS fix)', lat: f.lat, lon: f.lon });
+    }
+    var navs = NAVAIDS[q];
+    if (navs) {
+      navs.forEach(function (n) {
+        out.push({
+          label: q + ' ' + n.ty + ' — ' + n.n + ' (' + n.co + ')' + (n.freq ? ', ' + n.freq : ''),
+          lat: n.lat, lon: n.lon
+        });
+      });
+    }
+    return out;
+  }
+
+  // ---------- route: waypoint rows (UI) ----------
+
+  var routeRowSeq = 0;
+  var routeWaypoints = {}; // rowId -> { lat, lon, label } | null
+
+  function createWaypointRow() {
+    var rowId = 'wp' + (++routeRowSeq);
+    var row = document.createElement('div');
+    row.className = 'route-row';
+    row.dataset.rowId = rowId;
+    row.innerHTML =
+      '<input type="text" class="route-wp-input" placeholder="ICAO / navaid / fix" maxlength="8" autocomplete="off" spellcheck="false">' +
+      '<select class="route-wp-disambig" hidden></select>' +
+      '<span class="route-wp-info"></span>' +
+      '<button type="button" class="route-wp-remove" title="Remove waypoint">×</button>';
+    $('routeWaypoints').appendChild(row);
+
+    var input = row.querySelector('.route-wp-input');
+    var disambig = row.querySelector('.route-wp-disambig');
+    var info = row.querySelector('.route-wp-info');
+    var removeBtn = row.querySelector('.route-wp-remove');
+
+    function resolve() {
+      var candidates = resolveWaypointQuery(input.value);
+      if (candidates.length === 0) {
+        routeWaypoints[rowId] = null;
+        disambig.hidden = true;
+        info.innerHTML = input.value.trim() ? '<span class="bad">Not found</span>' : '';
+        computeRoute();
+        return;
+      }
+      if (candidates.length === 1) {
+        disambig.hidden = true;
+        routeWaypoints[rowId] = candidates[0];
+        info.textContent = candidates[0].label;
+        computeRoute();
+        return;
+      }
+      disambig.hidden = false;
+      disambig.innerHTML = candidates.map(function (c, i) {
+        return '<option value="' + i + '">' + c.label + '</option>';
+      }).join('');
+      routeWaypoints[rowId] = candidates[0];
+      info.textContent = '';
+      computeRoute();
+    }
+
+    input.addEventListener('change', resolve);
+    input.addEventListener('blur', resolve);
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); resolve(); } });
+    disambig.addEventListener('change', function () {
+      var candidates = resolveWaypointQuery(input.value);
+      routeWaypoints[rowId] = candidates[parseInt(disambig.value, 10)];
+      computeRoute();
+    });
+    removeBtn.addEventListener('click', function () {
+      delete routeWaypoints[rowId];
+      row.remove();
+      computeRoute();
+    });
+
+    routeWaypoints[rowId] = null;
+    return row;
+  }
+
+  // ---------- route: winds/temps aloft ----------
+
+  var WINDTEMP_LEVELS = [3000, 6000, 9000, 12000, 18000, 24000, 30000, 34000, 39000];
+  var WINDTEMP_SLICES = [[4, 8], [9, 16], [17, 24], [25, 32], [33, 40], [41, 48], [49, 55], [56, 62], [63, 69]];
+  var windTempCache = null; // { stations: {code: {level: {dir,spd,temp}}}, fetchedAt }
+  var windTempPromise = null;
+  var matchedStationCache = null;
+
+  function parseWindField(raw, level) {
+    var s = (raw || '').trim();
+    if (!s) return null;
+    var lightVariable = s.slice(0, 4) === '9900';
+    var dircode = parseInt(s.slice(0, 2), 10);
+    var spd = parseInt(s.slice(2, 4), 10);
+    var temp = null;
+    if (level <= 24000) {
+      if (s.length > 4) temp = parseInt(s.slice(4, 7), 10);
+    } else {
+      temp = -parseInt(s.slice(4, 6), 10);
+    }
+    if (isNaN(dircode) || isNaN(spd)) return null;
+    if (lightVariable) return { dir: null, spd: 0, temp: temp };
+    var direction = dircode * 10;
+    if (dircode >= 51) { direction = (dircode - 50) * 10; spd += 100; }
+    return { dir: direction, spd: spd, temp: temp };
+  }
+
+  function parseWindTempBulletin(text) {
+    var stations = {};
+    text.split('\n').forEach(function (lineRaw) {
+      var line = lineRaw.replace(/\r$/, '');
+      if (line.length < 69) return;
+      var code = line.slice(0, 3);
+      if (!/^[A-Z]{3}$/.test(code) || line[3] !== ' ') return;
+      var levels = {};
+      for (var i = 0; i < WINDTEMP_LEVELS.length; i++) {
+        var slice = WINDTEMP_SLICES[i];
+        var parsed = parseWindField(line.slice(slice[0], slice[1]), WINDTEMP_LEVELS[i]);
+        if (parsed) levels[WINDTEMP_LEVELS[i]] = parsed;
+      }
+      if (Object.keys(levels).length) stations[code] = levels;
+    });
+    return stations;
+  }
+
+  function ensureWindTemp() {
+    if (windTempCache && (Date.now() - windTempCache.fetchedAt) < 55 * 60 * 1000) {
+      return Promise.resolve(windTempCache);
+    }
+    if (windTempPromise) return windTempPromise;
+    windTempPromise = fetch(WEATHER_PROXY + '/windtemp?fcst=06')
+      .then(function (resp) {
+        if (!resp.ok) throw new Error('bad status');
+        return resp.text();
+      })
+      .then(function (text) {
+        windTempCache = { stations: parseWindTempBulletin(text), fetchedAt: Date.now() };
+        matchedStationCache = null;
+        windTempPromise = null;
+        return windTempCache;
+      })
+      .catch(function (err) {
+        windTempPromise = null;
+        throw err;
+      });
+    return windTempPromise;
+  }
+
+  function matchedStations() {
+    if (matchedStationCache) return matchedStationCache;
+    if (!windTempCache) return [];
+    var AIRPORTS = window.PA30_AIRPORTS || {};
+    var out = [];
+    Object.keys(windTempCache.stations).forEach(function (code) {
+      var apt = AIRPORTS['K' + code];
+      if (apt) out.push({ code: code, lat: apt.lat, lon: apt.lon, levels: windTempCache.stations[code] });
+    });
+    matchedStationCache = out;
+    return out;
+  }
+
+  function nearestStation(lat, lon) {
+    var list = matchedStations();
+    var best = null, bestDist = Infinity;
+    list.forEach(function (s) {
+      var d = haversineNm(lat, lon, s.lat, s.lon);
+      if (d < bestDist) { bestDist = d; best = s; }
+    });
+    return best ? { station: best, distNm: bestDist } : null;
+  }
+
+  function interpolateLevels(levels, altFt) {
+    var keys = Object.keys(levels).map(Number).sort(function (a, b) { return a - b; });
+    if (!keys.length) return null;
+    var lo = keys[0], hi = keys[keys.length - 1];
+    for (var i = 0; i < keys.length - 1; i++) {
+      if (altFt >= keys[i] && altFt <= keys[i + 1]) { lo = keys[i]; hi = keys[i + 1]; break; }
+    }
+    if (altFt <= keys[0]) { lo = keys[0]; hi = keys[0]; }
+    if (altFt >= keys[keys.length - 1]) { lo = hi = keys[keys.length - 1]; }
+    var a = levels[lo], b = levels[hi];
+    var t = (hi === lo) ? 0 : clamp((altFt - lo) / (hi - lo), 0, 1);
+    var spd = lerp(0, a.spd, 1, b.spd, t);
+    var temp = (a.temp !== null && b.temp !== null) ? lerp(0, a.temp, 1, b.temp, t) : (a.temp !== null ? a.temp : b.temp);
+    var dir;
+    if (a.dir === null && b.dir === null) dir = null;
+    else if (a.dir === null) dir = b.dir;
+    else if (b.dir === null) dir = a.dir;
+    else dir = lerpAngleDeg(a.dir, b.dir, t);
+    return { dir: dir, spd: spd, temp: temp };
+  }
+
+  // ---------- route: compute & render ----------
+
+  function cruisePaFt() {
+    var alt = parseFloat($('cruiseAlt').value) || 0;
+    var altimeter = parseFloat($('cruiseAltimeter').value);
+    if (isNaN(altimeter)) altimeter = 29.92;
+    return Math.round(alt + (29.92 - altimeter) * 1000);
+  }
+
+  function renderCruisePa() {
+    $('cruisePA').textContent = fmt(cruisePaFt(), 'ft');
+  }
+
+  function orderedResolvedWaypoints() {
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#routeWaypoints .route-row'));
+    return rows.map(function (row) { return routeWaypoints[row.dataset.rowId]; }).filter(Boolean);
+  }
+
+  function computeRoute() {
+    renderCruisePa();
+    var wps = orderedResolvedWaypoints();
+    var legsEl = $('routeLegs');
+    if (wps.length < 2) {
+      legsEl.innerHTML = wps.length === 1
+        ? '<p class="route-status">Add at least one more waypoint to compute a leg.</p>' : '';
+      return;
+    }
+
+    ensureWindTemp().then(function () {
+      renderLegs(wps);
+    }).catch(function () {
+      renderLegs(wps, true);
+    });
+  }
+
+  function renderLegs(wps, windUnavailable) {
+    var legsEl = $('routeLegs');
+    var pa = cruisePaFt();
+    var rows = [];
+    var totalNm = 0;
+    for (var i = 0; i < wps.length - 1; i++) {
+      var from = wps[i], to = wps[i + 1];
+      var distNm = haversineNm(from.lat, from.lon, to.lat, to.lon);
+      var course = initialBearingDeg(from.lat, from.lon, to.lat, to.lon);
+      totalNm += distNm;
+      var mid = midpoint(from.lat, from.lon, to.lat, to.lon);
+
+      var windCell = '<span class="bad">unavailable</span>';
+      var compCell = '—';
+      if (!windUnavailable) {
+        var ns = nearestStation(mid.lat, mid.lon);
+        if (ns) {
+          var wx = interpolateLevels(ns.station.levels, pa);
+          if (wx) {
+            var dirTxt = wx.dir === null ? 'calm/var' : Math.round(wx.dir) + '°T';
+            windCell = dirTxt + ' @ ' + Math.round(wx.spd) + ' kt, ' + Math.round(wx.temp) + '°C' +
+              '<br><span class="wx-note">nearest: ' + ns.station.code + ', ' + Math.round(ns.distNm) + ' nm away</span>';
+            if (wx.dir !== null) {
+              var diff = angleDiff(wx.dir, course);
+              var rad = diff * Math.PI / 180;
+              var hwKt = wx.spd * Math.cos(rad);
+              var xwKt = wx.spd * Math.sin(rad);
+              var hwMph = hwKt * 1.15078, xwMph = Math.abs(xwKt) * 1.15078;
+              var cls = hwMph < 0 ? 'leg-head tailwind' : 'leg-head';
+              var lbl = hwMph < 0 ? 'Tailwind' : 'Headwind';
+              compCell = '<span class="' + cls + '">' + lbl + ' ' + Math.abs(Math.round(hwMph)) + ' mph</span><br>Xwind ' + Math.round(xwMph) + ' mph';
+            } else {
+              compCell = 'Calm/variable';
+            }
+          }
+        }
+      }
+
+      rows.push('<tr><td>' + from.label.split(' — ')[0] + ' → ' + to.label.split(' — ')[0] +
+        '</td><td>' + Math.round(course) + '°T</td><td>' + Math.round(distNm) + ' nm</td>' +
+        '<td>' + windCell + '</td><td>' + compCell + '</td></tr>');
+    }
+
+    var html = '<div class="table-scroll"><table class="leg-table"><thead><tr>' +
+      '<th>Leg</th><th>Course</th><th>Distance</th><th>Wind/temp aloft</th><th>Component</th>' +
+      '</tr></thead><tbody>' + rows.join('') + '</tbody></table></div>' +
+      '<p class="route-status">Total distance: ' + Math.round(totalNm) + ' nm over ' + rows.length + ' leg' + (rows.length > 1 ? 's' : '') + '.</p>';
+    if (windUnavailable) {
+      html += '<p class="route-status bad">Winds/temps aloft unavailable right now (network or Worker issue) — course and distance are still shown.</p>';
+    }
+    legsEl.innerHTML = html;
+  }
+
   function runVerification() {
     var ids = ['fig5-06', 'fig5-07', 'fig5-08', 'fig5-15', 'fig5-16'];
     var lines = ids.map(function (id) {
@@ -545,6 +876,13 @@
     });
     $('depRunway').addEventListener('change', function () { computeWindComponent('dep'); render(); });
     $('destRunway').addEventListener('change', function () { computeWindComponent('dest'); render(); });
+
+    createWaypointRow();
+    createWaypointRow();
+    $('addWaypoint').addEventListener('click', createWaypointRow);
+    $('cruiseAlt').addEventListener('input', computeRoute);
+    $('cruiseAltimeter').addEventListener('input', computeRoute);
+    renderCruisePa();
 
     if ('serviceWorker' in navigator && (location.protocol === 'http:' || location.protocol === 'https:')) {
       navigator.serviceWorker.register('sw.js').catch(function () { /* offline caching is a nice-to-have, never block the app on it */ });

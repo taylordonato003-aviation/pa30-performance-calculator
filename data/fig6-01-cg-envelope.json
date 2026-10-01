@@ -9,9 +9,17 @@
   "aftLimitLabel": "26.3% MAC",
   "polygon": [
     [81.0, 2300],
-    [81.0, 2460],
-    [87.3, 3200],
+    [81.0, 2500],
+    [81.2, 2730],
+    [81.6, 3010],
+    [82.0, 3150],
+    [82.4, 3230],
+    [83.2, 3310],
+    [84.2, 3415],
+    [85.0, 3500],
+    [85.9, 3600],
     [92.0, 3600],
     [92.0, 2300]
-  ]
+  ],
+  "verificationNote": "Re-measured pixel-by-pixel against reference/fig6-01-cg-envelope.png on 2026-10-01. Two errors found in the original digitization: (1) the top-left bend was stored as (87.3, 3200), but the real forward-limit line bends at approximately (82.2, 3200) — off by ~5 inches of CG; (2) the chart's top axis label was misread as 3800 instead of 3600, which (if left uncorrected) would have shifted every weight reading on this chart. The boundary from the lower bend to the top is not a single straight line — it has two distinct slopes (~355 lb/inch below 3200 lb, ~105 lb/inch above), now represented as a denser polygon rather than one bend point, for a closer fit to the actual printed curve."
 }

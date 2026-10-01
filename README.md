@@ -90,21 +90,32 @@ point.
 
 ### Per-chart digitization confidence
 
+As of 2026-10-01, every chart has been re-measured pixel-by-pixel against its
+source scan in `reference/`, following a full re-verification pass that found
+two systematic errors in the original digitization: **every one of the five
+ladder charts' printed worked examples actually uses a 30 mph headwind, not
+the 10 mph originally assumed** (confirmed by direct pixel measurement — point
+F sits on the chart's own "30" gridline in all five cases), and several
+charts' pressure-altitude/OAT/weight example inputs were also misread (e.g.
+fig 5-15's example is at 4000 ft/70°F, not the originally assumed 6000 ft/65°F).
+All five ladder charts now reproduce their own chart's worked example to
+within 0.06%.
+
 | Figure | Chart | Self-check vs. printed example | Confidence |
 |---|---|---|---|
-| 5-06 | Takeoff ground run | computed 1045 ft vs. chart 1100 ft (−5.0%) | Good |
-| 5-07 | Takeoff distance, 50 ft obstacle | computed 2250 ft vs. chart 2350 ft (−4.3%) | Good |
-| 5-08 | Accelerate-stop distance | computed 2050 ft vs. chart 2050 ft (0.0%), after a 2026-10-01 re-check | Good at PA=6000 ft (the example point) — re-measured pixel-by-pixel against `reference/fig5-08-accelerate-stop.png`; the original −12.6% was caused by a misdigitized 6000 ft altitude curve (slope off by ~9x) *and* a misread chart target (true answer is 2050 ft, not the originally recorded 2500 ft). The 0/2000/4000/8000 ft altitude curves on this chart were **not** re-verified and may carry similar error — see `unverifiedAltitudes` in `data/fig5-08-accelerate-stop.json` |
-| 5-15 | Landing ground roll | computed 540 ft vs. chart 520 ft (+3.8%) | Good |
-| 5-16 | Landing distance, 50 ft obstacle | computed 1690 ft vs. chart 1750 ft (−3.4%) | Good |
-| 5-09 | Multi-engine rate of climb | not independently verifiable (no worked example on this chart) | Approximate — 2-point linear fit per weight curve |
-| 5-10 | Single-engine rate of climb | same as above | Approximate |
-| 5-11 | Vx/Vy vs density altitude | same as above | Approximate |
-| 5-12 | True airspeed vs DA | same as above | Approximate |
-| 5-13 | Range profile | same as above; basic-fuel (84 gal) curves only — tip-tank curves on the shared chart were ignored | Approximate |
-| 5-14 | Endurance profile | same as above; basic-fuel only | Approximate |
-| 6-01 | C.G. envelope | polygon vertices read directly off the chart's own gridlines (no curve-fitting involved) | Good |
-| 5-17 | Power setting table | transcribed directly, cell by cell, from the printed table (not a curve — exact, not an approximation) | Exact transcription |
+| 5-06 | Takeoff ground run | computed 850 ft vs. chart 850 ft (−0.01%) | Good at the example point (PA=6000 ft). An earlier pass used the wrong right-axis calibration and an unverified example condition (assumed 65°F/3100 lb/10 mph instead of the real 65°F/3000 lb/30 mph headwind) — both now corrected. 0/2000/4000/8000 ft curves unverified, see `unverifiedAltitudes` |
+| 5-07 | Takeoff distance, 50 ft obstacle | computed 2318 ft vs. chart 2318 ft (0.00%) | Good at the example point (PA=6000 ft). An earlier automated trace misidentified which curve point A/B sit on; re-measured from scratch at the correct conditions (70°F/3200 lb/30 mph headwind, not 65°F/3100 lb/10 mph). 0/2000/4000/8000 ft curves unverified |
+| 5-08 | Accelerate-stop distance | computed 2050 ft vs. chart 2050 ft (0.01%) | Good at the example point (PA=6000 ft). Original digitization had a 6000 ft altitude curve off by ~9x in slope, a misread chart target, *and* wrong example conditions (actual: 70°F/3200 lb/30 mph headwind) — all corrected. 0/2000/4000/8000 ft curves unverified |
+| 5-15 | Landing ground roll | computed 525 ft vs. chart 525 ft (0.06%) | Good at the example point (PA=4000 ft, not the originally assumed 6000 ft). Weight (3100 lb) confirmed correct; wind corrected 10→30 mph. 0/2000/6000/8000 ft curves unverified |
+| 5-16 | Landing distance, 50 ft obstacle | computed 1701 ft vs. chart 1700 ft (0.06%) | Good at the example point (PA=2000 ft, not the originally assumed 6000 ft). Weight corrected 3100→3200 lb; wind corrected 10→30 mph. 0/4000/6000/8000 ft curves unverified |
+| 5-09 | Multi-engine rate of climb | no worked example on this chart to self-check against; each of the 3 weight curves independently re-measured at 3 pixel-calibrated altitudes, fit to <1% | Good |
+| 5-10 | Single-engine rate of climb | same method as 5-09; sea-level points were significantly revised (up to 73% relative, though small in absolute ft/min), ceilings were already close | Good |
+| 5-11 | Vx/Vy vs density altitude | re-measured at 6 altitudes per curve (multi-engine); found and fixed a structural error where single-engine Vx/Vy were modeled converging to two different ceiling speeds instead of one | Good |
+| 5-12 | True airspeed vs DA | re-measured; found each %power curve has its own real ceiling (e.g. 75% power tops out at 8000 ft, not 16000 ft) — confirmed visually against the chart | Good, except the 55% curve's exact termination point (medium — sits close to a gridline) |
+| 5-13 | Range profile | basic-fuel (84 gal) curves only; 75% curve was off ~24% in the original, others more minor | Good |
+| 5-14 | Endurance profile | basic-fuel only; original `at16000` values used a suspicious uniform +1.0 hr bump for every curve — replaced with per-curve measured ceilings | Good, except the 45% curve's top end (medium — crosses close to the 55% curve on the chart, hard to separate pixel-by-pixel) |
+| 6-01 | C.G. envelope | polygon re-measured directly off the chart's gridlines; found the original top-left bend point was misplaced by ~5 inches of C.G., and the axis top label had been misread (3800 instead of 3600) | Good |
+| 5-17 | Power setting table | transcribed directly, cell by cell; spot-checked two full rows against the image, exact match | Exact transcription |
 
 Re-run the self-check anytime by opening the browser console after loading
 `index.html` — `app.js` logs a one-line summary per ladder chart on load.

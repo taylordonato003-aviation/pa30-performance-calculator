@@ -49,8 +49,12 @@
         </div>
       </div>
       <div class="field">
-        <label for="weight">Weight (lb, max 3600)</label>
-        <input type="number" id="weight" value="3400" step="50" max="3600" min="1500">
+        <label for="toWeight">Takeoff weight (lb, max 3600)</label>
+        <input type="number" id="toWeight" value="3400" step="50" max="3600" min="1500">
+      </div>
+      <div class="field">
+        <label for="ldgWeight">Landing weight at destination (lb, optional)</label>
+        <input type="number" id="ldgWeight" value="" step="50" max="3600" min="1500" placeholder="defaults to takeoff weight">
       </div>
       <div class="field">
         <label for="wind">Wind component (mph)</label>
@@ -69,7 +73,7 @@
         <input type="number" id="cg" value="" step="0.1" placeholder="e.g. 88.5">
       </div>
     </div>
-    <p class="hint">Positive wind = headwind, negative = tailwind. Weight is capped at 3600 lb (standard, non tip-tank gross weight).</p>
+    <p class="hint">Positive wind = headwind, negative = tailwind. Weights are capped at 3600 lb (standard, non tip-tank gross weight). Leave landing weight blank to use takeoff weight (e.g. a short local flight with negligible fuel burn).</p>
   </section>
 
   <section class="card">
@@ -88,6 +92,19 @@
         <div class="value" id="accelStop">—</div>
       </div>
     </div>
+
+    <h3 class="subhead">Immediate Return &amp; Land</h3>
+    <p class="hint">If something requires landing right back after takeoff — same weight as takeoff, since essentially no fuel has burned off yet.</p>
+    <div class="results-grid">
+      <div class="result">
+        <div class="label">Landing ground roll at takeoff weight <span class="fig">Fig 5-15</span></div>
+        <div class="value" id="irGroundRoll">—</div>
+      </div>
+      <div class="result">
+        <div class="label">Landing distance over 50 ft at takeoff weight <span class="fig">Fig 5-16</span></div>
+        <div class="value" id="irDist50">—</div>
+      </div>
+    </div>
   </section>
 
   <section class="card">
@@ -100,6 +117,35 @@
       <div class="result">
         <div class="label">Distance over 50 ft obstacle <span class="fig">Fig 5-16</span></div>
         <div class="value" id="ldgDist50">—</div>
+      </div>
+    </div>
+    <p class="hint">Computed at the landing weight entered above.</p>
+
+    <h3 class="subhead">Go-Around / Balked Landing</h3>
+    <div class="note-warn">
+      <strong>Approximate reference only — not a POH chart.</strong> This aircraft's digitized performance section has no dedicated
+      balked-landing / landing-configuration climb chart. The figures below are the <em>clean-configuration</em> (gear and flaps
+      retracted) climb numbers from Fig 5-09/5-10/5-11, at your landing weight. A real go-around starts with flaps and gear still
+      out, which costs climb performance this does not model — especially on one engine, where initial climb can be marginal or
+      negative in that transition. Treat this as a best-case floor, not a guarantee, and fly the go-around per the actual aircraft's
+      POH emergency procedures.
+    </div>
+    <div class="results-grid">
+      <div class="result">
+        <div class="label">V<sub>X</sub> / V<sub>Y</sub>, both engines</div>
+        <div class="value"><span id="gaVxMulti">—</span> / <span id="gaVyMulti">—</span></div>
+      </div>
+      <div class="result">
+        <div class="label">V<sub>X</sub> / V<sub>Y</sub>, single engine</div>
+        <div class="value"><span id="gaVxSingle">—</span> / <span id="gaVySingle">—</span></div>
+      </div>
+      <div class="result">
+        <div class="label">Rate of climb, both engines (clean config)</div>
+        <div class="value" id="gaRocMulti">—</div>
+      </div>
+      <div class="result">
+        <div class="label">Rate of climb, single engine (clean config)</div>
+        <div class="value" id="gaRocSingle">—</div>
       </div>
     </div>
   </section>

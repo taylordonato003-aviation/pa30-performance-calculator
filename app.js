@@ -153,12 +153,14 @@
     if (isNaN(oatRaw)) oatRaw = 59;
     var oatUnit = $('oatUnit').value;
     var oatF = oatUnit === 'C' ? cToF(oatRaw) : oatRaw;
-    var weight = clamp(parseFloat($('weight').value) || 3600, 1500, 3600);
+    var toWeight = clamp(parseFloat($('toWeight').value) || 3600, 1500, 3600);
+    var ldgWeightRaw = parseFloat($('ldgWeight').value);
+    var ldgWeight = isNaN(ldgWeightRaw) ? toWeight : clamp(ldgWeightRaw, 1500, 3600);
     var wind = parseFloat($('wind').value) || 0;
     var power = clamp(parseFloat($('power').value) || 65, 45, 75);
     var fuel = clamp(parseFloat($('fuel').value) || 84, 0, 84);
     var cg = parseFloat($('cg').value);
-    return { altFt: altFt, oatF: oatF, weight: weight, wind: wind, power: power, fuel: fuel, cg: cg };
+    return { altFt: altFt, oatF: oatF, toWeight: toWeight, ldgWeight: ldgWeight, wind: wind, power: power, fuel: fuel, cg: cg };
   }
 
   function fmt(n, unit) {
@@ -174,22 +176,35 @@
     var inp = readInputs();
 
     // Takeoff
-    $('toGroundRun').textContent = fmt(ladderResult('fig5-06', inp.altFt, inp.oatF, inp.weight, inp.wind), 'ft');
-    $('toDist50').textContent = fmt(ladderResult('fig5-07', inp.altFt, inp.oatF, inp.weight, inp.wind), 'ft');
-    $('accelStop').textContent = fmt(ladderResult('fig5-08', inp.altFt, inp.oatF, inp.weight, inp.wind), 'ft');
+    $('toGroundRun').textContent = fmt(ladderResult('fig5-06', inp.altFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
+    $('toDist50').textContent = fmt(ladderResult('fig5-07', inp.altFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
+    $('accelStop').textContent = fmt(ladderResult('fig5-08', inp.altFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
 
-    // Landing
-    $('ldgGroundRoll').textContent = fmt(ladderResult('fig5-15', inp.altFt, inp.oatF, inp.weight, inp.wind), 'ft');
-    $('ldgDist50').textContent = fmt(ladderResult('fig5-16', inp.altFt, inp.oatF, inp.weight, inp.wind), 'ft');
+    // Takeoff - immediate return & land (landing charts evaluated AT TAKEOFF WEIGHT)
+    $('irGroundRoll').textContent = fmt(ladderResult('fig5-15', inp.altFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
+    $('irDist50').textContent = fmt(ladderResult('fig5-16', inp.altFt, inp.oatF, inp.toWeight, inp.wind), 'ft');
 
-    // Climb
+    // Landing (at destination landing weight)
+    $('ldgGroundRoll').textContent = fmt(ladderResult('fig5-15', inp.altFt, inp.oatF, inp.ldgWeight, inp.wind), 'ft');
+    $('ldgDist50').textContent = fmt(ladderResult('fig5-16', inp.altFt, inp.oatF, inp.ldgWeight, inp.wind), 'ft');
+
+    // Go-around / balked landing (clean-config climb reference, at landing weight)
     var vv = vxvy(inp.altFt);
+    $('gaVxMulti').textContent = fmt(vv.multiVx, 'mph');
+    $('gaVyMulti').textContent = fmt(vv.multiVy, 'mph');
+    $('gaVxSingle').textContent = fmt(vv.singleVx, 'mph') + (vv.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
+    $('gaVySingle').textContent = fmt(vv.singleVy, 'mph') + (vv.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
+    $('gaRocMulti').textContent = fmt(rocFromCurves(DATA['fig5-09'].weightCurves, inp.altFt, inp.ldgWeight), 'ft/min');
+    var gaRocSingle = rocFromCurves(DATA['fig5-10'].weightCurves, inp.altFt, inp.ldgWeight);
+    $('gaRocSingle').textContent = fmt(gaRocSingle, 'ft/min') + (gaRocSingle <= 0 ? ' — at or above single-engine service ceiling' : '');
+
+    // Climb (at takeoff weight — initial climb-out performance)
     $('vxMulti').textContent = fmt(vv.multiVx, 'mph');
     $('vyMulti').textContent = fmt(vv.multiVy, 'mph');
     $('vxSingle').textContent = fmt(vv.singleVx, 'mph') + (vv.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
     $('vySingle').textContent = fmt(vv.singleVy, 'mph') + (vv.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
-    $('rocMulti').textContent = fmt(rocFromCurves(DATA['fig5-09'].weightCurves, inp.altFt, inp.weight), 'ft/min');
-    var rocSingle = rocFromCurves(DATA['fig5-10'].weightCurves, inp.altFt, inp.weight);
+    $('rocMulti').textContent = fmt(rocFromCurves(DATA['fig5-09'].weightCurves, inp.altFt, inp.toWeight), 'ft/min');
+    var rocSingle = rocFromCurves(DATA['fig5-10'].weightCurves, inp.altFt, inp.toWeight);
     $('rocSingle').textContent = fmt(rocSingle, 'ft/min') + (rocSingle <= 0 ? ' — at or above single-engine service ceiling' : '');
 
     // Cruise
@@ -209,7 +224,7 @@
     var svg = $('cgSvg');
     var statusEl = $('cgStatus');
     var cg = inp.cg;
-    var weight = inp.weight;
+    var weight = inp.toWeight;
 
     var xs = poly.map(function (p) { return p[0]; });
     var ys = poly.map(function (p) { return p[1]; });

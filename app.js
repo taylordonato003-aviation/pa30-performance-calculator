@@ -33,6 +33,8 @@
 
   function cToF(c) { return c * 9 / 5 + 32; }
 
+  var KT_TO_MPH = 1.15078;
+
   // Standard rule-of-thumb density altitude: DA = PA + 120 * (OAT - ISA temp at PA),
   // using the standard lapse rate of 2 degrees C per 1000 ft from a 15 degree C sea-level
   // baseline. This is the same approximation taught in FAA ground school material; it is
@@ -165,8 +167,13 @@
     var toWeight = clamp(parseFloat($('toWeight').value) || 3600, 1500, 3600);
     var ldgWeightRaw = parseFloat($('ldgWeight').value);
     var ldgWeight = isNaN(ldgWeightRaw) ? toWeight : clamp(ldgWeightRaw, 1500, 3600);
-    var depWind = parseFloat($('depWind').value) || 0;
-    var destWind = parseFloat($('destWind').value) || 0;
+    // Wind fields are entered/displayed in knots; the POH ladder charts' own
+    // axis (and the weightExponent/windKPerMph constants fit to it) are in
+    // mph, so convert at this boundary and keep everything downstream in mph.
+    var depWindKt = parseFloat($('depWind').value) || 0;
+    var destWindKt = parseFloat($('destWind').value) || 0;
+    var depWind = depWindKt * KT_TO_MPH;
+    var destWind = destWindKt * KT_TO_MPH;
     var power = clamp(parseFloat($('power').value) || 65, 45, 75);
     var fuel = clamp(parseFloat($('fuel').value) || 84, 0, 84);
     var cg = parseFloat($('cg').value);
@@ -384,16 +391,14 @@
       headwindKt = wind.speedKt * Math.cos(rad);
       crosswindKt = wind.speedKt * Math.sin(rad);
     }
-    var headwindMph = headwindKt * 1.15078;
-    var crosswindMph = Math.abs(crosswindKt) * 1.15078;
     var side = crosswindKt > 0.5 ? 'from the right' : (crosswindKt < -0.5 ? 'from the left' : '');
 
-    $(windFieldId).value = Math.round(headwindMph);
+    $(windFieldId).value = Math.round(headwindKt);
 
-    var headClass = headwindMph < 0 ? 'wc-head tailwind' : 'wc-head';
-    var headLabel = headwindMph < 0 ? 'Tailwind' : 'Headwind';
-    var html = '<span class="' + headClass + '">' + headLabel + ': ' + Math.abs(Math.round(headwindMph)) + ' mph</span>' +
-      ' &middot; Crosswind: ' + Math.round(crosswindMph) + ' mph' + (side ? ' ' + side : '') +
+    var headClass = headwindKt < 0 ? 'wc-head tailwind' : 'wc-head';
+    var headLabel = headwindKt < 0 ? 'Tailwind' : 'Headwind';
+    var html = '<span class="' + headClass + '">' + headLabel + ': ' + Math.abs(Math.round(headwindKt)) + ' kt</span>' +
+      ' &middot; Crosswind: ' + Math.round(Math.abs(crosswindKt)) + ' kt' + (side ? ' ' + side : '') +
       '<br><span class="wx-note">Rwy ' + rwyId + ' (' + rwyHdg + '°) vs wind ' +
       (wind.dirDeg === null ? 'calm/variable' : wind.dirDeg + '°') + ' @ ' + Math.round(wind.speedKt) + ' kt — applied to the wind component field below, editable if you want to override.</span>';
     windCalcEl.className = 'wind-calc shown';

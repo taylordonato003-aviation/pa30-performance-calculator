@@ -200,20 +200,41 @@ origin. If live weather is ever unreachable (offline, Worker down, airport
 has no reporting station), the UI says so and falls back to the field
 elevation already filled in — it never blocks manual entry.
 
+**TAF and extended outlook**, collapsed under each airport's weather block
+once available (tap to expand):
+- **TAF** (≈30 hour forecast): raw text plus a readable period-by-period
+  breakdown (wind, visibility, clouds, weather, and a computed flight
+  category — LIFR/IFR/MVFR/VFR — per period), through the same Worker (a
+  `/taf` endpoint alongside `/metar` and `/windtemp`).
+- **Extended outlook** (several days out, US airports only): the National
+  Weather Service's own forecast (`api.weather.gov`), which already
+  incorporates NBM (the National Blend of Models, the modern successor to
+  the older GFS-MOS product) — so this effectively covers what a MOS lookup
+  would have, through NWS's actively-maintained product instead of chasing
+  a legacy raw-text format. **No proxy needed for this one**: `api.weather.gov`
+  sends `Access-Control-Allow-Origin: *`, confirmed by testing, so the app
+  calls it directly from the browser.
+
 ## Route planning (winds/temps aloft)
 
-Type waypoints into the Route card — a 4-letter ICAO airport, a VOR/NDB
-identifier, or a 5-letter RNAV/GPS fix (press Enter/Tab to resolve each one).
-If an identifier matches more than one real-world station (navaid idents
-aren't globally unique the way ICAO codes are), a dropdown lets you pick the
-right one by name/country. Add as many waypoints as the route needs.
+The Route card's departure and destination always mirror whatever you've
+entered in the Airports card above — no retyping. With no fixes added, route
+distance is the direct great-circle distance between those two airports.
+Each fix you add (a 4-letter ICAO airport, a VOR/NDB identifier, or a
+5-letter RNAV/GPS fix — press Enter/Tab to resolve it) inserts a leg, point
+to point, in the order added. If an identifier matches more than one
+real-world station (navaid idents aren't globally unique the way ICAO codes
+are), a dropdown lets you pick the right one by name/country.
 
 Set a cruise altitude and an altimeter setting (defaults to standard, 29.92)
-to get cruise pressure altitude. For each leg, the app computes true course
-and distance from the waypoints' coordinates, finds the nearest winds-aloft
-forecast station to that leg's midpoint, interpolates its forecast to your
-cruise altitude, and shows the resulting headwind/tailwind and crosswind
-component along that leg's course.
+to get cruise pressure altitude, and an enroute OAT (manual entry — estimate
+it from the per-leg temperature-aloft readings, a briefing, or the ISA lapse
+rate) to get a cruise density altitude, shown the same reference-only way as
+the per-airport DA breakdown above. For each leg, the app computes true
+course and distance from the waypoints' coordinates, finds the nearest
+winds-aloft forecast station to that leg's midpoint, interpolates its
+forecast to your cruise altitude, and shows the resulting headwind/tailwind
+and crosswind component along that leg's course.
 
 **This is forecast data, not an observation** — NOAA's winds/temps-aloft
 product ("FD") is valid for a ~6-hour window and only exists at a sparse

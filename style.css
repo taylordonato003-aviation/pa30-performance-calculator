@@ -166,6 +166,35 @@ input[type="number"]:focus, select:focus {
 
 .runway-field { margin-top: 8px; }
 
+.wx-extra {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+.wx-extra summary {
+  cursor: pointer;
+  padding: 6px 10px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  font-weight: 600;
+  color: var(--text);
+  list-style: none;
+}
+.wx-extra summary::-webkit-details-marker { display: none; }
+.wx-extra summary::before { content: '▸ '; }
+.wx-extra[open] summary::before { content: '▾ '; }
+.wx-extra .wx-extra-body { padding: 8px 10px 4px; }
+.taf-period { padding: 5px 0; border-bottom: 1px solid var(--border); }
+.taf-period:last-child { border-bottom: none; }
+.taf-period .tp-change { font-weight: 600; color: var(--text); }
+.taf-period .tp-flightcat { font-weight: 600; margin-left: 4px; }
+.taf-period .tp-flightcat.vfr { color: var(--ok); }
+.taf-period .tp-flightcat.mvfr { color: #3b82f6; }
+.taf-period .tp-flightcat.ifr, .taf-period .tp-flightcat.lifr { color: var(--bad); }
+.outlook-period { padding: 5px 0; border-bottom: 1px solid var(--border); }
+.outlook-period:last-child { border-bottom: none; }
+.outlook-period .op-name { font-weight: 600; color: var(--text); }
+
 .wind-calc {
   font-size: 0.78rem;
   color: var(--text-dim);
@@ -221,6 +250,17 @@ input[type="number"]:focus, select:focus {
   line-height: 1;
 }
 .route-row .route-wp-remove:hover { color: var(--bad); border-color: var(--bad); }
+
+.route-endpoint { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; border-bottom: none; margin-bottom: 4px; }
+.route-endpoint .route-endpoint-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-dim);
+  font-weight: 600;
+  min-width: 90px;
+}
+.route-endpoint .route-wp-info { color: var(--text); }
 
 .btn-add {
   margin-top: 10px;

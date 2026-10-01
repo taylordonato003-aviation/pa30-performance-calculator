@@ -479,6 +479,118 @@
       });
   }
 
+  // ---------- TAF ----------
+
+  function parseVisibMiles(s) {
+    if (s === undefined || s === null) return null;
+    s = String(s).trim();
+    if (!s) return null;
+    if (s.indexOf('+') >= 0) { var n0 = parseFloat(s); return isNaN(n0) ? null : n0; }
+    if (s.indexOf('/') >= 0) {
+      var whole = 0, frac = 0;
+      s.split(' ').forEach(function (p) {
+        if (p.indexOf('/') >= 0) { var fp = p.split('/'); frac = parseFloat(fp[0]) / parseFloat(fp[1]); }
+        else { var w = parseFloat(p); if (!isNaN(w)) whole = w; }
+      });
+      return whole + frac;
+    }
+    var n = parseFloat(s);
+    return isNaN(n) ? null : n;
+  }
+
+  function flightCategory(visibStr, clouds) {
+    var ceiling = null;
+    (clouds || []).forEach(function (c) {
+      if ((c.cover === 'BKN' || c.cover === 'OVC') && (ceiling === null || c.base < ceiling)) ceiling = c.base;
+    });
+    var vis = parseVisibMiles(visibStr);
+    if (vis === null && ceiling === null) return null;
+    var effVis = vis === null ? 10 : vis;
+    var effCeil = ceiling === null ? 99999 : ceiling;
+    if (effCeil < 500 || effVis < 1) return 'LIFR';
+    if (effCeil < 1000 || effVis < 3) return 'IFR';
+    if (effCeil <= 3000 || effVis <= 5) return 'MVFR';
+    return 'VFR';
+  }
+
+  function fmtZulu(unixSec) {
+    var d = new Date(unixSec * 1000);
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+    return pad(d.getUTCDate()) + '/' + pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + 'Z';
+  }
+
+  function tafPeriodLabel(f) {
+    var label = f.probability ? ('Prob ' + f.probability + '% ') : '';
+    if (f.fcstChange === 'BECMG') return label + 'Becoming by ' + fmtZulu(f.timeBec || f.timeTo);
+    if (f.fcstChange === 'TEMPO') return label + 'Temporarily ' + fmtZulu(f.timeFrom) + '–' + fmtZulu(f.timeTo);
+    if (f.fcstChange) return label + f.fcstChange + ' ' + fmtZulu(f.timeFrom);
+    return label + 'From ' + fmtZulu(f.timeFrom);
+  }
+
+  function fmtTafWind(f) {
+    if (f.wdir === undefined || f.wdir === null) return f.wspd ? ('Var @ ' + f.wspd + ' kt') : '';
+    var txt = f.wdir + '° @ ' + f.wspd + ' kt';
+    if (f.wgst) txt += ' G' + f.wgst;
+    return txt;
+  }
+
+  function fmtClouds(clouds) {
+    if (!clouds || !clouds.length) return 'Sky clear';
+    return clouds.map(function (c) { return c.cover + ' ' + c.base.toLocaleString() + ' ft'; }).join(', ');
+  }
+
+  function fetchTaf(icao, prefix) {
+    var wrap = $(prefix + 'TafWrap');
+    var el = $(prefix + 'Taf');
+    fetch(WEATHER_PROXY + '/taf?ids=' + encodeURIComponent(icao))
+      .then(function (r) { if (!r.ok) throw new Error('bad status'); return r.json(); })
+      .then(function (data) {
+        if (!Array.isArray(data) || !data.length) { wrap.hidden = true; return; }
+        var d = data[0];
+        var html = '<div class="wx-extra-body"><span class="wx-raw">' + d.rawTAF + '</span>';
+        (d.fcsts || []).forEach(function (f) {
+          var cat = flightCategory(f.visib, f.clouds);
+          html += '<div class="taf-period"><span class="tp-change">' + tafPeriodLabel(f) + '</span>' +
+            (cat ? '<span class="tp-flightcat ' + cat.toLowerCase() + '">' + cat + '</span>' : '') +
+            '<br>' + fmtTafWind(f) + (f.visib ? (' · Vis ' + f.visib + ' SM') : '') + (f.wxString ? (' · ' + f.wxString) : '') +
+            '<br>' + fmtClouds(f.clouds) + '</div>';
+        });
+        html += '</div>';
+        el.innerHTML = html;
+        wrap.hidden = false;
+      })
+      .catch(function () { wrap.hidden = true; });
+  }
+
+  // ---------- NWS extended outlook (no proxy needed -- api.weather.gov sends CORS: *) ----------
+
+  function fetchOutlook(lat, lon, prefix) {
+    var wrap = $(prefix + 'OutlookWrap');
+    var el = $(prefix + 'Outlook');
+    fetch('https://api.weather.gov/points/' + lat.toFixed(4) + ',' + lon.toFixed(4))
+      .then(function (r) { if (!r.ok) throw new Error('not covered'); return r.json(); })
+      .then(function (d) {
+        var forecastUrl = d.properties && d.properties.forecast;
+        if (!forecastUrl) throw new Error('no forecast url');
+        return fetch(forecastUrl);
+      })
+      .then(function (r2) { if (!r2.ok) throw new Error('bad status'); return r2.json(); })
+      .then(function (fd) {
+        var periods = (fd.properties && fd.properties.periods) || [];
+        if (!periods.length) { wrap.hidden = true; return; }
+        var html = '<div class="wx-extra-body">';
+        periods.slice(0, 8).forEach(function (p) {
+          html += '<div class="outlook-period"><span class="op-name">' + p.name + '</span>: ' +
+            p.temperature + '°' + p.temperatureUnit + ', ' + p.windSpeed + ' ' + p.windDirection +
+            '<br>' + p.shortForecast + '</div>';
+        });
+        html += '<p class="wx-note">Source: National Weather Service (api.weather.gov) — US airports only.</p></div>';
+        el.innerHTML = html;
+        wrap.hidden = false;
+      })
+      .catch(function () { wrap.hidden = true; });
+  }
+
   function lookupAirport(prefix, icaoFieldId, infoElId, paFieldId, wxElId, rwySelectId, rwyFieldWrapId, applyOat) {
     var AIRPORTS = window.PA30_AIRPORTS || {};
     var raw = $(icaoFieldId).value.trim().toUpperCase();
@@ -488,15 +600,19 @@
     lastWind[prefix] = null;
     $(rwyFieldWrapId).hidden = true;
     $(rwySelectId).innerHTML = '<option value="">— select —</option>';
+    $(prefix + 'TafWrap').hidden = true;
+    $(prefix + 'OutlookWrap').hidden = true;
     computeWindComponent(prefix);
-    if (!raw) { infoEl.innerHTML = ''; return; }
+    if (!raw) { infoEl.innerHTML = ''; setRouteEndpoint(prefix, null); return; }
     if (raw.length !== 4) {
       infoEl.innerHTML = '<span class="bad">ICAO identifiers are 4 letters (e.g. KSEA).</span>';
+      setRouteEndpoint(prefix, null);
       return;
     }
     var apt = AIRPORTS[raw];
     if (!apt) {
       infoEl.innerHTML = '<span class="bad">Not found in the bundled airport database. Enter pressure altitude manually below.</span>';
+      setRouteEndpoint(prefix, null);
       return;
     }
     var bits = [];
@@ -512,8 +628,11 @@
       render();
     }
     populateRunways(raw, rwySelectId, rwyFieldWrapId);
+    setRouteEndpoint(prefix, { lat: apt.lat, lon: apt.lon, label: raw + ' — ' + apt.n });
     wxTimers[wxElId] = setTimeout(function () {
       fetchWeather(raw, prefix, wxElId, paFieldId, apt.elev, applyOat);
+      fetchTaf(raw, prefix);
+      fetchOutlook(apt.lat, apt.lon, prefix);
     }, 500);
   }
 
@@ -586,7 +705,15 @@
   // ---------- route: waypoint rows (UI) ----------
 
   var routeRowSeq = 0;
-  var routeWaypoints = {}; // rowId -> { lat, lon, label } | null
+  var routeWaypoints = {}; // rowId -> { lat, lon, label } | null  (intermediate fixes only)
+  var routeEndpoints = { dep: null, dest: null }; // { lat, lon, label } | null, synced from the Airports card
+
+  function setRouteEndpoint(prefix, resolved) {
+    routeEndpoints[prefix] = resolved;
+    var infoEl = $(prefix === 'dep' ? 'routeDepInfo' : 'routeDestInfo');
+    infoEl.textContent = resolved ? resolved.label : ('Enter ' + (prefix === 'dep' ? 'departure' : 'destination') + ' airport above');
+    computeRoute();
+  }
 
   function createWaypointRow() {
     var rowId = 'wp' + (++routeRowSeq);
@@ -597,8 +724,8 @@
       '<input type="text" class="route-wp-input" placeholder="ICAO / navaid / fix" maxlength="8" autocomplete="off" spellcheck="false">' +
       '<select class="route-wp-disambig" hidden></select>' +
       '<span class="route-wp-info"></span>' +
-      '<button type="button" class="route-wp-remove" title="Remove waypoint">×</button>';
-    $('routeWaypoints').appendChild(row);
+      '<button type="button" class="route-wp-remove" title="Remove fix">×</button>';
+    $('routeWaypoints').insertBefore(row, $('routeDestRow'));
 
     var input = row.querySelector('.route-wp-input');
     var disambig = row.querySelector('.route-wp-disambig');
@@ -770,24 +897,35 @@
   }
 
   function renderCruisePa() {
-    $('cruisePA').textContent = fmt(cruisePaFt(), 'ft');
+    var pa = cruisePaFt();
+    $('cruisePA').textContent = fmt(pa, 'ft');
+
+    var oatRaw = parseFloat($('cruiseOat').value);
+    var daEl = $('cruiseDA');
+    if (isNaN(oatRaw)) { daEl.textContent = '—'; return; }
+    var oatC = $('cruiseOatUnit').value === 'F' ? (oatRaw - 32) * 5 / 9 : oatRaw;
+    daEl.textContent = fmt(densityAltitude(pa, oatC), 'ft');
   }
 
   function orderedResolvedWaypoints() {
-    var rows = Array.prototype.slice.call(document.querySelectorAll('#routeWaypoints .route-row'));
-    return rows.map(function (row) { return routeWaypoints[row.dataset.rowId]; }).filter(Boolean);
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#routeWaypoints .route-row'))
+      .filter(function (row) { return row.id !== 'routeDepRow' && row.id !== 'routeDestRow'; });
+    var intermediate = rows.map(function (row) { return routeWaypoints[row.dataset.rowId]; }).filter(Boolean);
+    var list = [];
+    if (routeEndpoints.dep) list.push(routeEndpoints.dep);
+    list = list.concat(intermediate);
+    if (routeEndpoints.dest) list.push(routeEndpoints.dest);
+    return list;
   }
 
   function computeRoute() {
     renderCruisePa();
-    var wps = orderedResolvedWaypoints();
     var legsEl = $('routeLegs');
-    if (wps.length < 2) {
-      legsEl.innerHTML = wps.length === 1
-        ? '<p class="route-status">Add at least one more waypoint to compute a leg.</p>' : '';
+    if (!routeEndpoints.dep || !routeEndpoints.dest) {
+      legsEl.innerHTML = '<p class="route-status">Enter departure and destination airports above to compute route distance.</p>';
       return;
     }
-
+    var wps = orderedResolvedWaypoints();
     ensureWindTemp().then(function () {
       renderLegs(wps);
     }).catch(function () {
@@ -877,12 +1015,12 @@
     $('depRunway').addEventListener('change', function () { computeWindComponent('dep'); render(); });
     $('destRunway').addEventListener('change', function () { computeWindComponent('dest'); render(); });
 
-    createWaypointRow();
-    createWaypointRow();
     $('addWaypoint').addEventListener('click', createWaypointRow);
     $('cruiseAlt').addEventListener('input', computeRoute);
     $('cruiseAltimeter').addEventListener('input', computeRoute);
-    renderCruisePa();
+    $('cruiseOat').addEventListener('input', computeRoute);
+    $('cruiseOatUnit').addEventListener('change', computeRoute);
+    computeRoute();
 
     if ('serviceWorker' in navigator && (location.protocol === 'http:' || location.protocol === 'https:')) {
       navigator.serviceWorker.register('sw.js').catch(function () { /* offline caching is a nice-to-have, never block the app on it */ });

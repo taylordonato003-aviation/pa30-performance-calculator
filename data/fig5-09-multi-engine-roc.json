@@ -6,8 +6,14 @@
   "source": "reference/fig5-09-multi-engine-roc.png",
   "model": "linear-by-weight",
   "weightCurves": {
-    "2800": { "seaLevel": 1850, "daAtZero": 27000 },
-    "3200": { "seaLevel": 1550, "daAtZero": 23000 },
-    "3600": { "seaLevel": 1300, "daAtZero": 20500 }
+    "2800": { "seaLevel": 1895, "daAtZero": 22025 },
+    "3200": { "seaLevel": 1566, "daAtZero": 21080 },
+    "3600": { "seaLevel": 1337, "daAtZero": 20060 }
+  },
+  "verification": {
+    "method": "Each curve re-measured at 3 independent pixel-calibrated points (sea level, DA=13900 ft, DA=16600 ft) via column-cluster detection with gridlines masked out. All three points fit a straight line to within ~1% (linear least-squares), then extrapolated to ROC=0 for daAtZero. Cross-checked against a direct left-edge (ROC=0 axis) pixel read, which agreed with the fitted intercept within 0.2-0.4% for all three curves.",
+    "date": "2026-10-01",
+    "changeFromOriginal": "seaLevel values were already close (within ~3%). daAtZero (service ceiling) was significantly overestimated in the original digitization, worst for the 2800 lb curve (27000 -> 22025 ft, a 23% error) and the 3200 lb curve (23000 -> 21080 ft, 9% error); the 3600 lb curve was closer (20500 -> 20060 ft, 2%). Likely cause: the original digitization misread which of the 4 curves on this chart (the 4th being the unmodeled '3600 lb, gear extended, flaps 15' configuration) terminated where, in the crowded convergence zone near the top of the chart.",
+    "confidence": "High for all three curves — 3-point fits were highly linear and self-consistent."
   }
 }

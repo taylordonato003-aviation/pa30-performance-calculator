@@ -19,13 +19,13 @@ window.PA30_DATA = {
       "0":    { "t0": 650,  "t120": 1250 },
       "2000": { "t0": 750,  "t120": 1500 },
       "4000": { "t0": 870,  "t120": 1800 },
-      "6000": { "t0": 1385, "t120": 1915 },
+      "6000": { "t0": 1065, "t120": 1755 },
       "8000": { "t0": 1250, "t120": 2550 }
     },
-    "weightExponent": 1.5,
-    "windKPerMph": 0.0157,
+    "weightExponent": 1.898,
+    "windKPerMph": 0.0055,
     "tailwindMultiplier": 2.0,
-    "exampleCheck": { "pa": 6000, "oatF": 65, "weightLb": 3100, "windMph": 10, "chartReading": 1125 },
+    "exampleCheck": { "pa": 6000, "oatF": 65, "weightLb": 3000, "windMph": 30, "chartReading": 850 },
     "unverifiedAltitudes": ["0", "2000", "4000", "8000"]
   },
   "fig5-07": {
@@ -59,13 +59,13 @@ window.PA30_DATA = {
       "0":    { "t0": 850,  "t120": 2595 },
       "2000": { "t0": 1000, "t120": 3142 },
       "4000": { "t0": 1250, "t120": 3893 },
-      "6000": { "t0": 2600, "t120": 2970 },
+      "6000": { "t0": 2600, "t120": 2943 },
       "8000": { "t0": 2200, "t120": 5830 }
     },
-    "weightExponent": 0.89,
-    "windKPerMph": 0.0163,
+    "weightExponent": 1.134,
+    "windKPerMph": 0.00544,
     "tailwindMultiplier": 2.0,
-    "exampleCheck": { "pa": 6000, "oatF": 65, "weightLb": 3100, "windMph": 10, "chartReading": 2050 },
+    "exampleCheck": { "pa": 6000, "oatF": 70, "weightLb": 3200, "windMph": 30, "chartReading": 2050 },
     "unverifiedAltitudes": ["0", "2000", "4000", "8000"]
   },
   "fig5-15": {

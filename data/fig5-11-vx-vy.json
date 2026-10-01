@@ -6,12 +6,18 @@
   "source": "reference/fig5-11-vx-vy.png",
   "model": "linear-vxvy",
   "multiEngine": {
-    "vx": { "seaLevel": 90, "at15000": 100 },
-    "vy": { "seaLevel": 105, "at15000": 90 }
+    "vx": { "seaLevel": 90, "at15000": 94 },
+    "vy": { "seaLevel": 112, "at15000": 99 }
   },
   "singleEngine": {
-    "ceilingDa": 7000,
-    "vx": { "seaLevel": 84, "atCeiling": 80 },
-    "vy": { "seaLevel": 96, "atCeiling": 85 }
+    "ceilingDa": 7189,
+    "vx": { "seaLevel": 94, "atCeiling": 98 },
+    "vy": { "seaLevel": 105, "atCeiling": 98 }
+  },
+  "verification": {
+    "method": "Multi-engine: both curves re-measured at 6 independent pixel-calibrated altitudes (SL, then every ~1500-4000 ft up to 15000 ft); both fit remarkably linear trends (slope consistent to within ~3% across all sampled points) with NO crossing within the charted range -- the two lines converge but Vx stays below Vy throughout, contrary to the original model's implied crossing around 9000 ft. Single-engine: the chart draws Vx and Vy as a single 'tent' shape that visually converges to ONE point at the single-engine ceiling (confirmed by locating the apex pixel directly) -- the original model's separate, unequal atCeiling values for vx/vy did not reflect this.",
+    "date": "2026-10-01",
+    "changeFromOriginal": "Multi-engine vy.seaLevel corrected 105->112 (7%), vy.at15000 corrected 90->99 (10%), vx.at15000 corrected 100->94 (6%). Single-engine values were all more significantly off: vx.seaLevel 84->94 (12%), vy.seaLevel 96->105 (9%), and critically, atCeiling was modeled as two different values (vx=80, vy=85) when the chart actually shows both converging to the SAME value (measured 98) at the ceiling -- a structural error, not just a magnitude error. ceilingDa 7000->7189 (3%, within normal reading tolerance); note this is close to but not identical to the independently re-measured 3600 lb single-engine ceiling on fig5-10 (6925 ft) -- a ~260 ft (4%) cross-chart discrepancy that may reflect normal POH drafting tolerance between the two source figures.",
+    "confidence": "High for multi-engine (6-point fits, very linear). High for single-engine SL and ceiling-convergence finding; the exact ceilingDa/atCeiling pixel read has the usual single-point reading uncertainty (+/- 1-2%)."
   }
 }

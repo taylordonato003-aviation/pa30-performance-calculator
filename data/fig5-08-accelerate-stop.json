@@ -9,16 +9,16 @@
     "0":    { "t0": 850,  "t120": 2595 },
     "2000": { "t0": 1000, "t120": 3142 },
     "4000": { "t0": 1250, "t120": 3893 },
-    "6000": { "t0": 2600, "t120": 2970 },
+    "6000": { "t0": 2600, "t120": 2943 },
     "8000": { "t0": 2200, "t120": 5830 }
   },
-  "weightExponent": 0.89,
-  "windKPerMph": 0.0163,
+  "weightExponent": 1.134,
+  "windKPerMph": 0.00544,
   "tailwindMultiplier": 2.0,
   "exampleCheck": {
-    "pa": 6000, "oatF": 65, "weightLb": 3100, "windMph": 10,
+    "pa": 6000, "oatF": 70, "weightLb": 3200, "windMph": 30,
     "chartReading": 2050,
-    "note": "Worked example printed on the chart (points A-F). Re-measured directly from reference/fig5-08-accelerate-stop.png pixel positions on 2026-10-01 — the original chartReading of 2500 and the 6000 ft altitude curve's t0/t120 were misdigitized (off by roughly 9x in slope); weightExponent and windKPerMph were refit from directly-measured B/D/F points (2800/2450/2050) on this same worked example."
+    "note": "Worked example printed on the chart (points A-F). Re-measured directly from reference/fig5-08-accelerate-stop.png pixel positions on 2026-10-01. Two rounds of correction: first pass fixed the 6000 ft altitude curve's slope (was off ~9x) but kept the ORIGINAL example's input conditions (pa/oatF/weightLb/windMph) unverified, assuming 65F/3100lb/10mph by analogy with other charts. A second pass found those assumed inputs were also wrong -- the dashed temperature line actually sits at 70F (not 65), point C sits at weight=3200 (not 3100), and point F sits at wind=30mph headwind (not 10) -- confirmed by directly overlaying calibrated axis gridlines on zoomed crops of each dashed-line crossing. The measured B/D/F height values (2800/2450/2050 ft) were unaffected by this relabeling (they're read from pixel ROW, independent of which column/axis-label was assumed), but weightExponent and windKPerMph were recomputed against the correct weight/wind magnitudes."
   },
   "unverifiedAltitudes": {
     "note": "The 0/2000/4000/8000 ft altitudeCurves entries below are the ORIGINAL, unverified digitization. Only the 6000 ft entry (above) and the weight/wind exponents have been independently re-measured pixel-by-pixel against the source chart. Given the 6000 ft entry was off by ~9x, these others may carry similar error and should be re-checked before being trusted for altitudes other than 6000 ft.",

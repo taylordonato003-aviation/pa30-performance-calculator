@@ -6,9 +6,24 @@
   "source": "reference/fig5-12-true-airspeed.png",
   "model": "linear-by-power",
   "powerCurves": {
-    "45": { "seaLevel": 140, "at16000": 150 },
-    "55": { "seaLevel": 158, "at16000": 168 },
-    "65": { "seaLevel": 172, "at16000": 183 },
-    "75": { "seaLevel": 185, "at16000": 205 }
+    "45": { "seaLevel": 143.6, "at16000": 152.5 },
+    "55": { "seaLevel": 156.6, "at16000": 159.3 },
+    "65": { "seaLevel": 167.9, "at16000": 169.0 },
+    "75": { "seaLevel": 176.7, "at16000": 192.5 }
+  },
+  "verification": {
+    "note": "Re-measured pixel-by-pixel against reference/fig5-12-true-airspeed.png on 2026-10-01. The chart's curves do NOT all extend to 16000 ft -- each %power setting has its own real ceiling (the altitude where full throttle is required, i.e. where the curve bends into the '2400 RPM FULL THROTTLE' or '2700 RPM FULL THROTTLE' envelope line, or simply stops). app.js's linear-by-power model only supports a {seaLevel, at16000} pair, so values beyond each curve's real ceiling are a straight-line extrapolation of the measured slope, not real chart data.",
+    "realCeilings": {
+      "45": { "ft": 16000, "tasMph": 152.5, "note": "Curve's real top matches the schema's 16000 ft point exactly -- no extrapolation needed." },
+      "55": { "ft": 14667, "tasMph": 159.1, "note": "Curve plainly terminates (flat end, no envelope bend) at ~14667 ft. The at16000 value above is extrapolated ~1300 ft past the real curve on its measured slope -- small, low-risk extrapolation." },
+      "65": { "ft": 15967, "tasMph": 169.0, "note": "Sharp peak where curve meets the 2400 RPM FULL THROTTLE envelope, at essentially 16000 ft -- matches the schema point almost exactly." },
+      "75": { "ft": 8000, "tasMph": 184.6, "note": "Sharp peak where curve meets the 2700 RPM FULL THROTTLE envelope, at 8000 ft. The at16000 value above is extrapolated a full 8000 ft past the real curve -- the original stored value (205) was even further from reality. Treat any 75%-power TAS figure above 8000 ft density altitude as unsupported by this chart; a future app.js change should probably cap/flag %power settings above each curve's real ceiling instead of silently extrapolating." }
+    },
+    "confidence": {
+      "45": "high - clean, unambiguous curve, no interference from overlapping lines",
+      "65": "high - clean sharp peak, unambiguous",
+      "75": "high for both measured points (177/185 clean); the schema's at16000 extrapolation is necessarily low-confidence since it's 8000 ft beyond real data",
+      "55": "medium - sea level point is clean, but the curve's flat termination point sits almost exactly on a minor gridline, making the exact pixel read harder to pin down than the other three; the small total rise (only ~2.4 mph from SL to ceiling) is also harder to measure precisely than the steeper curves. Worth a second look if this number matters."
+    }
   }
 }

@@ -6,8 +6,14 @@
   "source": "reference/fig5-10-single-engine-roc.png",
   "model": "linear-by-weight",
   "weightCurves": {
-    "2800": { "seaLevel": 480, "daAtZero": 11500 },
-    "3200": { "seaLevel": 300, "daAtZero": 9000 },
-    "3600": { "seaLevel": 150, "daAtZero": 6500 }
+    "2800": { "seaLevel": 520, "daAtZero": 11400 },
+    "3200": { "seaLevel": 373, "daAtZero": 9100 },
+    "3600": { "seaLevel": 260, "daAtZero": 6925 }
+  },
+  "verification": {
+    "method": "Sea-level ROC re-measured directly via column-cluster detection at the SL gridline. Each curve's own ceiling (ROC=0) point was located directly as the pixel where that curve first appears, working down from the top of the chart (the 3 curves do not cross; the lightest-weight curve simply extends highest before any of the others appear, since its ceiling is the highest of the three). Each 2-point line (SL + ceiling) was cross-checked against at least one independently measured mid-altitude point and matched within 1-3 ROC units.",
+    "date": "2026-10-01",
+    "changeFromOriginal": "daAtZero (service ceiling) values were already accurate in the original digitization (within 1-6.5%). seaLevel (SL rate of climb) was significantly underestimated for all three curves, worst for 3600 lb (150 -> 260 ft/min, a 73% relative error, though only 110 ft/min in absolute terms) and 3200 lb (300 -> 373, 24%); 2800 lb was closer (480 -> 520, 8%).",
+    "confidence": "High for all three curves — SL points directly measured at a clean, uncrowded part of the chart; ceiling points confirmed via two independent read methods (direct axis-intercept pixel read, and line-fit extrapolation from mid-altitude points) that agreed closely."
   }
 }

@@ -7,9 +7,25 @@
   "model": "linear-by-power",
   "fuelGal": 84,
   "powerCurves": {
-    "45": { "seaLevel": 970, "at16000": 1010 },
-    "55": { "seaLevel": 930, "at16000": 1000 },
-    "65": { "seaLevel": 870, "at16000": 990 },
-    "75": { "seaLevel": 700, "at16000": 980 }
+    "45": { "seaLevel": 997, "at16000": 1045 },
+    "55": { "seaLevel": 961, "at16000": 1011 },
+    "65": { "seaLevel": 928, "at16000": 956 },
+    "75": { "seaLevel": 868, "at16000": 880 }
+  },
+  "verification": {
+    "note": "Re-measured pixel-by-pixel against reference/fig5-13-range-profile.png on 2026-10-01 (BASIC FUEL 84 gal solid curves only -- the TIP TANK FUEL dashed curves on the same chart were ignored, out of scope). Like fig 5-12, not all curves reach 16000 ft -- each terminates where the aircraft can no longer sustain that %power (full-throttle limit).",
+    "realCeilings": {
+      "45": { "ft": 16000, "mi": 1045, "note": "Terminates essentially exactly at 16000 ft -- matches the schema point, no extrapolation." },
+      "55": { "ft": 16000, "mi": 1011, "note": "Same -- terminates essentially exactly at 16000 ft." },
+      "65": { "ft": 12000, "mi": 948, "note": "Terminates at 12000 ft. The at16000 value above (956) is extrapolated ~4000 ft past the real curve on its measured slope." },
+      "75": { "ft": 8000, "mi": 874, "note": "Terminates at 8000 ft. The at16000 value above (880) is extrapolated a full 8000 ft past the real curve -- same caveat as fig 5-12's 75% TAS curve." }
+    },
+    "correctionVsOriginal": "The original seaLevel values for 55/65/75% (930/870/700) were reasonably close to re-measured (961/928/868) except 75%, which was off by a large margin (700 vs. the measured ~868 -- a ~24% error, re-confirmed by three independent pixel reads at different rows). The 45% value was also revised slightly (970 -> 997). All four curves' relative ordering (45 > 55 > 65 > 75, i.e. lower power = longer range) was already correct in the original data and remains so.",
+    "confidence": {
+      "45": "high",
+      "55": "high",
+      "65": "high",
+      "75": "high for the measured 868/874 points; low confidence on the at16000=880 extrapolation since it's 8000 ft beyond real data"
+    }
   }
 }

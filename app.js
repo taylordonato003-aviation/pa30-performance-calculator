@@ -299,8 +299,9 @@
     // (weight, wind-derived PA, power, fuel) in addition to the Route card's
     // own inputs, so refresh it here too rather than only on route-specific
     // field changes. computeRoute()'s winds-aloft fetch is cached (55 min),
-    // so this is cheap after the first call.
-    computeRoute();
+    // so this is cheap after the first call. Skipped while propagating a
+    // fuel-burn update -- see fuelBurnUpdateInProgress above.
+    if (!fuelBurnUpdateInProgress) computeRoute();
   }
 
   // ---------- weight & balance worksheet ----------
@@ -326,13 +327,27 @@
   // defaults to taxi-fuel-only (climb/cruise/descent = 0) until then.
   var lastPhaseFuelGal = { climb: 0, cruise: 0, descent: 0 };
 
+  // Guards against re-entering computeRoute() while propagating a fuel-burn
+  // update: several independent async events (METAR/TAF/Open-Meteo/windtemp,
+  // for both airports) each call computeRoute() on their own completion, and
+  // without this guard, renderWeightBalance()'s own render()->computeRoute()
+  // tail call would re-enter renderClimbCruiseDescent() for every one of
+  // them, each potentially re-triggering this same propagation again --
+  // compounding into a runaway cascade right as both airports resolve.
+  // Nothing climb/cruise/descent compute from (toWeight, route, power, wind)
+  // changes as a result of a burn-only update, so skipping computeRoute()
+  // here is always safe, not just a performance shortcut.
+  var fuelBurnUpdateInProgress = false;
+
   function updatePhaseFuel(climbGal, cruiseGal, descentGal) {
     var c = climbGal || 0, r = cruiseGal || 0, d = descentGal || 0;
     if (Math.abs(c - lastPhaseFuelGal.climb) < 0.05 &&
         Math.abs(r - lastPhaseFuelGal.cruise) < 0.05 &&
         Math.abs(d - lastPhaseFuelGal.descent) < 0.05) return;
     lastPhaseFuelGal = { climb: c, cruise: r, descent: d };
+    fuelBurnUpdateInProgress = true;
     renderWeightBalance();
+    fuelBurnUpdateInProgress = false;
   }
 
   // Computes the loading worksheet (empty weight through takeoff/landing weight

@@ -270,6 +270,26 @@
 
   <section class="card">
     <h2>Route</h2>
+    <div class="input-grid">
+      <div class="field">
+        <label for="etdDate">Departure date</label>
+        <input type="date" id="etdDate" value="">
+      </div>
+      <div class="field">
+        <label for="etdTime">Departure time (local)</label>
+        <input type="time" id="etdTime" value="">
+      </div>
+      <div class="field">
+        <label for="etdTimezone">Departure time zone</label>
+        <select id="etdTimezone">
+          <option value="America/Los_Angeles" selected>Pacific</option>
+          <option value="America/Denver">Mountain</option>
+          <option value="America/Chicago">Central</option>
+          <option value="America/New_York">Eastern</option>
+        </select>
+      </div>
+    </div>
+    <p class="hint">Used to estimate time of arrival (departure time + total flight time from Climb/Cruise/Descent below) and match it against the destination's TAF or hourly forecast period. Correctly accounts for daylight saving vs. standard time for the date entered.</p>
     <div id="routeWaypoints">
       <div class="route-row route-endpoint" id="routeDepRow">
         <span class="route-endpoint-label">Departure</span>

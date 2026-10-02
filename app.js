@@ -573,6 +573,8 @@
   var wxTimers = {};
   var wxRequestSeq = {};
   var lastWind = {}; // keyed by prefix ('dep'/'dest') -> { dirDeg, speedKt } | null
+  var lastTaf = {}; // keyed by prefix -> parsed TAF object ({fcsts: [...], ...}) | null, for ETA cross-reference
+  var lastHourly = {}; // keyed by prefix -> NWS hourly forecast periods array | null (US only, wind+temp, no altimeter)
 
   function hpaToInHg(hpa) { return hpa / 33.8639; }
 
@@ -803,8 +805,9 @@
     fetch(WEATHER_PROXY + '/taf?ids=' + encodeURIComponent(icao))
       .then(function (r) { if (!r.ok) throw new Error('bad status'); return r.json(); })
       .then(function (data) {
-        if (!Array.isArray(data) || !data.length) { wrap.hidden = true; return; }
+        if (!Array.isArray(data) || !data.length) { wrap.hidden = true; lastTaf[prefix] = null; computeRoute(); return; }
         var d = data[0];
+        lastTaf[prefix] = d;
         var html = '<div class="wx-extra-body"><span class="wx-raw">' + d.rawTAF + '</span>';
         (d.fcsts || []).forEach(function (f) {
           var cat = flightCategory(f.visib, f.clouds);
@@ -816,8 +819,9 @@
         html += '</div>';
         el.innerHTML = html;
         wrap.hidden = false;
+        computeRoute();
       })
-      .catch(function () { wrap.hidden = true; });
+      .catch(function () { wrap.hidden = true; lastTaf[prefix] = null; computeRoute(); });
   }
 
   // ---------- NWS extended outlook (no proxy needed -- api.weather.gov sends CORS: *) ----------
@@ -829,6 +833,15 @@
       .then(function (r) { if (!r.ok) throw new Error('not covered'); return r.json(); })
       .then(function (d) {
         var forecastUrl = d.properties && d.properties.forecast;
+        var hourlyUrl = d.properties && d.properties.forecastHourly;
+        if (hourlyUrl) {
+          fetch(hourlyUrl).then(function (rh) { return rh.ok ? rh.json() : null; }).then(function (hd) {
+            lastHourly[prefix] = (hd && hd.properties && hd.properties.periods) || null;
+            computeRoute();
+          }).catch(function () { lastHourly[prefix] = null; computeRoute(); });
+        } else {
+          lastHourly[prefix] = null;
+        }
         if (!forecastUrl) throw new Error('no forecast url');
         return fetch(forecastUrl);
       })
@@ -1283,6 +1296,101 @@
     return interpBreakpoints(points, power, true);
   }
 
+  // ---------- ETA / destination forecast at landing time ----------
+
+  // UTC offset (minutes) of an IANA zone at a given UTC instant -- handles DST
+  // automatically via the browser's own timezone database, no manual table.
+  function tzOffsetMinutes(ianaZone, dateUtc) {
+    var dtf = new Intl.DateTimeFormat('en-US', {
+      timeZone: ianaZone, hourCycle: 'h23',
+      year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+    var parts = dtf.formatToParts(dateUtc).reduce(function (acc, p) { acc[p.type] = p.value; return acc; }, {});
+    var asUtc = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+    return (asUtc - dateUtc.getTime()) / 60000;
+  }
+
+  // Converts a local wall-clock date/time + IANA zone into the correct UTC
+  // instant, iterating once to handle the (rare) case where the offset
+  // itself changes between the naive guess and the corrected instant.
+  function localWallClockToUtc(y, mo, d, h, mi, ianaZone) {
+    var guessUtc = Date.UTC(y, mo - 1, d, h, mi);
+    var offset = tzOffsetMinutes(ianaZone, new Date(guessUtc));
+    var actualUtc = guessUtc - offset * 60000;
+    var offset2 = tzOffsetMinutes(ianaZone, new Date(actualUtc));
+    if (offset2 !== offset) actualUtc = guessUtc - offset2 * 60000;
+    return new Date(actualUtc);
+  }
+
+  // Reads the Route card's date/time/timezone fields and returns the
+  // departure instant as a UTC Date, or null if date/time haven't been entered.
+  function getEtdUtc() {
+    var dateStr = $('etdDate').value, timeStr = $('etdTime').value;
+    if (!dateStr || !timeStr) return null;
+    var dp = dateStr.split('-').map(Number), tp = timeStr.split(':').map(Number);
+    return localWallClockToUtc(dp[0], dp[1], dp[2], tp[0], tp[1], $('etdTimezone').value);
+  }
+
+  // The TAF "base" forecast is whichever FM/BECMG/initial period has the
+  // latest timeFrom at or before the target time (each supersedes the last
+  // until the next one takes effect); TEMPO/PROB periods are temporary
+  // overlays on top of that, so collected separately rather than replacing it.
+  function findTafPeriodForTime(fcsts, targetUnixSec) {
+    var base = null, overlays = [];
+    (fcsts || []).forEach(function (f) {
+      if (f.fcstChange === 'TEMPO' || f.probability) {
+        if (targetUnixSec >= f.timeFrom && targetUnixSec <= (f.timeTo || f.timeFrom)) overlays.push(f);
+        return;
+      }
+      if (f.timeFrom <= targetUnixSec && (!base || f.timeFrom > base.timeFrom)) base = f;
+    });
+    return (base || overlays.length) ? { base: base, overlays: overlays } : null;
+  }
+
+  function findHourlyPeriodForTime(periods, targetDate) {
+    var t = targetDate.getTime();
+    return (periods || []).find(function (p) {
+      return new Date(p.startTime).getTime() <= t && t < new Date(p.endTime).getTime();
+    }) || null;
+  }
+
+  function renderEtaForecast(totalTimeHr) {
+    var etd = getEtdUtc();
+    if (!etd || totalTimeHr === null || isNaN(totalTimeHr)) {
+      return '<p class="route-status">Enter a departure date/time above to see the destination forecast for your estimated arrival time.</p>';
+    }
+    var eta = new Date(etd.getTime() + totalTimeHr * 3600000);
+    var etaUnixSec = Math.round(eta.getTime() / 1000);
+    var html = '<p class="route-status"><strong>ETA: ' + fmtZulu(etaUnixSec) + '</strong> (departure ' + fmtZulu(Math.round(etd.getTime() / 1000)) + ' + ' + Math.round(totalTimeHr * 60) + ' min total flight time)</p>';
+
+    var taf = lastTaf.dest ? findTafPeriodForTime(lastTaf.dest.fcsts, etaUnixSec) : null;
+    if (taf && taf.base) {
+      var cat = flightCategory(taf.base.visib, taf.base.clouds);
+      html += '<div class="taf-period"><span class="tp-change">TAF forecast at ETA (' + tafPeriodLabel(taf.base) + ')</span>' +
+        (cat ? '<span class="tp-flightcat ' + cat.toLowerCase() + '">' + cat + '</span>' : '') +
+        '<br>' + fmtTafWind(taf.base) + (taf.base.visib ? (' · Vis ' + taf.base.visib + ' SM') : '') +
+        '<br>' + fmtClouds(taf.base.clouds) + '</div>';
+      taf.overlays.forEach(function (f) {
+        html += '<div class="taf-period"><span class="tp-change">Also possible: ' + tafPeriodLabel(f) + '</span><br>' +
+          fmtTafWind(f) + (f.visib ? (' · Vis ' + f.visib + ' SM') : '') + (f.wxString ? (' · ' + f.wxString) : '') + '</div>';
+      });
+      html += '<p class="wx-note">No altimeter/pressure forecast exists in a TAF (or anywhere else free/public) — use standard pressure (29.92) for planning beyond what a live METAR close to departure can tell you.</p>';
+      return html;
+    }
+
+    var hourly = lastHourly.dest ? findHourlyPeriodForTime(lastHourly.dest, eta) : null;
+    if (hourly) {
+      html += '<p class="route-status bad">ETA is outside this TAF\'s coverage (or no TAF exists for this airport) — falling back to the NWS hourly forecast (US only, wind + temperature only, no altimeter/pressure data exists in this source either).</p>';
+      html += '<div class="taf-period"><span class="tp-change">NWS hourly forecast at ETA (' + hourly.name + ')</span><br>' +
+        hourly.temperature + '°' + hourly.temperatureUnit + ', wind ' + hourly.windSpeed + ' ' + hourly.windDirection +
+        '<br>' + hourly.shortForecast + '</div>';
+      return html;
+    }
+
+    html += '<p class="route-status bad">No automated forecast (TAF or NWS hourly) covers this ETA — it\'s likely too far out, or this airport/area isn\'t covered by either source. Check a fresh briefing closer to departure.</p>';
+    return html;
+  }
+
   // Headwind component (kt, positive = headwind) from the nearest winds-aloft
   // station to (lat, lon) at altFt, along courseDeg. Returns null if wind data
   // isn't available there (caller should fall back to TAS-only / no wind).
@@ -1407,7 +1515,8 @@
       notes.push('<p class="route-status bad">Winds/temps aloft unavailable — groundspeeds above are TAS only (no wind correction).</p>');
     }
 
-    el.innerHTML = html + notes.join('');
+    el.innerHTML = html + notes.join('') +
+      '<h3 class="subhead">Destination Forecast at ETA</h3>' + renderEtaForecast(totalTimeHr);
   }
 
   function runVerification() {
@@ -1423,6 +1532,10 @@
   document.addEventListener('DOMContentLoaded', function () {
     renderPowerTable();
     renderWeightBalance();
+    if (!$('etdDate').value) {
+      var today = new Date();
+      $('etdDate').value = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+    }
     render();
     runVerification();
     var wbFieldIds = ['wbEmptyWt', 'wbEmptyArm', 'wbPilotWt', 'wbRearWt', 'wbBagWt', 'wbMainGal', 'wbAuxGal', 'wbMainBurnGal', 'wbAuxBurnGal'];

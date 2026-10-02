@@ -361,6 +361,31 @@ exact value. Above the highest altitude 2400 RPM has data for at a given
 higher), it shows "full throttle*" with a note, rather than a number the
 chart doesn't support.
 
+### Destination forecast at ETA
+
+Set a departure date, time, and time zone (Pacific/Mountain/Central/Eastern
+— correctly handles daylight saving vs. standard time for the date entered,
+via the browser's own IANA timezone database, not a fixed UTC offset) and
+the Climb/Cruise/Descent card computes an ETA (departure + total flight
+time) and shows the destination forecast that actually covers it:
+
+1. **TAF**, if the destination has one and it extends that far out — the
+   specific forecast period in effect at ETA (not just the whole TAF dumped
+   out for you to find it yourself), plus any TEMPO/PROB conditions that
+   overlap it.
+2. Otherwise, **NWS hourly forecast** (`api.weather.gov`, already used for
+   the extended outlook above) — wind and temperature only, US airports
+   only, up to 4 days out.
+3. If neither covers it, says so plainly rather than guessing.
+
+**Neither source forecasts altimeter/pressure at all** — not TAF, and not
+NWS's hourly or raw gridpoint data (confirmed directly against their API).
+A MOS (Model Output Statistics) fallback was considered since it's what
+ForeFlight uses for exactly this gap, but NOAA's free public MOS feed has
+been retired — there's no current free, public, machine-readable source for
+it anymore. Use standard pressure (29.92) for planning beyond what a live
+METAR close to departure can tell you.
+
 The FD text format itself is a fixed-width bulletin with some real quirks
 handled here: a station can report wind with no temperature at low altitude,
 "light and variable" wind can still carry a temperature, and wind speeds at

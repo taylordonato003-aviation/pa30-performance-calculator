@@ -36,96 +36,103 @@
   <section class="card">
     <h2>Weight &amp; Balance <span class="fig">Fig 6-01</span></h2>
     <p class="hint">Fillable loading worksheet, prefilled for N40DA (PA-30B, SN 30-904) — edit empty weight/arm for a different airplane. Filling this in sets the Takeoff/Landing weight and C.G. fields below automatically (gear-extended values); you can still edit those directly afterward for a quick what-if.</p>
-    <div class="table-scroll">
-      <table class="wb-table">
-        <thead><tr><th>Item</th><th>Weight (lb)</th><th>Arm (in)</th><th>Moment (in-lb)</th></tr></thead>
-        <tbody>
-          <tr>
-            <td>Empty weight (incl. unusable fuel &amp; full oil)</td>
-            <td><input type="number" id="wbEmptyWt" value="2400.9" step="0.1"></td>
-            <td><input type="number" id="wbEmptyArm" value="85.85" step="0.01"></td>
-            <td id="wbEmptyMoment">—</td>
-          </tr>
-          <tr>
-            <td>Pilot &amp; front passenger</td>
-            <td><input type="number" id="wbPilotWt" value="0" step="1" min="0"></td>
-            <td>84.8</td>
-            <td id="wbPilotMoment">—</td>
-          </tr>
-          <tr>
-            <td>Rear passengers</td>
-            <td><input type="number" id="wbRearWt" value="0" step="1" min="0"></td>
-            <td>120.5</td>
-            <td id="wbRearMoment">—</td>
-          </tr>
-          <tr>
-            <td>Baggage area (250 lb max)</td>
-            <td><input type="number" id="wbBagWt" value="0" step="1" min="0" max="250"></td>
-            <td>142</td>
-            <td id="wbBagMoment">—</td>
-          </tr>
-          <tr class="wb-subtotal">
-            <td>Total before fuel</td>
-            <td id="wbPreFuelWt">—</td><td id="wbPreFuelArm">—</td><td id="wbPreFuelMoment">—</td>
-          </tr>
-          <tr>
-            <td>Usable fuel, main tanks (6 lb/gal, 54 gal max)</td>
-            <td><input type="number" id="wbMainGal" value="54" step="1" min="0" max="54"> gal</td>
-            <td>90</td>
-            <td id="wbMainMoment">—</td>
-          </tr>
-          <tr>
-            <td>Usable fuel, aux tanks (6 lb/gal, 30 gal max)</td>
-            <td><input type="number" id="wbAuxGal" value="0" step="1" min="0" max="30"> gal</td>
-            <td>95</td>
-            <td id="wbAuxMoment">—</td>
-          </tr>
-          <tr class="wb-subtotal">
-            <td>Takeoff weight &amp; C.G., gear extended</td>
-            <td id="wbToWtExt">—</td><td id="wbToArmExt">—</td><td id="wbToMomentExt">—</td>
-          </tr>
-          <tr class="wb-subtotal">
-            <td>Takeoff weight &amp; C.G., gear retracted (+770 in-lb)</td>
-            <td id="wbToWtRet">—</td><td id="wbToArmRet">—</td><td id="wbToMomentRet">—</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="hint" id="wbToStatus"></p>
+    <div class="section-split">
+      <div>
+        <div class="table-scroll">
+          <table class="wb-table">
+            <colgroup><col class="wb-col-item"><col class="wb-col-num"><col class="wb-col-num"><col class="wb-col-num"></colgroup>
+            <thead><tr><th>Item</th><th>Wt (lb)</th><th>Arm (in)</th><th>Mom (in-lb)</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>Empty weight (incl. unusable fuel &amp; full oil)</td>
+                <td><input type="number" id="wbEmptyWt" value="2400.9" step="0.1"></td>
+                <td><input type="number" id="wbEmptyArm" value="85.85" step="0.01"></td>
+                <td id="wbEmptyMoment">—</td>
+              </tr>
+              <tr>
+                <td>Pilot &amp; front passenger</td>
+                <td><input type="number" id="wbPilotWt" value="0" step="1" min="0"></td>
+                <td>84.8</td>
+                <td id="wbPilotMoment">—</td>
+              </tr>
+              <tr>
+                <td>Rear passengers</td>
+                <td><input type="number" id="wbRearWt" value="0" step="1" min="0"></td>
+                <td>120.5</td>
+                <td id="wbRearMoment">—</td>
+              </tr>
+              <tr>
+                <td>Baggage area (250 lb max)</td>
+                <td><input type="number" id="wbBagWt" value="0" step="1" min="0" max="250"></td>
+                <td>142</td>
+                <td id="wbBagMoment">—</td>
+              </tr>
+              <tr class="wb-subtotal">
+                <td>Total before fuel</td>
+                <td id="wbPreFuelWt">—</td><td id="wbPreFuelArm">—</td><td id="wbPreFuelMoment">—</td>
+              </tr>
+              <tr>
+                <td>Main tanks (6 lb/gal, 54 gal max)</td>
+                <td><input type="number" id="wbMainGal" value="54" step="1" min="0" max="54"></td>
+                <td>90</td>
+                <td id="wbMainMoment">—</td>
+              </tr>
+              <tr>
+                <td>Aux tanks (6 lb/gal, 30 gal max)</td>
+                <td><input type="number" id="wbAuxGal" value="0" step="1" min="0" max="30"></td>
+                <td>95</td>
+                <td id="wbAuxMoment">—</td>
+              </tr>
+              <tr class="wb-subtotal">
+                <td>Takeoff wt &amp; C.G., gear extended</td>
+                <td id="wbToWtExt">—</td><td id="wbToArmExt">—</td><td id="wbToMomentExt">—</td>
+              </tr>
+              <tr class="wb-subtotal">
+                <td>Takeoff wt &amp; C.G., gear retracted (+770 in-lb)</td>
+                <td id="wbToWtRet">—</td><td id="wbToArmRet">—</td><td id="wbToMomentRet">—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="hint" id="wbToStatus"></p>
 
-    <h3 class="subhead">Fuel Burned En Route</h3>
-    <div class="table-scroll">
-      <table class="wb-table">
-        <tbody>
-          <tr>
-            <td>Less fuel burned, main tanks</td>
-            <td><input type="number" id="wbMainBurnGal" value="0" step="1" min="0"> gal</td>
-            <td>90</td>
-            <td id="wbMainBurnMoment">—</td>
-          </tr>
-          <tr>
-            <td>Less fuel burned, aux tanks</td>
-            <td><input type="number" id="wbAuxBurnGal" value="0" step="1" min="0"> gal</td>
-            <td>95</td>
-            <td id="wbAuxBurnMoment">—</td>
-          </tr>
-          <tr class="wb-subtotal">
-            <td>Descent weight &amp; C.G., gear retracted</td>
-            <td id="wbDescWtRet">—</td><td id="wbDescArmRet">—</td><td id="wbDescMomentRet">—</td>
-          </tr>
-          <tr class="wb-subtotal">
-            <td>Landing weight &amp; C.G., gear extended (−770 in-lb)</td>
-            <td id="wbLdgWtExt">—</td><td id="wbLdgArmExt">—</td><td id="wbLdgMomentExt">—</td>
-          </tr>
-        </tbody>
-      </table>
+        <h3 class="subhead">Fuel Burned En Route</h3>
+        <div class="table-scroll">
+          <table class="wb-table">
+            <colgroup><col class="wb-col-item"><col class="wb-col-num"><col class="wb-col-num"><col class="wb-col-num"></colgroup>
+            <tbody>
+              <tr>
+                <td>Less fuel burned, main tanks</td>
+                <td><input type="number" id="wbMainBurnGal" value="0" step="1" min="0"></td>
+                <td>90</td>
+                <td id="wbMainBurnMoment">—</td>
+              </tr>
+              <tr>
+                <td>Less fuel burned, aux tanks</td>
+                <td><input type="number" id="wbAuxBurnGal" value="0" step="1" min="0"></td>
+                <td>95</td>
+                <td id="wbAuxBurnMoment">—</td>
+              </tr>
+              <tr class="wb-subtotal">
+                <td>Descent wt &amp; C.G., gear retracted</td>
+                <td id="wbDescWtRet">—</td><td id="wbDescArmRet">—</td><td id="wbDescMomentRet">—</td>
+              </tr>
+              <tr class="wb-subtotal">
+                <td>Landing wt &amp; C.G., gear extended (−770 in-lb)</td>
+                <td id="wbLdgWtExt">—</td><td id="wbLdgArmExt">—</td><td id="wbLdgMomentExt">—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="hint" id="wbLdgStatus"></p>
+      </div>
+      <div class="cg-wrap-narrow">
+        <div class="cg-wrap">
+          <svg id="cgSvg" viewBox="0 0 500 360" role="img" aria-label="C.G. envelope plot"></svg>
+        </div>
+        <div class="cg-status" id="cgStatus"></div>
+      </div>
     </div>
-    <p class="hint" id="wbLdgStatus"></p>
-
-    <div class="cg-wrap">
-      <svg id="cgSvg" viewBox="0 0 500 360" role="img" aria-label="C.G. envelope plot"></svg>
-    </div>
-    <div class="cg-status" id="cgStatus"></div>
   </section>
 
   <section class="card">
@@ -485,29 +492,6 @@
     <div id="pmResults" class="results-grid" style="margin-top:14px;"></div>
   </section>
 
-  <section class="card">
-    <h2>Power Setting Table <span class="fig">Fig 5-17</span></h2>
-    <p class="hint">Lycoming IO-320-B, 160 HP normally aspirated. Manifold pressure (in. Hg) by pressure altitude and RPM.</p>
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th rowspan="2">Pressure Alt.</th>
-            <th rowspan="2">Std Temp F/C</th>
-            <th colspan="4">55% (~104 HP)</th>
-            <th colspan="4">65% (~104 HP)</th>
-            <th colspan="3">75% (~120 HP)</th>
-          </tr>
-          <tr>
-            <th>2100</th><th>2200</th><th>2300</th><th>2400</th>
-            <th>2100</th><th>2200</th><th>2300</th><th>2400</th>
-            <th>2200</th><th>2300</th><th>2400</th>
-          </tr>
-        </thead>
-        <tbody id="powerTableBody"></tbody>
-      </table>
-    </div>
-  </section>
 
   <footer>
     Data source: Piper PA-30 Twin Comanche POH, Section 5 (Performance) and Section 6 (Weight &amp; Balance), standard 3600&nbsp;lb configuration (no tip tanks).

@@ -48,10 +48,12 @@ features were added: **Weight & Balance** (know your weight/C.G. first) →
 instead of guesses) → **Conditions** (manual overrides for all of the
 above) → **Takeoff → Climb → Cruise → Descent → Landing** (the flight
 itself, in order) → **Personal Minimums** (final check, now that there's
-something to check against) → **Power Setting Table** (reference). Each of
-Climb/Cruise/Descent has both a quick-reference block (Vx/Vy, ROC, ceilings;
-TAS/range/endurance) and that phase's slice of the route-based time/
-distance/fuel breakdown — see "Climb / Cruise / Descent" below.
+something to check against). Each of Climb/Cruise/Descent has both a
+quick-reference block (Vx/Vy, ROC, ceilings; TAS/range/endurance) and that
+phase's slice of the route-based time/distance/fuel breakdown — see "Climb /
+Cruise / Descent" below. There's no dedicated Power Setting Table card —
+Fig 5-17 is used internally (fuel burn and the manifold-pressure guidance
+under each phase) but the raw table itself didn't earn a place in the UI.
 
 ## What's in this repo
 

@@ -340,11 +340,17 @@ input[type="number"]:focus, select:focus {
 .cg-status-ok { color: var(--ok); }
 .cg-status-bad { color: var(--bad); }
 
-.wb-table input[type="number"] { width: 90px; padding: 4px 6px; font-size: 0.85rem; }
-.wb-table td, .wb-table th { text-align: right; }
-.wb-table td:first-child, .wb-table th:first-child { text-align: left; }
+.wb-table { table-layout: fixed; width: 100%; }
+.wb-table col.wb-col-item { width: auto; }
+.wb-table col.wb-col-num { width: 78px; }
+.wb-table input[type="number"] { width: 100%; padding: 4px 4px; font-size: 0.82rem; }
+.wb-table td, .wb-table th { text-align: right; padding: 4px 6px; overflow: hidden; }
+.wb-table td:first-child, .wb-table th:first-child { text-align: left; white-space: normal; }
 .wb-subtotal td { font-weight: 600; background: var(--surface-2); }
 .wb-bad { color: var(--bad); }
+
+.cg-wrap-narrow { max-width: 360px; margin: 0 auto; }
+.cg-wrap-narrow .cg-wrap { margin-top: 0; }
 
 table { border-collapse: collapse; width: 100%; font-size: 0.78rem; }
 .table-scroll { overflow-x: auto; }

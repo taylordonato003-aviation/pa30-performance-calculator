@@ -548,23 +548,6 @@
     statusEl.className = 'cg-status' + ((toOk === false || ldgOk === false) ? ' cg-status-bad' : (toOk && ldgOk ? ' cg-status-ok' : ''));
   }
 
-  function renderPowerTable() {
-    var fig = DATA['fig5-17'];
-    var tbody = $('powerTableBody');
-    var rows = fig.rows.map(function (r) {
-      function cell(block, rpm) {
-        if (!block || !block.mp || block.mp[rpm] === undefined) return '<td>—</td>';
-        return '<td>' + block.mp[rpm] + '</td>';
-      }
-      return '<tr><td>' + r.altitude + '</td><td>' + r.stdTempF + ' / ' + r.stdTempC + '</td>' +
-        cell(r.p55, '2100') + cell(r.p55, '2200') + cell(r.p55, '2300') + cell(r.p55, '2400') +
-        cell(r.p65, '2100') + cell(r.p65, '2200') + cell(r.p65, '2300') + cell(r.p65, '2400') +
-        cell(r.p75, '2200') + cell(r.p75, '2300') + cell(r.p75, '2400') +
-        '</tr>';
-    }).join('');
-    tbody.innerHTML = rows;
-  }
-
   // ---------- airport lookup ----------
 
   var SURFACE_NAMES = {
@@ -1572,7 +1555,6 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    renderPowerTable();
     renderWeightBalance();
     if (!$('etdDate').value) {
       var today = new Date();

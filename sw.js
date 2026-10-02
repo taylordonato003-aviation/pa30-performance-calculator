@@ -3,7 +3,7 @@
 // registration accordingly, so this file is simply never loaded when the
 // app is opened directly from disk.
 
-var CACHE_NAME = 'pa30-calc-v8';
+var CACHE_NAME = 'pa30-calc-v9';
 var ASSETS = [
   './index.html',
   './style.css',
@@ -50,6 +50,30 @@ self.addEventListener('activate', function (event) {
 
 self.addEventListener('fetch', function (event) {
   if (event.request.method !== 'GET') return;
+
+  // index.html and app.js must always be the same version -- app.js reads
+  // element IDs that only that exact index.html defines, so a stale app.js
+  // served alongside a fresh index.html (or vice versa) silently breaks the
+  // whole page. Network-first for just these two (falling back to cache only
+  // when offline) guarantees they're always fetched and cached together;
+  // everything else keeps the fast cache-first/background-update strategy.
+  var url = new URL(event.request.url);
+  var isAppShellEntry = event.request.mode === 'navigate' ||
+    /\/(index\.html)?$/.test(url.pathname) || /\/app\.js$/.test(url.pathname);
+
+  if (isAppShellEntry) {
+    event.respondWith(
+      fetch(event.request).then(function (resp) {
+        if (resp && resp.ok) {
+          var copy = resp.clone();
+          caches.open(CACHE_NAME).then(function (cache) { cache.put(event.request, copy); });
+        }
+        return resp;
+      }).catch(function () { return caches.match(event.request); })
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then(function (cached) {
       var network = fetch(event.request).then(function (resp) {

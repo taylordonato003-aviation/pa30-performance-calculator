@@ -192,10 +192,12 @@
   function readInputs() {
     var depAltFt = parseFloat($('depPressureAlt').value) || 0;
     var destAltFt = parseFloat($('destPressureAlt').value) || 0;
-    var oatRaw = parseFloat($('oat').value);
-    if (isNaN(oatRaw)) oatRaw = 59;
-    var oatUnit = $('oatUnit').value;
-    var oatF = oatUnit === 'C' ? cToF(oatRaw) : oatRaw;
+    var depOatRaw = parseFloat($('depOat').value);
+    if (isNaN(depOatRaw)) depOatRaw = 59;
+    var depOatF = $('depOatUnit').value === 'C' ? cToF(depOatRaw) : depOatRaw;
+    var destOatRaw = parseFloat($('destOat').value);
+    if (isNaN(destOatRaw)) destOatRaw = 59;
+    var destOatF = $('destOatUnit').value === 'C' ? cToF(destOatRaw) : destOatRaw;
     var toWeight = clamp(parseFloat($('toWeight').value) || 3600, 1500, 3600);
     var ldgWeightRaw = parseFloat($('ldgWeight').value);
     var ldgWeight = isNaN(ldgWeightRaw) ? toWeight : clamp(ldgWeightRaw, 1500, 3600);
@@ -209,7 +211,7 @@
     var power = clamp(parseFloat($('power').value) || 65, 45, 75);
     var fuel = clamp(parseFloat($('fuel').value) || 84, 0, 84);
     var cg = parseFloat($('cg').value);
-    return { depAltFt: depAltFt, destAltFt: destAltFt, oatF: oatF, toWeight: toWeight, ldgWeight: ldgWeight, depWind: depWind, destWind: destWind, power: power, fuel: fuel, cg: cg };
+    return { depAltFt: depAltFt, destAltFt: destAltFt, depOatF: depOatF, destOatF: destOatF, toWeight: toWeight, ldgWeight: ldgWeight, depWind: depWind, destWind: destWind, power: power, fuel: fuel, cg: cg };
   }
 
   function fmt(n, unit) {
@@ -225,17 +227,17 @@
     var inp = readInputs();
 
     // Takeoff (at departure pressure altitude/wind)
-    $('toGroundRun').textContent = fmt(ladderResult('fig5-06', inp.depAltFt, inp.oatF, inp.toWeight, inp.depWind), 'ft');
-    $('toDist50').textContent = fmt(ladderResult('fig5-07', inp.depAltFt, inp.oatF, inp.toWeight, inp.depWind), 'ft');
-    $('accelStop').textContent = fmt(ladderResult('fig5-08', inp.depAltFt, inp.oatF, inp.toWeight, inp.depWind), 'ft');
+    $('toGroundRun').textContent = fmt(ladderResult('fig5-06', inp.depAltFt, inp.depOatF, inp.toWeight, inp.depWind), 'ft');
+    $('toDist50').textContent = fmt(ladderResult('fig5-07', inp.depAltFt, inp.depOatF, inp.toWeight, inp.depWind), 'ft');
+    $('accelStop').textContent = fmt(ladderResult('fig5-08', inp.depAltFt, inp.depOatF, inp.toWeight, inp.depWind), 'ft');
 
-    // Takeoff - immediate return & land (landing charts at departure altitude/wind, at takeoff weight)
-    $('irGroundRoll').textContent = fmt(ladderResult('fig5-15', inp.depAltFt, inp.oatF, inp.toWeight, inp.depWind), 'ft');
-    $('irDist50').textContent = fmt(ladderResult('fig5-16', inp.depAltFt, inp.oatF, inp.toWeight, inp.depWind), 'ft');
+    // Takeoff - immediate return & land (landing charts at departure altitude/wind/OAT, at takeoff weight)
+    $('irGroundRoll').textContent = fmt(ladderResult('fig5-15', inp.depAltFt, inp.depOatF, inp.toWeight, inp.depWind), 'ft');
+    $('irDist50').textContent = fmt(ladderResult('fig5-16', inp.depAltFt, inp.depOatF, inp.toWeight, inp.depWind), 'ft');
 
-    // Landing (at destination pressure altitude/wind, destination landing weight)
-    $('ldgGroundRoll').textContent = fmt(ladderResult('fig5-15', inp.destAltFt, inp.oatF, inp.ldgWeight, inp.destWind), 'ft');
-    $('ldgDist50').textContent = fmt(ladderResult('fig5-16', inp.destAltFt, inp.oatF, inp.ldgWeight, inp.destWind), 'ft');
+    // Landing (at destination pressure altitude/wind/OAT, destination landing weight)
+    $('ldgGroundRoll').textContent = fmt(ladderResult('fig5-15', inp.destAltFt, inp.destOatF, inp.ldgWeight, inp.destWind), 'ft');
+    $('ldgDist50').textContent = fmt(ladderResult('fig5-16', inp.destAltFt, inp.destOatF, inp.ldgWeight, inp.destWind), 'ft');
 
     // Go-around / balked landing (clean-config climb reference, at destination altitude/landing weight)
     var vvDest = vxvy(inp.destAltFt);
@@ -320,8 +322,8 @@
     if (depRwy === null) {
       rows.push(pmRow('Takeoff runway check', 'Select/confirm a departure runway (or airport) above to check', null));
     } else {
-      var asd = ladderResult('fig5-08', inp.depAltFt, inp.oatF, inp.toWeight, inp.depWind);
-      var tod50 = ladderResult('fig5-07', inp.depAltFt, inp.oatF, inp.toWeight, inp.depWind);
+      var asd = ladderResult('fig5-08', inp.depAltFt, inp.depOatF, inp.toWeight, inp.depWind);
+      var tod50 = ladderResult('fig5-07', inp.depAltFt, inp.depOatF, inp.toWeight, inp.depWind);
       rows.push(pmRow('Accelerate-stop distance vs runway', fmt(asd, 'ft') + ' vs ' + fmt(depRwy, 'ft') + ' available', asd <= depRwy));
       rows.push(pmRow('Takeoff dist. (50ft) × ' + toFactor + ' vs runway', fmt(tod50 * toFactor, 'ft') + ' needed vs ' + fmt(depRwy, 'ft') + ' available', tod50 * toFactor <= depRwy));
     }
@@ -333,7 +335,7 @@
     } else if (noFlap) {
       rows.push(pmRow('No-flap landing minimum runway', fmt(destRwy, 'ft') + ' available vs ' + fmt(noFlapMin, 'ft') + ' minimum', destRwy >= noFlapMin));
     } else {
-      var lnd50 = ladderResult('fig5-16', inp.destAltFt, inp.oatF, inp.ldgWeight, inp.destWind);
+      var lnd50 = ladderResult('fig5-16', inp.destAltFt, inp.destOatF, inp.ldgWeight, inp.destWind);
       rows.push(pmRow('Landing dist. (50ft) × ' + ldgFactor + ' vs runway', fmt(lnd50 * ldgFactor, 'ft') + ' needed vs ' + fmt(destRwy, 'ft') + ' available', lnd50 * ldgFactor <= destRwy));
     }
 
@@ -341,13 +343,14 @@
     // above the actual density altitude at departure, destination, and cruise.
     var seCeilSvc = ceilingDa(DATA['fig5-10'].weightCurves, inp.toWeight, 50);
     var threshold = seCeilSvc - ceilMargin;
-    var oatC = (inp.oatF - 32) * 5 / 9;
+    var depOatC = (inp.depOatF - 32) * 5 / 9;
+    var destOatC = (inp.destOatF - 32) * 5 / 9;
     function daCheck(label, daVal) {
       if (daVal === null || isNaN(daVal)) { rows.push(pmRow(label, 'Enter OAT to compute', null)); return; }
       rows.push(pmRow(label, fmt(daVal, 'ft DA') + ' vs ' + fmt(threshold, 'ft DA') + ' limit', daVal <= threshold));
     }
-    daCheck('Departure DA vs SE service ceiling − margin', densityAltitude(inp.depAltFt, oatC));
-    daCheck('Destination DA vs SE service ceiling − margin', densityAltitude(inp.destAltFt, oatC));
+    daCheck('Departure DA vs SE service ceiling − margin', densityAltitude(inp.depAltFt, depOatC));
+    daCheck('Destination DA vs SE service ceiling − margin', densityAltitude(inp.destAltFt, destOatC));
     var cruiseOatRaw = parseFloat($('cruiseOat').value);
     if (!isNaN(cruiseOatRaw)) {
       var cruiseOatC = $('cruiseOatUnit').value === 'F' ? (cruiseOatRaw - 32) * 5 / 9 : cruiseOatRaw;
@@ -355,6 +358,112 @@
     }
 
     el.innerHTML = rows.join('');
+  }
+
+  // ---------- weight & balance worksheet ----------
+
+  var WB_PILOT_ARM = 84.8, WB_REAR_ARM = 120.5, WB_BAG_ARM = 142, WB_MAIN_ARM = 90, WB_AUX_ARM = 95;
+  var WB_GEAR_MOMENT_SHIFT = 770;
+  var WB_MAX_GROSS = 3600;
+  var WB_MAX_BAG = 250;
+  var WB_MAIN_CAP_GAL = 54, WB_AUX_CAP_GAL = 30;
+  var WB_FUEL_LB_PER_GAL = 6;
+
+  function wbNum(id) {
+    var v = parseFloat($(id).value);
+    return isNaN(v) ? 0 : v;
+  }
+
+  // Computes the loading worksheet (empty weight through takeoff/landing weight
+  // and C.G., both gear positions) and pushes the gear-extended takeoff/landing
+  // results into the toWeight/ldgWeight/cg fields that drive the rest of the
+  // app. Only runs on a worksheet field's own input/change event (see the
+  // dedicated listener in DOMContentLoaded), so a manual edit to toWeight/cg
+  // afterward sticks until a worksheet field changes again.
+  function renderWeightBalance() {
+    var emptyWt = wbNum('wbEmptyWt');
+    var emptyArm = wbNum('wbEmptyArm');
+    var pilotWt = Math.max(0, wbNum('wbPilotWt'));
+    var rearWt = Math.max(0, wbNum('wbRearWt'));
+    var bagWt = Math.max(0, wbNum('wbBagWt'));
+    var mainGal = clamp(wbNum('wbMainGal'), 0, WB_MAIN_CAP_GAL);
+    var auxGal = clamp(wbNum('wbAuxGal'), 0, WB_AUX_CAP_GAL);
+    var mainBurnGal = Math.max(0, wbNum('wbMainBurnGal'));
+    var auxBurnGal = Math.max(0, wbNum('wbAuxBurnGal'));
+
+    var emptyMoment = emptyWt * emptyArm;
+    var pilotMoment = pilotWt * WB_PILOT_ARM;
+    var rearMoment = rearWt * WB_REAR_ARM;
+    var bagMoment = bagWt * WB_BAG_ARM;
+    $('wbEmptyMoment').textContent = fmt(emptyMoment);
+    $('wbPilotMoment').textContent = fmt(pilotMoment);
+    $('wbRearMoment').textContent = fmt(rearMoment);
+    $('wbBagMoment').textContent = fmt(bagMoment);
+
+    var preFuelWt = emptyWt + pilotWt + rearWt + bagWt;
+    var preFuelMoment = emptyMoment + pilotMoment + rearMoment + bagMoment;
+    var preFuelArm = preFuelWt > 0 ? preFuelMoment / preFuelWt : 0;
+    $('wbPreFuelWt').textContent = fmt(preFuelWt);
+    $('wbPreFuelArm').textContent = preFuelWt > 0 ? preFuelArm.toFixed(2) : '—';
+    $('wbPreFuelMoment').textContent = fmt(preFuelMoment);
+
+    var mainWt = mainGal * WB_FUEL_LB_PER_GAL, auxWt = auxGal * WB_FUEL_LB_PER_GAL;
+    var mainMoment = mainWt * WB_MAIN_ARM, auxMoment = auxWt * WB_AUX_ARM;
+    $('wbMainMoment').textContent = fmt(mainMoment);
+    $('wbAuxMoment').textContent = fmt(auxMoment);
+
+    var toWt = preFuelWt + mainWt + auxWt;
+    var toMomentExt = preFuelMoment + mainMoment + auxMoment;
+    var toArmExt = toWt > 0 ? toMomentExt / toWt : 0;
+    $('wbToWtExt').textContent = fmt(toWt);
+    $('wbToArmExt').textContent = toWt > 0 ? toArmExt.toFixed(2) : '—';
+    $('wbToMomentExt').textContent = fmt(toMomentExt);
+
+    var toMomentRet = toMomentExt + WB_GEAR_MOMENT_SHIFT;
+    var toArmRet = toWt > 0 ? toMomentRet / toWt : 0;
+    $('wbToWtRet').textContent = fmt(toWt);
+    $('wbToArmRet').textContent = toWt > 0 ? toArmRet.toFixed(2) : '—';
+    $('wbToMomentRet').textContent = fmt(toMomentRet);
+
+    var toStatusBits = [];
+    if (toWt > WB_MAX_GROSS) toStatusBits.push('✗ Takeoff weight ' + fmt(toWt, 'lb') + ' exceeds max gross ' + WB_MAX_GROSS + ' lb');
+    if (bagWt > WB_MAX_BAG) toStatusBits.push('✗ Baggage ' + fmt(bagWt, 'lb') + ' exceeds the 250 lb max');
+    $('wbToStatus').textContent = toStatusBits.length ? toStatusBits.join(' · ') : '✓ Takeoff weight within gross and baggage limits.';
+    $('wbToStatus').className = 'hint' + (toStatusBits.length ? ' wb-bad' : '');
+
+    var mainBurnWt = Math.min(mainBurnGal, mainGal) * WB_FUEL_LB_PER_GAL;
+    var auxBurnWt = Math.min(auxBurnGal, auxGal) * WB_FUEL_LB_PER_GAL;
+    var mainBurnMoment = mainBurnWt * WB_MAIN_ARM, auxBurnMoment = auxBurnWt * WB_AUX_ARM;
+    $('wbMainBurnMoment').textContent = fmt(mainBurnMoment);
+    $('wbAuxBurnMoment').textContent = fmt(auxBurnMoment);
+
+    var descWt = toWt - mainBurnWt - auxBurnWt;
+    var descMoment = toMomentRet - mainBurnMoment - auxBurnMoment;
+    var descArm = descWt > 0 ? descMoment / descWt : 0;
+    $('wbDescWtRet').textContent = fmt(descWt);
+    $('wbDescArmRet').textContent = descWt > 0 ? descArm.toFixed(2) : '—';
+    $('wbDescMomentRet').textContent = fmt(descMoment);
+
+    var ldgMomentExt = descMoment - WB_GEAR_MOMENT_SHIFT;
+    var ldgArmExt = descWt > 0 ? ldgMomentExt / descWt : 0;
+    $('wbLdgWtExt').textContent = fmt(descWt);
+    $('wbLdgArmExt').textContent = descWt > 0 ? ldgArmExt.toFixed(2) : '—';
+    $('wbLdgMomentExt').textContent = fmt(ldgMomentExt);
+
+    var ldgStatusBits = [];
+    if (descWt > WB_MAX_GROSS) ldgStatusBits.push('✗ Landing weight ' + fmt(descWt, 'lb') + ' exceeds max gross ' + WB_MAX_GROSS + ' lb');
+    if (mainBurnGal + auxBurnGal > mainGal + auxGal + 0.001) ldgStatusBits.push('✗ Fuel burned exceeds fuel loaded');
+    $('wbLdgStatus').textContent = ldgStatusBits.length ? ldgStatusBits.join(' · ') : '✓ Landing weight within max gross.';
+    $('wbLdgStatus').className = 'hint' + (ldgStatusBits.length ? ' wb-bad' : '');
+
+    if (toWt > 0) {
+      $('toWeight').value = Math.round(toWt * 10) / 10;
+      $('cg').value = toArmExt.toFixed(2);
+    }
+    if (descWt > 0) {
+      $('ldgWeight').value = Math.round(descWt * 10) / 10;
+    }
+    render();
   }
 
   function renderCg(inp) {
@@ -587,8 +696,8 @@
         wxEl.innerHTML = html;
 
         if (applyOat && tempC !== null) {
-          $('oatUnit').value = 'C';
-          $('oat').value = Math.round(tempC * 10) / 10;
+          $(prefix + 'OatUnit').value = 'C';
+          $(prefix + 'Oat').value = Math.round(tempC * 10) / 10;
         }
 
         lastWind[prefix] = windKnown ? { dirDeg: (m.wdir === 0 ? null : m.wdir), speedKt: m.wspd } : null;
@@ -1125,9 +1234,16 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     renderPowerTable();
+    renderWeightBalance();
     render();
     runVerification();
+    var wbFieldIds = ['wbEmptyWt', 'wbEmptyArm', 'wbPilotWt', 'wbRearWt', 'wbBagWt', 'wbMainGal', 'wbAuxGal', 'wbMainBurnGal', 'wbAuxBurnGal'];
     var skipGenericBinding = { depIcao: 1, destIcao: 1, depRunway: 1, destRunway: 1 };
+    wbFieldIds.forEach(function (id) { skipGenericBinding[id] = 1; });
+    wbFieldIds.forEach(function (id) {
+      $(id).addEventListener('input', renderWeightBalance);
+      $(id).addEventListener('change', renderWeightBalance);
+    });
     document.querySelectorAll('input, select').forEach(function (el) {
       if (skipGenericBinding[el.id]) return;
       el.addEventListener('input', render);
@@ -1137,7 +1253,7 @@
       lookupAirport('dep', 'depIcao', 'depInfo', 'depPressureAlt', 'depWx', 'depRunway', 'depRwyField', true);
     });
     $('destIcao').addEventListener('input', function () {
-      lookupAirport('dest', 'destIcao', 'destInfo', 'destPressureAlt', 'destWx', 'destRunway', 'destRwyField', false);
+      lookupAirport('dest', 'destIcao', 'destInfo', 'destPressureAlt', 'destWx', 'destRunway', 'destRwyField', true);
     });
     $('depRunway').addEventListener('change', function () { computeWindComponent('dep'); render(); });
     $('destRunway').addEventListener('change', function () { computeWindComponent('dest'); render(); });

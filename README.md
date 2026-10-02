@@ -189,6 +189,22 @@ destination/cruise density altitude against the single-engine service ceiling
 less your chosen margin. It uses the specific runway selected above if you
 picked one, otherwise the airport's longest runway.
 
+### Weight & balance worksheet
+
+The Weight & Balance card is a fillable loading worksheet (prefilled with
+N40DA's empty weight/arm — edit those two fields for a different airplane),
+following the same chain as a standard POH loading form: empty weight +
+pilot/front passenger + rear passengers + baggage = total before fuel; add
+main/aux tank fuel (6 lb/gal) to get takeoff weight & C.G., gear extended;
+add a fixed +770 in-lb moment shift for gear retracted (the in-flight
+configuration); subtract fuel burned en route (also moment-weighted by tank
+arm) to get descent weight & C.G., gear retracted; subtract the same 770
+in-lb shift back out for landing weight & C.G., gear extended. Takeoff/
+landing weight and C.G. feed the Conditions card's weight fields and the
+envelope plot automatically whenever a worksheet field changes — those
+fields stay directly editable afterward for a quick what-if without
+re-touching the worksheet.
+
 ### Why `data.js` duplicates `data/*.json`
 
 Browsers block `fetch()` of local files from a `file://` page (a CORS
@@ -222,8 +238,9 @@ wind, flight category, raw text, and observation age) and:
   `433 ft elev + (29.92 − 30.07) × 1000 = 280 ft`)
 - shows density altitude the same way, for situational awareness — but see
   the note below, it is **not** what the calculator actually uses
-- fills in outside air temperature, from departure's METAR only (OAT is a
-  single shared field across the whole calculator)
+- fills in outside air temperature from that airport's own METAR (departure
+  and destination each have their own OAT field, so takeoff and landing can
+  use different actual temperatures)
 - once a runway is picked, computes the real headwind/crosswind component
   by trigonometry against that runway's heading and the live wind, and
   auto-fills the wind-component field (still editable afterward if you want

@@ -212,16 +212,6 @@
           <label for="depRunway">Departure runway</label>
           <select id="depRunway"><option value="">— select —</option></select>
         </div>
-        <div class="weather-info" id="depWx"></div>
-        <div class="wind-calc" id="depWindCalc"></div>
-        <details class="wx-extra" id="depTafWrap" hidden>
-          <summary>Forecast (TAF)</summary>
-          <div id="depTaf"></div>
-        </details>
-        <details class="wx-extra" id="depOutlookWrap" hidden>
-          <summary>Extended outlook (NWS)</summary>
-          <div id="depOutlook"></div>
-        </details>
       </div>
       <div class="field">
         <label for="destIcao">Destination airport</label>
@@ -231,16 +221,6 @@
           <label for="destRunway">Landing runway</label>
           <select id="destRunway"><option value="">— select —</option></select>
         </div>
-        <div class="weather-info" id="destWx"></div>
-        <div class="wind-calc" id="destWindCalc"></div>
-        <details class="wx-extra" id="destTafWrap" hidden>
-          <summary>Forecast (TAF)</summary>
-          <div id="destTaf"></div>
-        </details>
-        <details class="wx-extra" id="destOutlookWrap" hidden>
-          <summary>Extended outlook (NWS)</summary>
-          <div id="destOutlook"></div>
-        </details>
       </div>
     </div>
   </section>
@@ -277,68 +257,38 @@
 
   <section class="card">
     <h2>Takeoff</h2>
-    <div class="results-grid">
-      <div class="result">
-        <div class="label">Ground run <span class="fig">Fig 5-06</span></div>
-        <div class="value" id="toGroundRun">—</div>
-      </div>
-      <div class="result">
-        <div class="label">Distance over 50 ft obstacle <span class="fig">Fig 5-07</span></div>
-        <div class="value" id="toDist50">—</div>
-      </div>
-      <div class="result">
-        <div class="label">Accelerate-stop distance <span class="fig">Fig 5-08</span></div>
-        <div class="value" id="accelStop">—</div>
-      </div>
-    </div>
+    <table class="results-table">
+      <tbody>
+        <tr><td>Ground run <span class="fig">Fig 5-06</span></td><td id="toGroundRun">—</td></tr>
+        <tr><td>Distance over 50 ft obstacle <span class="fig">Fig 5-07</span></td><td id="toDist50">—</td></tr>
+        <tr><td>Accelerate-stop distance <span class="fig">Fig 5-08</span></td><td id="accelStop">—</td></tr>
+      </tbody>
+    </table>
 
     <h3 class="subhead">Immediate Return &amp; Land</h3>
-    <p class="hint">If something requires landing right back after takeoff — same weight as takeoff, since essentially no fuel has burned off yet.</p>
-    <div class="results-grid">
-      <div class="result">
-        <div class="label">Landing ground roll at takeoff weight <span class="fig">Fig 5-15</span></div>
-        <div class="value" id="irGroundRoll">—</div>
-      </div>
-      <div class="result">
-        <div class="label">Landing distance over 50 ft at takeoff weight <span class="fig">Fig 5-16</span></div>
-        <div class="value" id="irDist50">—</div>
-      </div>
-    </div>
+    <table class="results-table">
+      <tbody>
+        <tr><td>Landing ground roll at takeoff weight <span class="fig">Fig 5-15</span></td><td id="irGroundRoll">—</td></tr>
+        <tr><td>Landing distance over 50 ft at takeoff weight <span class="fig">Fig 5-16</span></td><td id="irDist50">—</td></tr>
+      </tbody>
+    </table>
   </section>
 
   <section class="card">
     <h2>Climb</h2>
-    <div class="results-grid">
-      <div class="result">
-        <div class="label">V<sub>X</sub> / V<sub>Y</sub>, both engines <span class="fig">Fig 5-11</span></div>
-        <div class="value"><span id="vxMulti">—</span> / <span id="vyMulti">—</span><small id="vxyMultiCas"></small></div>
-      </div>
-      <div class="result">
-        <div class="label">V<sub>X</sub> / V<sub>Y</sub>, single engine <span class="fig">Fig 5-11</span></div>
-        <div class="value"><span id="vxSingle">—</span> / <span id="vySingle">—</span><small id="vxySingleCas"></small></div>
-      </div>
-      <div class="result">
-        <div class="label">Rate of climb, both engines <span class="fig">Fig 5-09</span></div>
-        <div class="value" id="rocMulti">—</div>
-      </div>
-      <div class="result">
-        <div class="label">Rate of climb, single engine <span class="fig">Fig 5-10</span></div>
-        <div class="value" id="rocSingle">—</div>
-      </div>
-      <div class="result">
-        <div class="label">Absolute / service ceiling, both engines <span class="fig">Fig 5-09</span></div>
-        <div class="value" id="ceilMulti">—</div>
-      </div>
-      <div class="result">
-        <div class="label">Absolute / service ceiling, single engine <span class="fig">Fig 5-10</span></div>
-        <div class="value" id="ceilSingle">—</div>
-      </div>
-    </div>
-    <p class="hint">Ceilings are density altitude, at takeoff weight — service ceiling is 100 ft/min ROC (both engines) or 50 ft/min (single engine); absolute ceiling is 0 ft/min. CAS shown under V<sub>X</sub>/V<sub>Y</sub> is corrected from IAS via <span class="fig">Fig 5-02</span>, flaps retracted.</p>
+    <table class="results-table">
+      <tbody>
+        <tr><td>V<sub>X</sub> / V<sub>Y</sub>, both engines <span class="fig">Fig 5-11</span></td><td><span id="vxMulti">—</span> / <span id="vyMulti">—</span><small id="vxyMultiCas"></small></td></tr>
+        <tr><td>V<sub>X</sub> / V<sub>Y</sub>, single engine <span class="fig">Fig 5-11</span></td><td><span id="vxSingle">—</span> / <span id="vySingle">—</span><small id="vxySingleCas"></small></td></tr>
+        <tr><td>Rate of climb, both engines <span class="fig">Fig 5-09</span></td><td id="rocMulti">—</td></tr>
+        <tr><td>Rate of climb, single engine <span class="fig">Fig 5-10</span></td><td id="rocSingle">—</td></tr>
+        <tr><td>Absolute / service ceiling, both engines <span class="fig">Fig 5-09</span></td><td id="ceilMulti">—</td></tr>
+        <tr><td>Absolute / service ceiling, single engine <span class="fig">Fig 5-10</span></td><td id="ceilSingle">—</td></tr>
+      </tbody>
+    </table>
 
     <h3 class="subhead">Climb Phase (Departure Elevation → Cruise Altitude)</h3>
-    <p class="hint">75% power, at takeoff weight — average of rate of climb/true airspeed at the two endpoints, headwind from the station nearest departure along the route's initial course.</p>
-    <div class="results-grid" id="climbPhaseResults"></div>
+    <div id="climbPhaseResults"></div>
   </section>
 
   <section class="card">
@@ -349,24 +299,16 @@
         <input type="number" id="power" value="65" step="5" min="45" max="75">
       </div>
     </div>
-    <div class="results-grid">
-      <div class="result">
-        <div class="label">True airspeed <span class="fig">Fig 5-12</span></div>
-        <div class="value" id="tas">—</div>
-      </div>
-      <div class="result">
-        <div class="label">Range <span class="fig">Fig 5-13</span></div>
-        <div class="value" id="range">—</div>
-      </div>
-      <div class="result">
-        <div class="label">Endurance <span class="fig">Fig 5-14</span></div>
-        <div class="value" id="endurance">—</div>
-      </div>
-    </div>
-    <p class="hint">Range/endurance are scaled from the 84-gal basic-fuel chart by the fuel loaded in the Weight &amp; Balance worksheet above; both already include the chart's built-in 45-minute reserve and give no credit for wind.</p>
+    <table class="results-table">
+      <tbody>
+        <tr><td>True airspeed <span class="fig">Fig 5-12</span></td><td id="tas">—</td></tr>
+        <tr><td>Range <span class="fig">Fig 5-13</span></td><td id="range">—</td></tr>
+        <tr><td>Endurance <span class="fig">Fig 5-14</span></td><td id="endurance">—</td></tr>
+      </tbody>
+    </table>
 
     <h3 class="subhead">Cruise Phase</h3>
-    <div class="results-grid" id="cruisePhaseResults"></div>
+    <div id="cruisePhaseResults"></div>
   </section>
 
   <section class="card">
@@ -377,11 +319,10 @@
         <input type="number" id="descentRate" value="500" step="50" min="100">
       </div>
     </div>
-    <p class="hint">There's no POH chart for descent rate — it's a pilot technique choice, not a performance limit, so set your own plan above. Descent phase is cruise altitude down to destination field elevation at 55% power, headwind from the station nearest destination along the route's final course.</p>
-    <div class="results-grid" id="descentPhaseResults"></div>
+    <div id="descentPhaseResults"></div>
 
     <h3 class="subhead">Trip Summary</h3>
-    <div class="results-grid" id="tripSummaryResults"></div>
+    <div id="tripSummaryResults"></div>
 
     <h3 class="subhead">Destination Forecast at ETA</h3>
     <div id="etaForecastResults"></div>
@@ -389,37 +330,22 @@
 
   <section class="card">
     <h2>Landing</h2>
-    <div class="results-grid">
-      <div class="result">
-        <div class="label">Ground roll <span class="fig">Fig 5-15</span></div>
-        <div class="value" id="ldgGroundRoll">—</div>
-      </div>
-      <div class="result">
-        <div class="label">Distance over 50 ft obstacle <span class="fig">Fig 5-16</span></div>
-        <div class="value" id="ldgDist50">—</div>
-      </div>
-    </div>
-    <p class="hint">Computed at the landing weight entered above.</p>
+    <table class="results-table">
+      <tbody>
+        <tr><td>Ground roll <span class="fig">Fig 5-15</span></td><td id="ldgGroundRoll">—</td></tr>
+        <tr><td>Distance over 50 ft obstacle <span class="fig">Fig 5-16</span></td><td id="ldgDist50">—</td></tr>
+      </tbody>
+    </table>
 
     <h3 class="subhead">Go-Around / Balked Landing</h3>
-    <div class="results-grid">
-      <div class="result">
-        <div class="label">V<sub>X</sub> / V<sub>Y</sub>, both engines</div>
-        <div class="value"><span id="gaVxMulti">—</span> / <span id="gaVyMulti">—</span><small id="gaVxyMultiCas"></small></div>
-      </div>
-      <div class="result">
-        <div class="label">V<sub>X</sub> / V<sub>Y</sub>, single engine</div>
-        <div class="value"><span id="gaVxSingle">—</span> / <span id="gaVySingle">—</span><small id="gaVxySingleCas"></small></div>
-      </div>
-      <div class="result">
-        <div class="label">Rate of climb, both engines (clean config)</div>
-        <div class="value" id="gaRocMulti">—</div>
-      </div>
-      <div class="result">
-        <div class="label">Rate of climb, single engine (clean config)</div>
-        <div class="value" id="gaRocSingle">—</div>
-      </div>
-    </div>
+    <table class="results-table">
+      <tbody>
+        <tr><td>V<sub>X</sub> / V<sub>Y</sub>, both engines</td><td><span id="gaVxMulti">—</span> / <span id="gaVyMulti">—</span><small id="gaVxyMultiCas"></small></td></tr>
+        <tr><td>V<sub>X</sub> / V<sub>Y</sub>, single engine</td><td><span id="gaVxSingle">—</span> / <span id="gaVySingle">—</span><small id="gaVxySingleCas"></small></td></tr>
+        <tr><td>Rate of climb, both engines (clean config)</td><td id="gaRocMulti">—</td></tr>
+        <tr><td>Rate of climb, single engine (clean config)</td><td id="gaRocSingle">—</td></tr>
+      </tbody>
+    </table>
   </section>
 
   <section class="card">

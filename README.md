@@ -260,28 +260,23 @@ eyeballing crosswind, and it avoids needing separate magnetic-declination
 data per airport.
 
 About half a second after a valid ICAO is entered, the app also fetches
-**live current METAR** for that airport (temperature, altimeter setting,
-wind, flight category, raw text, and observation age) and:
+**live current METAR** for that airport and applies it silently, straight
+into the Conditions table below — no separate weather readout here, since
+that would just be the same pressure altitude/OAT/wind numbers shown twice:
 - upgrades pressure altitude from the standard-day elevation guess to a real
-  altimeter-corrected value, showing the exact arithmetic inline (e.g.
-  `433 ft elev + (29.92 − 30.07) × 1000 = 280 ft`)
-- shows density altitude the same way, for situational awareness — but see
-  the note below, it is **not** what the calculator actually uses
-- fills in outside air temperature from that airport's own METAR (departure
-  and destination each have their own OAT field, so takeoff and landing can
-  use different actual temperatures)
-- once a runway is picked, computes the real headwind/crosswind component
-  by trigonometry against that runway's heading and the live wind, and
-  auto-fills the wind-component field (still editable afterward if you want
-  to override it)
+  altimeter-corrected value
+- fills in outside air temperature (departure and destination each have
+  their own field in Conditions, so takeoff and landing can use different
+  actual temperatures)
+- once a runway is picked, computes the real headwind component by
+  trigonometry against that runway's heading and the live wind, and writes
+  it into Conditions' headwind field (still a plain editable field there if
+  you want to override it)
 
-**Pressure altitude vs. density altitude:** this calculator's underlying POH
-charts are indexed by pressure altitude and OAT directly (that's how Piper
-drew them), not density altitude. Density altitude is computed and displayed
-purely as a pilot-familiar reference number (the standard rule-of-thumb
-approximation: `DA = PA + 120 × (OAT − ISA temperature at that PA)`, ISA
-temp = `15 − 2 × (PA / 1000)` °C) — it is never fed into any calculation
-here.
+If live weather is ever unreachable (offline, Worker down, airport has no
+reporting station), the fields already filled in from the standard-day
+elevation guess / manual entry are simply left alone — it never blocks
+manual entry, and never surfaces an error for something this optional.
 
 **Why this needed a proxy, and what it is:** the free NOAA Aviation Weather
 Center API (`aviationweather.gov`) has real-time METAR/TAF data but sends no
@@ -291,24 +286,13 @@ uses a small Cloudflare Worker (`cloudflare-worker/metar-proxy.js`) — a
 serverless function, free tier (100k requests/day, no credit card), that
 fetches aviationweather.gov server-side (no CORS applies server-to-server)
 and re-serves it with CORS headers scoped to this project's own GitHub Pages
-origin. If live weather is ever unreachable (offline, Worker down, airport
-has no reporting station), the UI says so and falls back to the field
-elevation already filled in — it never blocks manual entry.
+origin.
 
-**TAF and extended outlook**, collapsed under each airport's weather block
-once available (tap to expand):
-- **TAF** (≈30 hour forecast): raw text plus a readable period-by-period
-  breakdown (wind, visibility, clouds, weather, and a computed flight
-  category — LIFR/IFR/MVFR/VFR — per period), through the same Worker (a
-  `/taf` endpoint alongside `/metar` and `/windtemp`).
-- **Extended outlook** (several days out, US airports only): the National
-  Weather Service's own forecast (`api.weather.gov`), which already
-  incorporates NBM (the National Blend of Models, the modern successor to
-  the older GFS-MOS product) — so this effectively covers what a MOS lookup
-  would have, through NWS's actively-maintained product instead of chasing
-  a legacy raw-text format. **No proxy needed for this one**: `api.weather.gov`
-  sends `Access-Control-Allow-Origin: *`, confirmed by testing, so the app
-  calls it directly from the browser.
+**TAF** is also fetched (through the same Worker's `/taf` endpoint) and
+cached silently — it isn't shown under each airport either, for the same
+double-data reason, but it's what powers the Descent card's "destination
+forecast at ETA" lookup (see below), which is the one place a forecast
+actually matters rather than just duplicating the current conditions.
 
 ## Route planning (winds/temps aloft)
 
@@ -325,8 +309,10 @@ are), a dropdown lets you pick the right one by name/country.
 Set a cruise altitude and an altimeter setting (defaults to standard, 29.92)
 to get cruise pressure altitude, and an enroute OAT (manual entry — estimate
 it from the per-leg temperature-aloft readings, a briefing, or the ISA lapse
-rate) to get a cruise density altitude, shown the same reference-only way as
-the per-airport DA breakdown above. For each leg, the app computes true
+rate) to get a cruise density altitude — reference only, same as the DA
+columns in the Conditions table below: the POH charts this calculator uses
+are indexed by pressure altitude and OAT directly, not density altitude.
+For each leg, the app computes true
 course and distance from the waypoints' coordinates, finds the nearest
 winds-aloft forecast station to that leg's midpoint, interpolates its
 forecast to your cruise altitude, and shows the resulting headwind/tailwind

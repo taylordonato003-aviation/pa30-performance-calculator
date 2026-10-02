@@ -228,8 +228,11 @@
     return n.toFixed(1) + (unit ? ' ' + unit : '');
   }
   function resultTile(label, value, small) {
-    return '<div class="result"><div class="label">' + label + '</div><div class="value">' + value +
-      (small ? '<small>' + small + '</small>' : '') + '</div></div>';
+    return '<tr><td>' + label + '</td><td>' + value +
+      (small ? '<small>' + small + '</small>' : '') + '</td></tr>';
+  }
+  function resultsTable(rowsHtml) {
+    return '<table class="results-table"><tbody>' + rowsHtml + '</tbody></table>';
   }
 
   function render() {
@@ -577,12 +580,9 @@
     return d;
   }
 
-  function clearWeather(wxElId) {
-    wxRequestSeq[wxElId] = (wxRequestSeq[wxElId] || 0) + 1; // invalidate any in-flight fetch
-    clearTimeout(wxTimers[wxElId]);
-    var el = $(wxElId);
-    el.className = 'weather-info';
-    el.innerHTML = '';
+  function clearWeather(prefix) {
+    wxRequestSeq[prefix] = (wxRequestSeq[prefix] || 0) + 1; // invalidate any in-flight fetch
+    clearTimeout(wxTimers[prefix]);
   }
 
   function populateRunways(icao, rwySelectId, rwyFieldWrapId) {
@@ -606,57 +606,33 @@
     wrap.hidden = false;
   }
 
+  // Computes headwind component from live wind + the selected runway's
+  // heading and writes it straight into the Conditions table's wind field --
+  // no separate display, the Conditions table is the single place to see it
+  // (and override it, since it's a plain editable field there).
   function computeWindComponent(prefix) {
-    var windCalcEl = $(prefix + 'WindCalc');
     var select = $(prefix + 'Runway');
-    var windFieldId = prefix + 'Wind';
     var wind = lastWind[prefix];
     var selVal = select.value;
-
-    if (!selVal) {
-      windCalcEl.className = 'wind-calc';
-      windCalcEl.innerHTML = '';
-      return;
-    }
-    if (!wind) {
-      windCalcEl.className = 'wind-calc shown';
-      windCalcEl.innerHTML = 'Waiting on live wind data for this runway’s headwind/crosswind — enter the wind component manually below if weather doesn’t load.';
-      return;
-    }
+    if (!selVal || !wind) return;
 
     var rwyHdg = parseInt(selVal.split('|')[0], 10);
-    var rwyId = selVal.split('|')[1];
-    var diff, headwindKt, crosswindKt;
+    var headwindKt;
     if (wind.dirDeg === null) { // reported calm or variable
       headwindKt = 0;
-      crosswindKt = 0;
-      diff = 0;
     } else {
-      diff = angleDiff(wind.dirDeg, rwyHdg);
-      var rad = diff * Math.PI / 180;
+      var rad = angleDiff(wind.dirDeg, rwyHdg) * Math.PI / 180;
       headwindKt = wind.speedKt * Math.cos(rad);
-      crosswindKt = wind.speedKt * Math.sin(rad);
     }
-    var side = crosswindKt > 0.5 ? 'from the right' : (crosswindKt < -0.5 ? 'from the left' : '');
-
-    $(windFieldId).value = Math.round(headwindKt);
-
-    var headClass = headwindKt < 0 ? 'wc-head tailwind' : 'wc-head';
-    var headLabel = headwindKt < 0 ? 'Tailwind' : 'Headwind';
-    var html = '<span class="' + headClass + '">' + headLabel + ': ' + Math.abs(Math.round(headwindKt)) + ' kt</span>' +
-      ' &middot; Crosswind: ' + Math.round(Math.abs(crosswindKt)) + ' kt' + (side ? ' ' + side : '') +
-      '<br><span class="wx-note">Rwy ' + rwyId + ' (' + rwyHdg + '°) vs wind ' +
-      (wind.dirDeg === null ? 'calm/variable' : wind.dirDeg + '°') + ' @ ' + Math.round(wind.speedKt) + ' kt — applied to the wind component field below, editable if you want to override.</span>';
-    windCalcEl.className = 'wind-calc shown';
-    windCalcEl.innerHTML = html;
+    $(prefix + 'Wind').value = Math.round(headwindKt);
   }
 
-  function fetchWeather(icao, prefix, wxElId, paFieldId, elevFt, applyOat) {
-    var wxEl = $(wxElId);
-    var seq = (wxRequestSeq[wxElId] = (wxRequestSeq[wxElId] || 0) + 1);
-    wxEl.className = 'weather-info shown';
-    wxEl.textContent = 'Fetching live weather…';
-
+  // Fetches live METAR and silently applies it to the Conditions table:
+  // altimeter-corrected pressure altitude, OAT, and (via computeWindComponent)
+  // headwind -- no separate weather display, Conditions is the one place to
+  // see (and override) the resulting numbers.
+  function fetchWeather(icao, prefix, paFieldId, elevFt, applyOat) {
+    var seq = (wxRequestSeq[prefix] = (wxRequestSeq[prefix] || 0) + 1);
     var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
     var timeoutId = setTimeout(function () { if (controller) controller.abort(); }, 8000);
 
@@ -667,51 +643,16 @@
         return resp.json();
       })
       .then(function (data) {
-        if (seq !== wxRequestSeq[wxElId]) return; // superseded by a newer lookup
-        if (!Array.isArray(data) || data.length === 0) {
-          wxEl.innerHTML = 'No current METAR for ' + icao + ' — it may not be a reporting station.';
-          return;
-        }
+        if (seq !== wxRequestSeq[prefix]) return; // superseded by a newer lookup
+        if (!Array.isArray(data) || data.length === 0) return;
         var m = data[0];
         var tempC = (typeof m.temp === 'number') ? m.temp : null;
-        var tempF = (tempC !== null) ? cToF(tempC) : null;
         var altimInHg = (typeof m.altim === 'number') ? hpaToInHg(m.altim) : null;
-        var ageMin = m.obsTime ? Math.round(Date.now() / 1000 - m.obsTime) / 60 : null;
-        var stale = ageMin !== null && ageMin > 90;
-
-        var bits = [];
-        if (m.fltCat) bits.push('<span class="wx-flightcat ' + m.fltCat.toLowerCase() + '">' + m.fltCat + '</span>');
-        if (tempF !== null) bits.push(Math.round(tempF) + '°F (' + Math.round(tempC) + '°C)');
-        if (altimInHg !== null) bits.push(altimInHg.toFixed(2) + ' inHg');
         var windKnown = typeof m.wspd === 'number';
-        if (windKnown) {
-          var dirTxt = (!m.wdir && m.wdir !== 0) ? 'calm' : (m.wdir === 0 ? 'variable' : Math.round(m.wdir) + '°');
-          bits.push('wind ' + dirTxt + ' @ ' + Math.round(m.wspd) + ' kt');
-        }
-        var ageTxt = ageMin !== null ? (ageMin <= 1 ? 'just now' : Math.round(ageMin) + ' min ago') : '';
-        var html = bits.join(' &middot; ');
-        if (ageTxt) html += ' <span class="' + (stale ? 'wx-stale' : '') + '">(' + ageTxt + (stale ? ' — may be stale' : '') + ')</span>';
 
-        // Pressure altitude: field elevation corrected for the actual altimeter setting.
-        var pa = null;
         if (typeof elevFt === 'number' && altimInHg !== null) {
-          pa = Math.round(elevFt + (29.92 - altimInHg) * 1000);
-          $(paFieldId).value = pa;
-          html += '<span class="wx-breakdown">Pressure altitude = <code>' + elevFt + ' ft elev + (29.92 − ' +
-            altimInHg.toFixed(2) + ') × 1000</code> = <strong>' + pa + ' ft</strong> (applied below)</span>';
+          $(paFieldId).value = Math.round(elevFt + (29.92 - altimInHg) * 1000);
         }
-        // Density altitude: rule-of-thumb, reference only -- the POH charts use PA + OAT
-        // directly, not DA, so this is shown for situational awareness, not applied anywhere.
-        if (pa !== null && tempC !== null) {
-          var isaC = isaTempC(pa);
-          var da = Math.round(densityAltitude(pa, tempC));
-          html += '<span class="wx-breakdown">Density altitude &asymp; <code>' + pa + ' ft PA + 120 × (' +
-            Math.round(tempC) + '°C − ' + isaC.toFixed(1) + '°C ISA)</code> = <strong>' + da +
-            ' ft</strong> <span class="wx-note">(reference only — the POH charts below use pressure altitude + OAT directly, not density altitude)</span></span>';
-        }
-        if (m.rawOb) html += '<span class="wx-raw">' + m.rawOb + '</span>';
-        wxEl.innerHTML = html;
-
         if (applyOat && tempC !== null) {
           $(prefix + 'Oat').value = Math.round(tempC * 10) / 10;
         }
@@ -722,8 +663,7 @@
       })
       .catch(function () {
         clearTimeout(timeoutId);
-        if (seq !== wxRequestSeq[wxElId]) return;
-        wxEl.innerHTML = 'Live weather unavailable right now — using field elevation / manual entry instead.';
+        if (seq !== wxRequestSeq[prefix]) return;
         lastWind[prefix] = null;
         computeWindComponent(prefix);
       });
@@ -789,58 +729,18 @@
     return clouds.map(function (c) { return c.cover + ' ' + c.base.toLocaleString() + ' ft'; }).join(', ');
   }
 
+  // Fetched and cached silently -- no longer displayed in the Airports card
+  // (Conditions already shows live PA/DA/temp/wind; a full TAF dump there
+  // was duplicate information), but still needed for the Descent card's
+  // "destination forecast at ETA" lookup below.
   function fetchTaf(icao, prefix) {
-    var wrap = $(prefix + 'TafWrap');
-    var el = $(prefix + 'Taf');
     fetch(WEATHER_PROXY + '/taf?ids=' + encodeURIComponent(icao))
       .then(function (r) { if (!r.ok) throw new Error('bad status'); return r.json(); })
       .then(function (data) {
-        if (!Array.isArray(data) || !data.length) { wrap.hidden = true; lastTaf[prefix] = null; computeRoute(); return; }
-        var d = data[0];
-        lastTaf[prefix] = d;
-        var html = '<div class="wx-extra-body"><span class="wx-raw">' + d.rawTAF + '</span>';
-        (d.fcsts || []).forEach(function (f) {
-          var cat = flightCategory(f.visib, f.clouds);
-          html += '<div class="taf-period"><span class="tp-change">' + tafPeriodLabel(f) + '</span>' +
-            (cat ? '<span class="tp-flightcat ' + cat.toLowerCase() + '">' + cat + '</span>' : '') +
-            '<br>' + fmtTafWind(f) + (f.visib ? (' · Vis ' + f.visib + ' SM') : '') + (f.wxString ? (' · ' + f.wxString) : '') +
-            '<br>' + fmtClouds(f.clouds) + '</div>';
-        });
-        html += '</div>';
-        el.innerHTML = html;
-        wrap.hidden = false;
+        lastTaf[prefix] = (Array.isArray(data) && data.length) ? data[0] : null;
         computeRoute();
       })
-      .catch(function () { wrap.hidden = true; lastTaf[prefix] = null; computeRoute(); });
-  }
-
-  // ---------- NWS extended outlook (no proxy needed -- api.weather.gov sends CORS: *) ----------
-
-  function fetchOutlook(lat, lon, prefix) {
-    var wrap = $(prefix + 'OutlookWrap');
-    var el = $(prefix + 'Outlook');
-    fetch('https://api.weather.gov/points/' + lat.toFixed(4) + ',' + lon.toFixed(4))
-      .then(function (r) { if (!r.ok) throw new Error('not covered'); return r.json(); })
-      .then(function (d) {
-        var forecastUrl = d.properties && d.properties.forecast;
-        if (!forecastUrl) throw new Error('no forecast url');
-        return fetch(forecastUrl);
-      })
-      .then(function (r2) { if (!r2.ok) throw new Error('bad status'); return r2.json(); })
-      .then(function (fd) {
-        var periods = (fd.properties && fd.properties.periods) || [];
-        if (!periods.length) { wrap.hidden = true; return; }
-        var html = '<div class="wx-extra-body">';
-        periods.slice(0, 8).forEach(function (p) {
-          html += '<div class="outlook-period"><span class="op-name">' + p.name + '</span>: ' +
-            p.temperature + '°' + p.temperatureUnit + ', ' + p.windSpeed + ' ' + p.windDirection +
-            '<br>' + p.shortForecast + '</div>';
-        });
-        html += '<p class="wx-note">Source: National Weather Service (api.weather.gov) — US airports only.</p></div>';
-        el.innerHTML = html;
-        wrap.hidden = false;
-      })
-      .catch(function () { wrap.hidden = true; });
+      .catch(function () { lastTaf[prefix] = null; computeRoute(); });
   }
 
   // Open-Meteo: free, no key, full CORS (Access-Control-Allow-Origin: *),
@@ -882,18 +782,16 @@
     return { tempC: data.tempC[best], windKt: data.windKt[best], windDirDeg: data.windDirDeg[best], altimIn: data.altimIn[best] };
   }
 
-  function lookupAirport(prefix, icaoFieldId, infoElId, paFieldId, wxElId, rwySelectId, rwyFieldWrapId, applyOat) {
+  function lookupAirport(prefix, icaoFieldId, infoElId, paFieldId, rwySelectId, rwyFieldWrapId, applyOat) {
     var AIRPORTS = window.PA30_AIRPORTS || {};
     var raw = $(icaoFieldId).value.trim().toUpperCase();
     $(icaoFieldId).value = raw;
     var infoEl = $(infoElId);
-    clearWeather(wxElId);
+    clearWeather(prefix);
     lastWind[prefix] = null;
     lastAirportInfo[prefix] = null;
     $(rwyFieldWrapId).hidden = true;
     $(rwySelectId).innerHTML = '<option value="">— select —</option>';
-    $(prefix + 'TafWrap').hidden = true;
-    $(prefix + 'OutlookWrap').hidden = true;
     computeWindComponent(prefix);
     if (!raw) { infoEl.innerHTML = ''; setRouteEndpoint(prefix, null); return; }
     var apt = AIRPORTS[raw];
@@ -917,10 +815,9 @@
     }
     populateRunways(raw, rwySelectId, rwyFieldWrapId);
     setRouteEndpoint(prefix, { lat: apt.lat, lon: apt.lon, label: raw + ' — ' + apt.n });
-    wxTimers[wxElId] = setTimeout(function () {
-      fetchWeather(raw, prefix, wxElId, paFieldId, apt.elev, applyOat);
+    wxTimers[prefix] = setTimeout(function () {
+      fetchWeather(raw, prefix, paFieldId, apt.elev, applyOat);
       fetchTaf(raw, prefix);
-      fetchOutlook(apt.lat, apt.lon, prefix);
       fetchOpenMeteo(apt.lat, apt.lon, prefix);
     }, 500);
   }
@@ -1502,11 +1399,13 @@
       return mp === null ? 'full throttle*' : mp.toFixed(1) + ' in Hg';
     }
     function phaseTiles(timeHr, distNm, gsKt, fuelGal, mp, mpLabel) {
-      return resultTile('Time', hm(timeHr)) +
+      return resultsTable(
+        resultTile('Time', hm(timeHr)) +
         resultTile('Distance', (distNm === null || isNaN(distNm)) ? '—' : Math.round(distNm) + ' nm') +
         resultTile('Avg groundspeed', (gsKt === null || isNaN(gsKt)) ? '—' : Math.round(gsKt) + ' kt') +
         resultTile('Fuel', (fuelGal === null || isNaN(fuelGal)) ? '—' : fuelGal.toFixed(1) + ' gal') +
-        resultTile('MP (' + mpLabel + ', 2400 RPM)', mpText(mp));
+        resultTile('MP (' + mpLabel + ', 2400 RPM)', mpText(mp))
+      );
     }
 
     var totalTimeHr = (climbTimeHr || 0) + (cruiseTimeHr || 0) + descentTimeHr;
@@ -1531,10 +1430,12 @@
     var descentHtml = phaseTiles(descentTimeHr, descentDistNm, descentGsKt, descentFuelGal, descentMp, '55%');
     $('descentPhaseResults').innerHTML = descentHtml + (descentMp === null ? mpFootnote : '');
 
-    var summaryHtml = resultTile('Total time', hm(totalTimeHr)) +
+    var summaryHtml = resultsTable(
+      resultTile('Total time', hm(totalTimeHr)) +
       resultTile('Total distance', Math.round(totalNm) + ' nm') +
       resultTile('Total fuel burn', totalFuelGal.toFixed(1) + ' gal') +
-      resultTile('Fuel remaining at destination', (fuelOnBoard - totalFuelGal).toFixed(1) + ' gal', 'of ' + fuelOnBoard + ' gal on board');
+      resultTile('Fuel remaining at destination', (fuelOnBoard - totalFuelGal).toFixed(1) + ' gal', 'of ' + fuelOnBoard + ' gal on board')
+    );
     if (totalFuelGal > fuelOnBoard) {
       summaryHtml += '<p class="route-status bad">Total fuel burn (' + totalFuelGal.toFixed(1) + ' gal) exceeds the ' + fuelOnBoard + ' gal entered above.</p>';
     }
@@ -1577,10 +1478,10 @@
       el.addEventListener('change', render);
     });
     $('depIcao').addEventListener('input', function () {
-      lookupAirport('dep', 'depIcao', 'depInfo', 'depPressureAlt', 'depWx', 'depRunway', 'depRwyField', true);
+      lookupAirport('dep', 'depIcao', 'depInfo', 'depPressureAlt', 'depRunway', 'depRwyField', true);
     });
     $('destIcao').addEventListener('input', function () {
-      lookupAirport('dest', 'destIcao', 'destInfo', 'destPressureAlt', 'destWx', 'destRunway', 'destRwyField', true);
+      lookupAirport('dest', 'destIcao', 'destInfo', 'destPressureAlt', 'destRunway', 'destRwyField', true);
     });
     $('depRunway').addEventListener('change', function () { computeWindComponent('dep'); render(); });
     $('destRunway').addEventListener('change', function () { computeWindComponent('dest'); render(); });

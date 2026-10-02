@@ -144,69 +144,16 @@ input[type="number"]:focus, select:focus {
 .airport-info .ok { color: var(--text); }
 .airport-info .bad { color: var(--bad); }
 
-.weather-info {
-  font-size: 0.78rem;
-  color: var(--text-dim);
-  margin-top: 4px;
-  padding: 8px 10px;
-  background: var(--surface-2);
-  border-radius: 8px;
-  display: none;
-}
-.weather-info.shown { display: block; }
-.weather-info .wx-flightcat { font-weight: 600; }
-.weather-info .wx-flightcat.vfr { color: var(--ok); }
-.weather-info .wx-flightcat.mvfr { color: #3b82f6; }
-.weather-info .wx-flightcat.ifr, .weather-info .wx-flightcat.lifr { color: var(--bad); }
-.weather-info .wx-raw { font-family: var(--mono); font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; display: block; word-break: break-all; }
-.weather-info .wx-stale { color: var(--warn-text); }
-.weather-info .wx-breakdown { display: block; margin-top: 6px; font-size: 0.74rem; color: var(--text-dim); }
-.weather-info .wx-breakdown code { font-family: var(--mono); font-size: 0.72rem; }
-.weather-info .wx-note { display: block; margin-top: 4px; font-size: 0.72rem; font-style: italic; }
-
 .runway-field { margin-top: 8px; }
 
-.wx-extra {
-  margin-top: 6px;
-  font-size: 0.78rem;
-  color: var(--text-dim);
-}
-.wx-extra summary {
-  cursor: pointer;
-  padding: 6px 10px;
-  background: var(--surface-2);
-  border-radius: 8px;
-  font-weight: 600;
-  color: var(--text);
-  list-style: none;
-}
-.wx-extra summary::-webkit-details-marker { display: none; }
-.wx-extra summary::before { content: '▸ '; }
-.wx-extra[open] summary::before { content: '▾ '; }
-.wx-extra .wx-extra-body { padding: 8px 10px 4px; }
-.taf-period { padding: 5px 0; border-bottom: 1px solid var(--border); }
+.wx-note { display: block; margin-top: 4px; font-size: 0.72rem; font-style: italic; color: var(--text-dim); }
+.taf-period { padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 0.78rem; color: var(--text-dim); }
 .taf-period:last-child { border-bottom: none; }
 .taf-period .tp-change { font-weight: 600; color: var(--text); }
 .taf-period .tp-flightcat { font-weight: 600; margin-left: 4px; }
 .taf-period .tp-flightcat.vfr { color: var(--ok); }
 .taf-period .tp-flightcat.mvfr { color: #3b82f6; }
 .taf-period .tp-flightcat.ifr, .taf-period .tp-flightcat.lifr { color: var(--bad); }
-.outlook-period { padding: 5px 0; border-bottom: 1px solid var(--border); }
-.outlook-period:last-child { border-bottom: none; }
-.outlook-period .op-name { font-weight: 600; color: var(--text); }
-
-.wind-calc {
-  font-size: 0.78rem;
-  color: var(--text-dim);
-  margin-top: 6px;
-  padding: 8px 10px;
-  background: var(--surface-2);
-  border-radius: 8px;
-  display: none;
-}
-.wind-calc.shown { display: block; }
-.wind-calc .wc-head { font-weight: 600; color: var(--text); }
-.wind-calc .wc-head.tailwind { color: var(--bad); }
 
 .route-row {
   display: flex;
@@ -306,6 +253,13 @@ input[type="number"]:focus, select:focus {
 .result .label { font-size: 0.78rem; color: var(--text-dim); }
 .result .value { font-size: 1.25rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .result .value small { font-weight: 400; font-size: 0.7rem; color: var(--text-dim); display: block; }
+
+.results-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 4px; }
+.results-table td { padding: 5px 4px; border-bottom: 1px solid var(--border); }
+.results-table tr:last-child td { border-bottom: none; }
+.results-table td:first-child { color: var(--text-dim); }
+.results-table td:last-child { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; padding-left: 12px; }
+.results-table small { display: block; font-weight: 400; font-size: 0.7rem; color: var(--text-dim); white-space: normal; }
 
 .section-split {
   display: grid;

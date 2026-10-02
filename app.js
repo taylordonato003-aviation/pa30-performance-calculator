@@ -1208,10 +1208,9 @@
     renderCruisePa();
     var legsEl = $('routeLegs');
     if (!routeEndpoints.dep || !routeEndpoints.dest) {
-      legsEl.innerHTML = '<p class="route-status">Enter departure and destination airports above to compute route distance.</p>';
-      var pending = '<p class="route-status">Enter departure and destination airports above.</p>';
+      legsEl.innerHTML = '';
       ['climbPhaseResults', 'cruisePhaseResults', 'descentPhaseResults', 'tripSummaryResults', 'etaForecastResults'].forEach(function (id) {
-        $(id).innerHTML = pending;
+        $(id).innerHTML = '';
       });
       return;
     }

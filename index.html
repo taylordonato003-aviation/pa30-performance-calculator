@@ -197,8 +197,6 @@
         <div class="value" id="cruiseDA" style="font-size:1.1rem">—</div>
       </div>
     </div>
-    <p class="hint">Enroute OAT is manual entry — estimate it from the per-leg temperature-aloft readings below, a weather briefing, or the ISA standard lapse rate (2&deg;C per 1,000 ft from 15&deg;C at sea level). Density altitude here is reference only, same as the per-airport breakdown below: this calculator's climb/cruise charts use pressure altitude + OAT directly, not density altitude.</p>
-    <p class="hint">Departure and destination here always match the airports entered below. With no fixes added, route distance is the direct great-circle distance between them. Each fix you add inserts a leg, point to point, in the order added. Fixes accept any airport in the bundled database (4-letter ICAO or local identifier), a VOR/NDB identifier, or a 5-letter RNAV/GPS fix — type one and press Enter or Tab. If more than one navaid shares that identifier, you'll get a dropdown to pick the right one by name/country. Winds/temps aloft are a forecast product (not a live observation) from the same live-data source as METAR, interpolated to your cruise altitude from the nearest reporting station to each leg — a convenience estimate for situational awareness, not a substitute for a real weather briefing.</p>
 
     <div id="routeLegs"></div>
   </section>
@@ -245,7 +243,6 @@
         </details>
       </div>
     </div>
-    <p class="hint">Accepts a 4-letter ICAO code (KSEA), or a local/FAA-style identifier for smaller fields that don't have one (C80, 7S3, etc.) — anything in the bundled airport database. Looking up an airport fills in its field elevation, then live METAR (when available) upgrades pressure altitude to a true altimeter-corrected value, fills in that airport's own OAT, and — once you pick a runway — computes the actual headwind/crosswind component from live wind direction and speed against that runway's magnetic heading (derived from its own number, e.g. Rwy 34 ≈ 340°). TAF (≈30 hr forecast) and the NWS extended outlook (several days, US airports only) are shown collapsed below each airport once available — tap to expand. Runway length/surface/weather are reference only; always verify against current charts and a real briefing, as this is a convenience lookup, not NOTAMs or an official briefing.</p>
   </section>
 
   <section class="card">

@@ -192,12 +192,14 @@
   function readInputs() {
     var depAltFt = parseFloat($('depPressureAlt').value) || 0;
     var destAltFt = parseFloat($('destPressureAlt').value) || 0;
-    var depOatRaw = parseFloat($('depOat').value);
-    if (isNaN(depOatRaw)) depOatRaw = 59;
-    var depOatF = $('depOatUnit').value === 'C' ? cToF(depOatRaw) : depOatRaw;
-    var destOatRaw = parseFloat($('destOat').value);
-    if (isNaN(destOatRaw)) destOatRaw = 59;
-    var destOatF = $('destOatUnit').value === 'C' ? cToF(destOatRaw) : destOatRaw;
+    // OAT is Celsius-only input now (no F/C toggle) -- convert to F once here
+    // since the POH ladder-chart formulas are calibrated in Fahrenheit.
+    var depOatC = parseFloat($('depOat').value);
+    if (isNaN(depOatC)) depOatC = 15;
+    var depOatF = cToF(depOatC);
+    var destOatC = parseFloat($('destOat').value);
+    if (isNaN(destOatC)) destOatC = 15;
+    var destOatF = cToF(destOatC);
     var toWeight = clamp(parseFloat($('toWeight').value) || 3600, 1500, 3600);
     var ldgWeightRaw = parseFloat($('ldgWeight').value);
     var ldgWeight = isNaN(ldgWeightRaw) ? toWeight : clamp(ldgWeightRaw, 1500, 3600);
@@ -209,10 +211,12 @@
     var depWind = depWindKt * KT_TO_MPH;
     var destWind = destWindKt * KT_TO_MPH;
     var power = clamp(parseFloat($('power').value) || 65, 45, 75);
-    var fuel = clamp(parseFloat($('fuel').value) || 84, 0, 84);
+    // Usable fuel on board is just whatever's loaded in the Weight & Balance
+    // worksheet's tanks -- no separate field to keep in sync with that.
+    var fuel = clamp(wbNum('wbMainGal') + wbNum('wbAuxGal'), 0, 84);
     var cg = parseFloat($('cg').value);
     var ldgCg = parseFloat($('ldgCg').value);
-    return { depAltFt: depAltFt, destAltFt: destAltFt, depOatF: depOatF, destOatF: destOatF, toWeight: toWeight, ldgWeight: ldgWeight, depWind: depWind, destWind: destWind, power: power, fuel: fuel, cg: cg, ldgCg: ldgCg };
+    return { depAltFt: depAltFt, destAltFt: destAltFt, depOatC: depOatC, destOatC: destOatC, depOatF: depOatF, destOatF: destOatF, toWeight: toWeight, ldgWeight: ldgWeight, depWind: depWind, destWind: destWind, power: power, fuel: fuel, cg: cg, ldgCg: ldgCg };
   }
 
   function fmt(n, unit) {
@@ -230,6 +234,8 @@
 
   function render() {
     var inp = readInputs();
+    $('depDA').textContent = fmt(densityAltitude(inp.depAltFt, inp.depOatC), 'ft');
+    $('destDA').textContent = fmt(densityAltitude(inp.destAltFt, inp.destOatC), 'ft');
 
     // Takeoff (at departure pressure altitude/wind)
     $('toGroundRun').textContent = fmt(ladderResult('fig5-06', inp.depAltFt, inp.depOatF, inp.toWeight, inp.depWind), 'ft');
@@ -355,14 +361,12 @@
     // above the actual density altitude at departure, destination, and cruise.
     var seCeilSvc = ceilingDa(DATA['fig5-10'].weightCurves, inp.toWeight, 50);
     var threshold = seCeilSvc - ceilMargin;
-    var depOatC = (inp.depOatF - 32) * 5 / 9;
-    var destOatC = (inp.destOatF - 32) * 5 / 9;
     function daCheck(label, daVal) {
       if (daVal === null || isNaN(daVal)) { rows.push(pmRow(label, 'Enter OAT to compute', null)); return; }
       rows.push(pmRow(label, fmt(daVal, 'ft DA') + ' vs ' + fmt(threshold, 'ft DA') + ' limit', daVal <= threshold));
     }
-    daCheck('Departure DA vs SE service ceiling − margin', densityAltitude(inp.depAltFt, depOatC));
-    daCheck('Destination DA vs SE service ceiling − margin', densityAltitude(inp.destAltFt, destOatC));
+    daCheck('Departure DA vs SE service ceiling − margin', densityAltitude(inp.depAltFt, inp.depOatC));
+    daCheck('Destination DA vs SE service ceiling − margin', densityAltitude(inp.destAltFt, inp.destOatC));
     var cruiseOatRaw = parseFloat($('cruiseOat').value);
     if (!isNaN(cruiseOatRaw)) {
       var cruiseOatC = $('cruiseOatUnit').value === 'F' ? (cruiseOatRaw - 32) * 5 / 9 : cruiseOatRaw;
@@ -709,7 +713,6 @@
         wxEl.innerHTML = html;
 
         if (applyOat && tempC !== null) {
-          $(prefix + 'OatUnit').value = 'C';
           $(prefix + 'Oat').value = Math.round(tempC * 10) / 10;
         }
 

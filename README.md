@@ -55,6 +55,16 @@ Cruise / Descent" below. There's no dedicated Power Setting Table card —
 Fig 5-17 is used internally (fuel burn and the manifold-pressure guidance
 under each phase) but the raw table itself didn't earn a place in the UI.
 
+Conditions is a compact two-row table (departure/destination) rather than a
+grid of labeled fields: pressure altitude, density altitude (computed,
+read-only), OAT, headwind component, weight, and C.G. — the takeoff pair in
+the departure row, landing pair in the destination row. OAT is Celsius-only
+(no F/C toggle). Usable fuel on board isn't a separate field here or
+anywhere else — it's always whatever's loaded in the Weight & Balance
+worksheet's main + aux tanks, so there's one number to keep in sync instead
+of two. Cruise power moved to the Cruise card, next to the numbers it
+actually drives.
+
 ## What's in this repo
 
 ```
@@ -349,7 +359,7 @@ destination-forecast-at-ETA lookup under Descent, right before Landing:
   departure airport, at the midpoint climb altitude, along the route's
   initial course.
 - **Cruise** — whatever route distance is left after climb and descent, at
-  the cruise power set in Conditions. Groundspeed is the route's own per-leg
+  the cruise power set in the Cruise card. Groundspeed is the route's own per-leg
   winds (from the table above), distance-weighted across however many legs
   the cruise segment actually spans.
 - **Descent** — cruise altitude to destination field elevation, 55% power,

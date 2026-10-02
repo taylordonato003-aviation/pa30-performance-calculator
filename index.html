@@ -247,69 +247,32 @@
 
   <section class="card">
     <h2>Conditions</h2>
-    <div class="input-grid">
-      <div class="field">
-        <label for="depPressureAlt">Departure pressure altitude (ft)</label>
-        <input type="number" id="depPressureAlt" value="2000" step="100">
-      </div>
-      <div class="field">
-        <label for="destPressureAlt">Destination pressure altitude (ft)</label>
-        <input type="number" id="destPressureAlt" value="2000" step="100">
-      </div>
-      <div class="field">
-        <label for="depOat">Departure outside air temperature</label>
-        <div class="row">
-          <input type="number" id="depOat" value="70" step="1">
-          <select id="depOatUnit" style="max-width:80px">
-            <option value="F" selected>&deg;F</option>
-            <option value="C">&deg;C</option>
-          </select>
-        </div>
-      </div>
-      <div class="field">
-        <label for="destOat">Destination outside air temperature</label>
-        <div class="row">
-          <input type="number" id="destOat" value="70" step="1">
-          <select id="destOatUnit" style="max-width:80px">
-            <option value="F" selected>&deg;F</option>
-            <option value="C">&deg;C</option>
-          </select>
-        </div>
-      </div>
-      <div class="field">
-        <label for="toWeight">Takeoff weight (lb, max 3600)</label>
-        <input type="number" id="toWeight" value="3400" step="50" max="3600" min="1500">
-      </div>
-      <div class="field">
-        <label for="ldgWeight">Landing weight at destination (lb, optional)</label>
-        <input type="number" id="ldgWeight" value="" step="50" max="3600" min="1500" placeholder="defaults to takeoff weight">
-      </div>
-      <div class="field">
-        <label for="depWind">Departure wind component (kt)</label>
-        <input type="number" id="depWind" value="0" step="1">
-      </div>
-      <div class="field">
-        <label for="destWind">Destination wind component (kt)</label>
-        <input type="number" id="destWind" value="0" step="1">
-      </div>
-      <div class="field">
-        <label for="power">Cruise power (%)</label>
-        <input type="number" id="power" value="65" step="5" min="45" max="75">
-      </div>
-      <div class="field">
-        <label for="fuel">Usable fuel on board (gal, max 84)</label>
-        <input type="number" id="fuel" value="84" step="1" max="84" min="0">
-      </div>
-      <div class="field">
-        <label for="cg">Takeoff C.G. (in aft of datum, optional)</label>
-        <input type="number" id="cg" value="" step="0.1" placeholder="e.g. 88.5">
-      </div>
-      <div class="field">
-        <label for="ldgCg">Landing C.G. (in aft of datum, optional)</label>
-        <input type="number" id="ldgCg" value="" step="0.1" placeholder="e.g. 87.2">
-      </div>
+    <div class="table-scroll">
+      <table class="wb-table">
+        <colgroup><col class="wb-col-item"><col class="wb-col-num"><col class="wb-col-num"><col class="wb-col-num"><col class="wb-col-num"><col class="wb-col-num"><col class="wb-col-num"></colgroup>
+        <thead><tr><th></th><th>PA (ft)</th><th>DA (ft)</th><th>Temp (&deg;C)</th><th>HW (kt)</th><th>Wt (lb)</th><th>C.G. (in)</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Departure</td>
+            <td><input type="number" id="depPressureAlt" value="2000" step="100"></td>
+            <td id="depDA">—</td>
+            <td><input type="number" id="depOat" value="21" step="1"></td>
+            <td><input type="number" id="depWind" value="0" step="1"></td>
+            <td><input type="number" id="toWeight" value="3400" step="50" max="3600" min="1500"></td>
+            <td><input type="number" id="cg" value="" step="0.1" placeholder="88.5"></td>
+          </tr>
+          <tr>
+            <td>Destination</td>
+            <td><input type="number" id="destPressureAlt" value="2000" step="100"></td>
+            <td id="destDA">—</td>
+            <td><input type="number" id="destOat" value="21" step="1"></td>
+            <td><input type="number" id="destWind" value="0" step="1"></td>
+            <td><input type="number" id="ldgWeight" value="" step="50" max="3600" min="1500" placeholder="= T/O"></td>
+            <td><input type="number" id="ldgCg" value="" step="0.1" placeholder="87.2"></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-    <p class="hint">Weight/C.G. fields are normally filled in by the Weight &amp; Balance worksheet above; pressure altitude/OAT/wind are normally filled in by the Airports lookup above. All stay directly editable here for a quick what-if without re-touching those. Positive wind = headwind, negative = tailwind. Weights are capped at 3600 lb (standard, non tip-tank gross weight). Leave landing weight blank to use takeoff weight (e.g. a short local flight with negligible fuel burn).</p>
   </section>
 
   <section class="card">
@@ -380,24 +343,29 @@
 
   <section class="card">
     <h2>Cruise</h2>
+    <div class="input-grid">
+      <div class="field">
+        <label for="power">Cruise power (%)</label>
+        <input type="number" id="power" value="65" step="5" min="45" max="75">
+      </div>
+    </div>
     <div class="results-grid">
       <div class="result">
         <div class="label">True airspeed <span class="fig">Fig 5-12</span></div>
         <div class="value" id="tas">—</div>
       </div>
       <div class="result">
-        <div class="label">Range on fuel entered <span class="fig">Fig 5-13</span></div>
+        <div class="label">Range <span class="fig">Fig 5-13</span></div>
         <div class="value" id="range">—</div>
       </div>
       <div class="result">
-        <div class="label">Endurance on fuel entered <span class="fig">Fig 5-14</span></div>
+        <div class="label">Endurance <span class="fig">Fig 5-14</span></div>
         <div class="value" id="endurance">—</div>
       </div>
     </div>
-    <p class="hint">Range/endurance are scaled from the 84-gal basic-fuel chart by the fuel you entered; both already include the chart's built-in 45-minute reserve and give no credit for wind.</p>
+    <p class="hint">Range/endurance are scaled from the 84-gal basic-fuel chart by the fuel loaded in the Weight &amp; Balance worksheet above; both already include the chart's built-in 45-minute reserve and give no credit for wind.</p>
 
     <h3 class="subhead">Cruise Phase</h3>
-    <p class="hint">Whatever route distance is left after climb and descent, at the cruise power set in Conditions — groundspeed is the route's own per-leg winds above, distance-weighted.</p>
     <div class="results-grid" id="cruisePhaseResults"></div>
   </section>
 

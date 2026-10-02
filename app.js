@@ -311,10 +311,28 @@
   var WB_MAX_BAG = 250;
   var WB_MAIN_CAP_GAL = 54, WB_AUX_CAP_GAL = 30;
   var WB_FUEL_LB_PER_GAL = 6;
+  var WB_TAXI_FUEL_GAL = 3; // start/runup/taxi, burned from the main tanks before takeoff
+  var WB_AUX_RESERVE_GAL = 8; // 4 gal minimum left in each aux tank -- cruise burn stops pulling from aux once this is reached
 
   function wbNum(id) {
     var v = parseFloat($(id).value);
     return isNaN(v) ? 0 : v;
+  }
+
+  // Takeoff/climb/descent (and the fixed taxi allowance) are assumed to run
+  // on the main tanks; cruise draws from the aux tanks down to the reserve,
+  // then spills over to the mains for whatever cruise fuel the aux tanks
+  // can't cover. Fed by renderClimbCruiseDescent() once a route is planned;
+  // defaults to taxi-fuel-only (climb/cruise/descent = 0) until then.
+  var lastPhaseFuelGal = { climb: 0, cruise: 0, descent: 0 };
+
+  function updatePhaseFuel(climbGal, cruiseGal, descentGal) {
+    var c = climbGal || 0, r = cruiseGal || 0, d = descentGal || 0;
+    if (Math.abs(c - lastPhaseFuelGal.climb) < 0.05 &&
+        Math.abs(r - lastPhaseFuelGal.cruise) < 0.05 &&
+        Math.abs(d - lastPhaseFuelGal.descent) < 0.05) return;
+    lastPhaseFuelGal = { climb: c, cruise: r, descent: d };
+    renderWeightBalance();
   }
 
   // Computes the loading worksheet (empty weight through takeoff/landing weight
@@ -331,8 +349,15 @@
     var bagWt = Math.max(0, wbNum('wbBagWt'));
     var mainGal = clamp(wbNum('wbMainGal'), 0, WB_MAIN_CAP_GAL);
     var auxGal = clamp(wbNum('wbAuxGal'), 0, WB_AUX_CAP_GAL);
-    var mainBurnGal = Math.max(0, wbNum('wbMainBurnGal'));
-    var auxBurnGal = Math.max(0, wbNum('wbAuxBurnGal'));
+
+    // Cruise fuel comes from the aux tanks down to the reserve, then spills
+    // to the mains; taxi + climb + descent always come from the mains.
+    var auxAvailableGal = Math.max(0, auxGal - WB_AUX_RESERVE_GAL);
+    var auxBurnGal = Math.min(lastPhaseFuelGal.cruise, auxAvailableGal);
+    var mainBurnGal = WB_TAXI_FUEL_GAL + lastPhaseFuelGal.climb + lastPhaseFuelGal.descent +
+      Math.max(0, lastPhaseFuelGal.cruise - auxAvailableGal);
+    $('wbMainBurnGal').textContent = fmt1(mainBurnGal);
+    $('wbAuxBurnGal').textContent = fmt1(auxBurnGal);
 
     var emptyMoment = emptyWt * emptyArm;
     var pilotMoment = pilotWt * WB_PILOT_ARM;
@@ -1034,6 +1059,7 @@
       ['climbPhaseResults', 'cruisePhaseResults', 'descentPhaseResults', 'tripSummaryResults', 'etaForecastResults'].forEach(function (id) {
         $(id).innerHTML = '';
       });
+      updatePhaseFuel(0, 0, 0);
       return;
     }
     var wps = orderedResolvedWaypoints();
@@ -1295,6 +1321,7 @@
     var cruiseGsKt = cruiseHw === null ? cruiseTasKt : (cruiseTasKt - cruiseHw);
     var cruiseTimeHr = cruiseGsKt > 0 ? cruiseDistNm / cruiseGsKt : null;
     var cruiseFuelGal = cruiseTimeHr !== null ? cruiseTimeHr * fuelGphAtPower(inp.power) : null;
+    updatePhaseFuel(climbFuelGal, cruiseFuelGal, descentFuelGal);
 
     // Manifold pressure needed to hold each phase's %power at 2400 RPM, at
     // that phase's representative altitude -- cockpit-actionable power
@@ -1387,7 +1414,7 @@
     }
     render();
     runVerification();
-    var wbFieldIds = ['wbEmptyWt', 'wbEmptyArm', 'wbPilotWt', 'wbRearWt', 'wbBagWt', 'wbMainGal', 'wbAuxGal', 'wbMainBurnGal', 'wbAuxBurnGal'];
+    var wbFieldIds = ['wbEmptyWt', 'wbEmptyArm', 'wbPilotWt', 'wbRearWt', 'wbBagWt', 'wbMainGal', 'wbAuxGal'];
     var skipGenericBinding = { depIcao: 1, destIcao: 1, depRunway: 1, destRunway: 1 };
     wbFieldIds.forEach(function (id) { skipGenericBinding[id] = 1; });
     wbFieldIds.forEach(function (id) {

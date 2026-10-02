@@ -211,7 +211,18 @@ main/aux tank fuel (6 lb/gal) to get takeoff weight & C.G., gear extended;
 add a fixed +770 in-lb moment shift for gear retracted (the in-flight
 configuration); subtract fuel burned en route (also moment-weighted by tank
 arm) to get descent weight & C.G., gear retracted; subtract the same 770
-in-lb shift back out for landing weight & C.G., gear extended. Takeoff/
+in-lb shift back out for landing weight & C.G., gear extended.
+
+**Fuel burned en route is computed automatically**, not entered by hand: a
+fixed 3 gal start/runup/taxi allowance plus the Climb and Descent cards'
+computed fuel burn always comes from the main tanks; the Cruise card's fuel
+burn comes from the aux tanks, down to a 4 gal/side (8 gal total) reserve,
+then spills over to the main tanks for whatever cruise fuel the aux tanks
+can't cover past that reserve (e.g. with 0 aux gal loaded, as N40DA defaults
+to, cruise burns entirely from the mains). This updates live as the route,
+weight, power setting, or fuel loaded change — it's recomputed from the
+Climb/Cruise/Descent cards' own numbers below, not a separate estimate.
+Takeoff/
 landing weight and C.G. feed the Conditions card's weight/C.G. fields
 (separate fields for each) automatically whenever a worksheet field
 changes — those fields stay directly editable afterward for a quick

@@ -92,14 +92,14 @@
             <colgroup><col class="wb-col-item"><col class="wb-col-num"><col class="wb-col-num"><col class="wb-col-num"></colgroup>
             <tbody>
               <tr>
-                <td>Less fuel burned, main tanks</td>
-                <td><input type="number" id="wbMainBurnGal" value="0" step="1" min="0"></td>
+                <td>Less fuel burned, main tanks (taxi + climb + descent, &amp; cruise overflow)</td>
+                <td id="wbMainBurnGal">—</td>
                 <td>90</td>
                 <td id="wbMainBurnMoment">—</td>
               </tr>
               <tr>
-                <td>Less fuel burned, aux tanks</td>
-                <td><input type="number" id="wbAuxBurnGal" value="0" step="1" min="0"></td>
+                <td>Less fuel burned, aux tanks (cruise, down to 4 gal/side reserve)</td>
+                <td id="wbAuxBurnGal">—</td>
                 <td>95</td>
                 <td id="wbAuxBurnMoment">—</td>
               </tr>

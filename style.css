@@ -292,17 +292,6 @@ input[type="number"]:focus, select:focus {
   padding-top: 14px;
 }
 
-.note-warn {
-  background: var(--warn-bg);
-  border: 1px solid var(--warn-border);
-  color: var(--warn-text);
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 0.82rem;
-  margin-bottom: 10px;
-}
-.note-warn strong { display: block; margin-bottom: 2px; }
-
 .results-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

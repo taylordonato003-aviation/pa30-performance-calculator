@@ -261,6 +261,11 @@ input[type="number"]:focus, select:focus {
 .results-table td:last-child { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; padding-left: 12px; }
 .results-table small { display: block; font-weight: 400; font-size: 0.7rem; color: var(--text-dim); white-space: normal; }
 
+.stat-strip { display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; margin-bottom: 10px; }
+.stat-strip .stat { flex: 1 1 auto; min-width: 90px; }
+.stat-strip .stat-label { font-size: 0.78rem; color: var(--text-dim); }
+.stat-strip .stat-value { font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
 .section-split {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -235,6 +235,16 @@
     return '<table class="results-table"><tbody>' + rowsHtml + '</tbody></table>';
   }
 
+  // A horizontal left-to-right strip of big, bold stats (as opposed to
+  // resultsTable's vertical label/value rows) -- for the headline numbers at
+  // the very top of the (collapsible) Performance card, visible at a glance.
+  function statStrip(statsHtml) {
+    return '<div class="stat-strip">' + statsHtml + '</div>';
+  }
+  function stat(label, value) {
+    return '<div class="stat"><div class="stat-label">' + label + '</div><div class="stat-value">' + value + '</div></div>';
+  }
+
   function render() {
     var inp = readInputs();
     // Fig 5-09/5-10/5-11/5-12/5-13/5-14 are all plotted against DENSITY
@@ -1480,10 +1490,10 @@
     var descentHtml = phaseTiles(descentTimeHr, descentDistNm, descentGsKt, descentFuelGal, descentMp, '55%');
     $('descentPhaseResults').innerHTML = descentHtml + (descentMp === null ? mpFootnote : '');
 
-    var summaryHtml = resultsTable(
-      resultTile('Total time', hm(totalTimeHr)) +
-      resultTile('Total distance', Math.round(totalNm) + ' nm') +
-      resultTile('Total fuel burn', totalFuelGal.toFixed(1) + ' gal')
+    var summaryHtml = statStrip(
+      stat('Total time', hm(totalTimeHr)) +
+      stat('Total distance', Math.round(totalNm) + ' nm') +
+      stat('Total fuel burn', totalFuelGal.toFixed(1) + ' gal')
     );
     if (totalFuelGal > fuelOnBoard) {
       summaryHtml += '<p class="route-status bad">Total fuel burn (' + totalFuelGal.toFixed(1) + ' gal) exceeds the ' + fuelOnBoard + ' gal entered above.</p>';

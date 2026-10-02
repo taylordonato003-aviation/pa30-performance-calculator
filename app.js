@@ -284,6 +284,13 @@
 
     // Personal minimums
     renderPersonalMinimums(inp);
+
+    // Climb/cruise/descent plan depends on several Conditions-card fields
+    // (weight, wind-derived PA, power, fuel) in addition to the Route card's
+    // own inputs, so refresh it here too rather than only on route-specific
+    // field changes. computeRoute()'s winds-aloft fetch is cached (55 min),
+    // so this is cheap after the first call.
+    computeRoute();
   }
 
   // ---------- personal minimums ----------
@@ -1171,13 +1178,16 @@
     var legsEl = $('routeLegs');
     if (!routeEndpoints.dep || !routeEndpoints.dest) {
       legsEl.innerHTML = '<p class="route-status">Enter departure and destination airports above to compute route distance.</p>';
+      $('cruisePlanResults').innerHTML = '<p class="route-status">Enter departure and destination airports above.</p>';
       return;
     }
     var wps = orderedResolvedWaypoints();
     ensureWindTemp().then(function () {
-      renderLegs(wps);
+      var legsResult = renderLegs(wps);
+      renderClimbCruiseDescent(wps, legsResult, false);
     }).catch(function () {
-      renderLegs(wps, true);
+      var legsResult = renderLegs(wps, true);
+      renderClimbCruiseDescent(wps, legsResult, true);
     });
   }
 
@@ -1186,6 +1196,7 @@
     var pa = cruisePaFt();
     var rows = [];
     var totalNm = 0;
+    var legData = []; // {distNm, course, gsKt (TAS-independent -- headwind component only, in kt; null if unavailable)}
     for (var i = 0; i < wps.length - 1; i++) {
       var from = wps[i], to = wps[i + 1];
       var distNm = haversineNm(from.lat, from.lon, to.lat, to.lon);
@@ -1195,6 +1206,7 @@
 
       var windCell = '<span class="bad">unavailable</span>';
       var compCell = '—';
+      var headwindKt = null;
       if (!windUnavailable) {
         var ns = nearestStation(mid.lat, mid.lon);
         if (ns) {
@@ -1206,18 +1218,20 @@
             if (wx.dir !== null) {
               var diff = angleDiff(wx.dir, course);
               var rad = diff * Math.PI / 180;
-              var hwKt = wx.spd * Math.cos(rad);
+              headwindKt = wx.spd * Math.cos(rad);
               var xwKt = wx.spd * Math.sin(rad);
-              var hwMph = hwKt * 1.15078, xwMph = Math.abs(xwKt) * 1.15078;
+              var hwMph = headwindKt * 1.15078, xwMph = Math.abs(xwKt) * 1.15078;
               var cls = hwMph < 0 ? 'leg-head tailwind' : 'leg-head';
               var lbl = hwMph < 0 ? 'Tailwind' : 'Headwind';
               compCell = '<span class="' + cls + '">' + lbl + ' ' + Math.abs(Math.round(hwMph)) + ' mph</span><br>Xwind ' + Math.round(xwMph) + ' mph';
             } else {
               compCell = 'Calm/variable';
+              headwindKt = 0;
             }
           }
         }
       }
+      legData.push({ distNm: distNm, course: course, headwindKt: headwindKt });
 
       rows.push('<tr><td>' + from.label.split(' — ')[0] + ' → ' + to.label.split(' — ')[0] +
         '</td><td>' + Math.round(course) + '°T</td><td>' + Math.round(distNm) + ' nm</td>' +
@@ -1232,6 +1246,126 @@
       html += '<p class="route-status bad">Winds/temps aloft unavailable right now (network or Worker issue) — course and distance are still shown.</p>';
     }
     legsEl.innerHTML = html;
+    return { totalNm: totalNm, legs: legData };
+  }
+
+  // ---------- route: climb / cruise / descent planning ----------
+
+  function fuelGphAtPower(power) {
+    var fig = DATA['fig5-17'];
+    var points = [55, 65, 75].map(function (p) {
+      var parts = fig.rows[0]['p' + p].gph.split('/').map(function (s) { return parseFloat(s.trim()); });
+      return { x: p, y: parts[1] }; // best-power (rich of peak), matching the worksheet's own "best power" chain
+    });
+    return interpBreakpoints(points, power, true);
+  }
+
+  // Headwind component (kt, positive = headwind) from the nearest winds-aloft
+  // station to (lat, lon) at altFt, along courseDeg. Returns null if wind data
+  // isn't available there (caller should fall back to TAS-only / no wind).
+  function headwindAt(lat, lon, altFt, courseDeg) {
+    var ns = nearestStation(lat, lon);
+    if (!ns) return null;
+    var wx = interpolateLevels(ns.station.levels, altFt);
+    if (!wx) return null;
+    if (wx.dir === null) return 0;
+    var rad = angleDiff(wx.dir, courseDeg) * Math.PI / 180;
+    return wx.spd * Math.cos(rad);
+  }
+
+  function renderClimbCruiseDescent(wps, legsResult, windUnavailable) {
+    var el = $('cruisePlanResults');
+    var inp = readInputs();
+    var depPa = inp.depAltFt, destPa = inp.destAltFt, cruisePa = cruisePaFt();
+    var descentRate = Math.max(100, parseFloat($('descentRate').value) || 500);
+    var dep = routeEndpoints.dep, dest = routeEndpoints.dest;
+
+    // Climb: departure field elevation -> cruise altitude, 75% power, at takeoff weight.
+    var rocDep = rocFromCurves(DATA['fig5-09'].weightCurves, depPa, inp.toWeight);
+    var rocCruise = rocFromCurves(DATA['fig5-09'].weightCurves, cruisePa, inp.toWeight);
+    var climbAvgRoc = (rocDep + rocCruise) / 2;
+    var climbAltFt = Math.max(0, cruisePa - depPa);
+    var climbTimeHr = climbAvgRoc > 0 ? (climbAltFt / climbAvgRoc) / 60 : null;
+    var climbTasKt = ((byPower(DATA['fig5-12'].powerCurves, depPa, 75) + byPower(DATA['fig5-12'].powerCurves, cruisePa, 75)) / 2) / KT_TO_MPH;
+    var climbCourse = wps.length > 1 ? initialBearingDeg(wps[0].lat, wps[0].lon, wps[1].lat, wps[1].lon) : null;
+    var climbHw = (!windUnavailable && climbCourse !== null) ? headwindAt(dep.lat, dep.lon, (depPa + cruisePa) / 2, climbCourse) : null;
+    var climbGsKt = climbHw === null ? climbTasKt : (climbTasKt - climbHw);
+    var climbDistNm = climbTimeHr !== null ? climbGsKt * climbTimeHr : null;
+    var climbFuelGal = climbTimeHr !== null ? climbTimeHr * fuelGphAtPower(75) : null;
+
+    // Descent: cruise altitude -> destination field elevation, 55% power, at the planned descent rate.
+    var descentAltFt = Math.max(0, cruisePa - destPa);
+    var descentTimeHr = (descentAltFt / descentRate) / 60;
+    var descentTasKt = ((byPower(DATA['fig5-12'].powerCurves, destPa, 55) + byPower(DATA['fig5-12'].powerCurves, cruisePa, 55)) / 2) / KT_TO_MPH;
+    var n = wps.length;
+    var descentCourse = n > 1 ? initialBearingDeg(wps[n - 2].lat, wps[n - 2].lon, wps[n - 1].lat, wps[n - 1].lon) : null;
+    var descentHw = (!windUnavailable && descentCourse !== null) ? headwindAt(dest.lat, dest.lon, (destPa + cruisePa) / 2, descentCourse) : null;
+    var descentGsKt = descentHw === null ? descentTasKt : (descentTasKt - descentHw);
+    var descentDistNm = descentGsKt * descentTimeHr;
+    var descentFuelGal = descentTimeHr * fuelGphAtPower(55);
+
+    // Cruise: whatever route distance is left, at the cruise-power TAS and the
+    // route's own distance-weighted average groundspeed from the leg table above.
+    var totalNm = legsResult.totalNm;
+    var usedNm = (climbDistNm || 0) + descentDistNm;
+    var tooShort = usedNm > totalNm;
+    var cruiseDistNm = Math.max(0, totalNm - usedNm);
+    var cruiseTasKt = byPower(DATA['fig5-12'].powerCurves, cruisePa, inp.power) / KT_TO_MPH;
+    var weightedHwSum = 0, weightedDistSum = 0;
+    legsResult.legs.forEach(function (leg) {
+      if (leg.headwindKt === null) return;
+      weightedHwSum += leg.headwindKt * leg.distNm;
+      weightedDistSum += leg.distNm;
+    });
+    var cruiseHw = weightedDistSum > 0 ? weightedHwSum / weightedDistSum : null;
+    var cruiseGsKt = cruiseHw === null ? cruiseTasKt : (cruiseTasKt - cruiseHw);
+    var cruiseTimeHr = cruiseGsKt > 0 ? cruiseDistNm / cruiseGsKt : null;
+    var cruiseFuelGal = cruiseTimeHr !== null ? cruiseTimeHr * fuelGphAtPower(inp.power) : null;
+
+    function hm(hr) {
+      if (hr === null || isNaN(hr)) return '—';
+      var totalMin = Math.round(hr * 60);
+      var h = Math.floor(totalMin / 60), m = totalMin % 60;
+      return (h > 0 ? h + 'h ' : '') + m + 'm';
+    }
+    function phaseRow(label, timeHr, distNm, fuelGal, gsKt) {
+      return '<tr><td>' + label + '</td><td>' + hm(timeHr) + '</td>' +
+        '<td>' + (distNm === null || isNaN(distNm) ? '—' : Math.round(distNm) + ' nm') + '</td>' +
+        '<td>' + (gsKt === null || isNaN(gsKt) ? '—' : Math.round(gsKt) + ' kt') + '</td>' +
+        '<td>' + (fuelGal === null || isNaN(fuelGal) ? '—' : fuelGal.toFixed(1) + ' gal') + '</td></tr>';
+    }
+
+    var totalTimeHr = (climbTimeHr || 0) + (cruiseTimeHr || 0) + descentTimeHr;
+    var totalFuelGal = (climbFuelGal || 0) + (cruiseFuelGal || 0) + descentFuelGal;
+    var fuelOnBoard = inp.fuel;
+
+    var html = '<div class="table-scroll"><table class="leg-table"><thead><tr>' +
+      '<th>Phase</th><th>Time</th><th>Distance</th><th>Avg GS</th><th>Fuel</th>' +
+      '</tr></thead><tbody>' +
+      phaseRow('Climb (75% pwr)', climbTimeHr, climbDistNm, climbFuelGal, climbGsKt) +
+      phaseRow('Cruise (' + inp.power + '% pwr)', cruiseTimeHr, cruiseDistNm, cruiseFuelGal, cruiseGsKt) +
+      phaseRow('Descent (55% pwr)', descentTimeHr, descentDistNm, descentFuelGal, descentGsKt) +
+      '<tr class="wb-subtotal"><td>Total</td><td>' + hm(totalTimeHr) + '</td><td>' + Math.round(totalNm) + ' nm</td><td>—</td>' +
+      '<td>' + totalFuelGal.toFixed(1) + ' gal</td></tr>' +
+      '</tbody></table></div>';
+
+    var notes = [];
+    if (tooShort) {
+      notes.push('<p class="route-status bad">Climb + descent distance (' + Math.round(usedNm) + ' nm) exceeds the total route distance (' + Math.round(totalNm) + ' nm) — this flight never reaches a stabilized cruise segment; the numbers above are climb/descent only, cruise is zeroed out.</p>');
+    }
+    if (climbAvgRoc <= 0) {
+      notes.push('<p class="route-status bad">Average climb rate is at or below zero at these conditions — climb time/distance/fuel can\'t be computed.</p>');
+    }
+    if (totalFuelGal > fuelOnBoard) {
+      notes.push('<p class="route-status bad">Total fuel burn (' + totalFuelGal.toFixed(1) + ' gal) exceeds the ' + fuelOnBoard + ' gal entered above.</p>');
+    } else {
+      notes.push('<p class="route-status">Fuel remaining at destination: ' + (fuelOnBoard - totalFuelGal).toFixed(1) + ' gal, of ' + fuelOnBoard + ' gal on board.</p>');
+    }
+    if (windUnavailable) {
+      notes.push('<p class="route-status bad">Winds/temps aloft unavailable — groundspeeds above are TAS only (no wind correction).</p>');
+    }
+
+    el.innerHTML = html + notes.join('');
   }
 
   function runVerification() {

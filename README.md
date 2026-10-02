@@ -318,6 +318,38 @@ reported in **true** heading by NOAA convention (unlike METAR surface wind,
 which is magnetic) — course is computed in true heading too, so the
 comparison is apples-to-apples with no conversion needed.
 
+### Climb / Cruise / Descent
+
+Breaks the route into three phases, each with its own time/distance/fuel:
+
+- **Climb** — departure field elevation to cruise altitude, 75% power, at
+  takeoff weight. Rate of climb is the average of Fig 5-09's value at each
+  endpoint; true airspeed is the average of Fig 5-12's value at each endpoint
+  (TAS doesn't vary by weight in this POH — Fig 5-12 is defined at a fixed
+  3600 lb). Wind is the headwind component from the station nearest the
+  departure airport, at the midpoint climb altitude, along the route's
+  initial course.
+- **Cruise** — whatever route distance is left after climb and descent, at
+  the cruise power set in Conditions. Groundspeed is the route's own per-leg
+  winds (from the table above), distance-weighted across however many legs
+  the cruise segment actually spans.
+- **Descent** — cruise altitude to destination field elevation, 55% power,
+  at a planned descent rate you set directly (there's no POH descent-rate
+  chart — unlike climb, how fast to descend is a pilot technique choice, not
+  an aircraft performance limit). Wind is the headwind component nearest the
+  destination airport, along the route's final course.
+
+Fuel burn for all three phases uses Fig 5-17's sea-level fuel flow at each
+phase's own power setting (its "best power," rich-of-peak column, matching
+the same chain a full performance worksheet uses) — the table doesn't
+tabulate fuel flow at altitude, but %power already normalizes for it (that's
+what adjusting manifold pressure with altitude is *for*), so the sea-level
+figure is a standard, POH-consistent approximation at any altitude. If climb
+and descent distance together exceed the total route distance, the flight
+never reaches a stabilized cruise segment — cruise is shown as zero and a
+warning explains why, rather than silently producing numbers that don't
+reflect reality.
+
 The FD text format itself is a fixed-width bulletin with some real quirks
 handled here: a station can report wind with no temperature at low altitude,
 "light and variable" wind can still carry a temperature, and wind speeds at

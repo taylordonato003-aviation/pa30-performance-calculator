@@ -216,8 +216,9 @@ you hand-correct a digitized value there, make the same edit in `data.js`.
 
 ## Airport lookup
 
-Type an ICAO identifier (e.g. `KSEA`) into the Departure or Destination field
-and the app looks up that airport's name, field elevation, and longest
+Type an ICAO identifier (e.g. `KSEA`) or a local/domestic identifier for a
+smaller field that doesn't have one (e.g. `C80`) into the Departure or
+Destination field, and the app looks up that airport's name, field elevation, and longest
 runway (length + surface) from a bundled offline database (`airports.js`) —
 see "Data source" below for its provenance. Field elevation immediately
 fills in as a standard-day pressure altitude guess.
@@ -286,8 +287,9 @@ once available (tap to expand):
 The Route card's departure and destination always mirror whatever you've
 entered in the Airports card above — no retyping. With no fixes added, route
 distance is the direct great-circle distance between those two airports.
-Each fix you add (a 4-letter ICAO airport, a VOR/NDB identifier, or a
-5-letter RNAV/GPS fix — press Enter/Tab to resolve it) inserts a leg, point
+Each fix you add (any airport in the bundled database, ICAO or local
+identifier; a VOR/NDB identifier; or a 5-letter RNAV/GPS fix — press
+Enter/Tab to resolve it) inserts a leg, point
 to point, in the order added. If an identifier matches more than one
 real-world station (navaid idents aren't globally unique the way ICAO codes
 are), a dropdown lets you pick the right one by name/country.
@@ -356,16 +358,25 @@ Piper PA-30 Twin Comanche Pilot's Operating Handbook, Section 5
 Airport data (`airports.js`, also mirrored as `data/airports.json`), runway
 data (`runways.js` / `data/runways.json`), and navaid data (`navaids.js` /
 `data/navaids.json`) come from [OurAirports](https://ourairports.com/data/),
-a public-domain (CC0) dataset maintained by volunteers. Airports are filtered
-to the 10,110 small/medium/large airports worldwide with a 4-letter ICAO
-identifier (name, municipality, country, coordinates, field elevation,
-longest-runway length/surface). Runways are every non-closed runway end at
-those airports (22,113) with length, width, surface, and a magnetic heading
-derived from the runway's own number (not OurAirports' true-heading column —
-see "Airport lookup" above for why). Navaids are VOR/VOR-DME/VORTAC/NDB/
-NDB-DME stations (10,399 of them, 5,718 unique identifiers — navaid idents
-are *not* globally unique the way ICAO airport codes are, so the same
-identifier can resolve to multiple real-world stations).
+a public-domain (CC0) dataset maintained by volunteers. Airports are every
+small/medium/large airport worldwide (47,465 of them) indexed by whichever
+identifier it actually has: a true 4-letter ICAO code when OurAirports has
+one on file, else the local/domestic identifier (e.g. the FAA's 3-character
+LID for a US field like `C80` — most small, non-towered airports worldwide
+only have this, not a real ICAO code), else OurAirports' own internal ident
+as a last resort. A few hundred mostly-private airstrips worldwide collide
+on this fallback identifier (a data-quality quirk of the source, not
+something fixable here) — whichever one is encountered first in the source
+data wins and the rest are dropped rather than silently overwriting each
+other. Each entry carries name, municipality, country, coordinates, field
+elevation, and longest-runway length/surface. Runways are every non-closed
+runway end at those airports (66,415) with length, width, surface, and a
+magnetic heading derived from the runway's own number (not OurAirports'
+true-heading column — see "Airport lookup" above for why). Navaids are
+VOR/VOR-DME/VORTAC/NDB/NDB-DME stations (10,399 of them, 5,718 unique
+identifiers — navaid idents are *not* globally unique the way ICAO airport
+codes are, so the same identifier can resolve to multiple real-world
+stations).
 
 Fix data (`fixes.js` / `data/fixes.json`) comes from the FAA's 28-day NASR
 subscription data — the authoritative, free, public-domain source for every

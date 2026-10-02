@@ -839,11 +839,6 @@
     $(prefix + 'OutlookWrap').hidden = true;
     computeWindComponent(prefix);
     if (!raw) { infoEl.innerHTML = ''; setRouteEndpoint(prefix, null); return; }
-    if (raw.length !== 4) {
-      infoEl.innerHTML = '<span class="bad">ICAO identifiers are 4 letters (e.g. KSEA).</span>';
-      setRouteEndpoint(prefix, null);
-      return;
-    }
     var apt = AIRPORTS[raw];
     if (!apt) {
       infoEl.innerHTML = '<span class="bad">Not found in the bundled airport database. Enter pressure altitude manually below.</span>';
@@ -918,7 +913,7 @@
     var AIRPORTS = window.PA30_AIRPORTS || {};
     var NAVAIDS = window.PA30_NAVAIDS || {};
     var FIXES = window.PA30_FIXES || {};
-    if (q.length === 4 && AIRPORTS[q]) {
+    if (AIRPORTS[q]) {
       var a = AIRPORTS[q];
       out.push({ label: q + ' — ' + a.n + (a.c ? ', ' + a.c : ''), lat: a.lat, lon: a.lon });
     }

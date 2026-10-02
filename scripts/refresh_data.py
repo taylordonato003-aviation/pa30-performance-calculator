@@ -64,6 +64,25 @@ OURAIRPORTS_BASE = 'https://ourairports.com/data/'
 SURFACE_NAMES_NOTE = None  # surface codes are kept as-is; app.js has the display-name lookup
 
 
+def airport_key(row):
+    """The identifier this app indexes an airport under. A true 4-letter ICAO
+    code wins when OurAirports has one on file; most small/non-towered fields
+    worldwide don't, though, and are left with icao_code blank even though
+    they have a perfectly usable domestic identifier (FAA LID in the US, e.g.
+    'C80' -- this is what a sectional chart and a pilot would actually call
+    it, and what OurAirports puts in local_code). Fall back to that, then to
+    OurAirports' own internal ident as a last resort (covers oddities like a
+    private strip with no local_code either)."""
+    icao = (row['icao_code'] or '').strip().upper()
+    if icao and len(icao) == 4:
+        return icao
+    local = (row['local_code'] or '').strip().upper()
+    if local:
+        return local
+    ident = (row['ident'] or '').strip().upper()
+    return ident or None
+
+
 def build_airports_and_runways():
     print('Downloading OurAirports airports.csv ...')
     airports_csv = fetch_text(OURAIRPORTS_BASE + 'airports.csv')
@@ -71,15 +90,24 @@ def build_airports_and_runways():
     runways_csv = fetch_text(OURAIRPORTS_BASE + 'runways.csv')
 
     ident_to_icao = {}
-    airports_out = {}
+    rows_by_key = {}
+    skipped_collisions = 0
     reader = csv.DictReader(io.StringIO(airports_csv))
     for row in reader:
-        icao = (row['icao_code'] or '').strip().upper()
-        if not icao or len(icao) != 4:
-            continue
         if row['type'] not in ('small_airport', 'medium_airport', 'large_airport'):
             continue
-        ident_to_icao[row['ident']] = icao
+        key = airport_key(row)
+        if not key:
+            continue
+        # A handful of mostly-private airstrips worldwide collide on their
+        # fallback key (OurAirports data quality, not something we can fix
+        # here) -- keep whichever we saw first and skip the rest rather than
+        # letting one silently overwrite another's runway data.
+        if key in rows_by_key:
+            skipped_collisions += 1
+            continue
+        rows_by_key[key] = row
+        ident_to_icao[row['ident']] = key
 
     # second pass for airports_out, plus longest-runway join (built below)
     def parse_heading(ident):
@@ -131,13 +159,8 @@ def build_airports_and_runways():
     for icao in runways_by_icao:
         runways_by_icao[icao].sort(key=lambda e: e['id'])
 
-    reader = csv.DictReader(io.StringIO(airports_csv))
-    for row in reader:
-        icao = (row['icao_code'] or '').strip().upper()
-        if not icao or len(icao) != 4:
-            continue
-        if row['type'] not in ('small_airport', 'medium_airport', 'large_airport'):
-            continue
+    airports_out = {}
+    for key, row in rows_by_key.items():
         try:
             elev = int(round(float(row['elevation_ft']))) if row['elevation_ft'] else None
         except ValueError:
@@ -161,14 +184,14 @@ def build_airports_and_runways():
             entry['rwy'] = int(rwy[0])
             if rwy[1]:
                 entry['srf'] = rwy[1]
-        airports_out[icao] = entry
+        airports_out[key] = entry
 
-    if len(airports_out) < 5000:
-        raise RuntimeError(f'Sanity check failed: only {len(airports_out)} airports parsed (expected 10000+)')
+    if len(airports_out) < 30000:
+        raise RuntimeError(f'Sanity check failed: only {len(airports_out)} airports parsed (expected 40000+)')
     if sum(len(v) for v in runways_by_icao.values()) < 10000:
         raise RuntimeError('Sanity check failed: runway count implausibly low')
 
-    print(f'  {len(airports_out):,} airports, {sum(len(v) for v in runways_by_icao.values()):,} runway ends')
+    print(f'  {len(airports_out):,} airports, {sum(len(v) for v in runways_by_icao.values()):,} runway ends, {skipped_collisions:,} fallback-key collisions skipped')
     return airports_out, dict(runways_by_icao)
 
 

@@ -111,6 +111,19 @@ reference point (16,000 ft for cruise charts, the chart's own ceiling for
 climb charts), linearly interpolated/extrapolated between the given curves
 (e.g. between the 3200 lb and 3600 lb weight curves).
 
+**All five of these charts are indexed by density altitude in the real POH**
+(confirmed in each chart's own title — e.g. "Rate of Climb vs Density
+Altitude and Weight"), so the app always converts to actual DA before
+looking them up, never pressure altitude alone — a hot day degrades climb/
+TAS/range/endurance even at a pressure altitude that hasn't changed. The
+Climb/Go-Around cards' quick-reference numbers (Vx/Vy, ROC) and the Cruise
+card's TAS/range/endurance use the Conditions table's own departure/
+destination OAT fields; the Climb/Cruise/Descent phase block's climb-top and
+descent-top points (and the Cruise phase's own TAS) use the Route card's
+manually-entered enroute temperature if you've set one, else ISA standard
+temperature at that altitude (i.e. DA defaults to PA when no enroute
+temperature is known, same as before this was fixed).
+
 The five **"ladder" charts** (Fig 5-06, 5-07, 5-08, 5-15, 5-16 — takeoff
 ground run, takeoff distance over 50 ft, accelerate-stop, landing ground
 roll, landing distance over 50 ft) are Piper's classic 3-panel nomographs:

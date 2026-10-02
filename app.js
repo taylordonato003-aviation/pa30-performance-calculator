@@ -237,8 +237,14 @@
 
   function render() {
     var inp = readInputs();
-    $('depDA').textContent = fmt(densityAltitude(inp.depAltFt, inp.depOatC), 'ft');
-    $('destDA').textContent = fmt(densityAltitude(inp.destAltFt, inp.destOatC), 'ft');
+    // Fig 5-09/5-10/5-11/5-12/5-13/5-14 are all plotted against DENSITY
+    // altitude in the real POH (confirmed in each chart's own title/axis
+    // label) -- pressure altitude alone misses the temperature effect
+    // entirely, so a hot day would never show degraded climb/TAS/range.
+    var depDaFt = densityAltitude(inp.depAltFt, inp.depOatC);
+    var destDaFt = densityAltitude(inp.destAltFt, inp.destOatC);
+    $('depDA').textContent = fmt(depDaFt, 'ft');
+    $('destDA').textContent = fmt(destDaFt, 'ft');
 
     // Takeoff (at departure pressure altitude/wind)
     $('toGroundRun').textContent = fmt(ladderResult('fig5-06', inp.depAltFt, inp.depOatF, inp.toWeight, inp.depWind), 'ft');
@@ -254,27 +260,27 @@
     $('ldgDist50').textContent = fmt(ladderResult('fig5-16', inp.destAltFt, inp.destOatF, inp.ldgWeight, inp.destWind), 'ft');
 
     // Go-around / balked landing (clean-config climb reference, at destination altitude/landing weight)
-    var vvDest = vxvy(inp.destAltFt);
+    var vvDest = vxvy(destDaFt);
     $('gaVxMulti').textContent = fmt(vvDest.multiVx, 'mph');
     $('gaVyMulti').textContent = fmt(vvDest.multiVy, 'mph');
     $('gaVxSingle').textContent = fmt(vvDest.singleVx, 'mph') + (vvDest.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
     $('gaVySingle').textContent = fmt(vvDest.singleVy, 'mph') + (vvDest.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
     $('gaVxyMultiCas').textContent = 'CAS: ' + fmt(casFromIas(vvDest.multiVx, false), 'mph') + ' / ' + fmt(casFromIas(vvDest.multiVy, false), 'mph');
     $('gaVxySingleCas').textContent = 'CAS: ' + fmt(casFromIas(vvDest.singleVx, false), 'mph') + ' / ' + fmt(casFromIas(vvDest.singleVy, false), 'mph');
-    $('gaRocMulti').textContent = fmt(rocFromCurves(DATA['fig5-09'].weightCurves, inp.destAltFt, inp.ldgWeight), 'ft/min');
-    var gaRocSingle = rocFromCurves(DATA['fig5-10'].weightCurves, inp.destAltFt, inp.ldgWeight);
+    $('gaRocMulti').textContent = fmt(rocFromCurves(DATA['fig5-09'].weightCurves, destDaFt, inp.ldgWeight), 'ft/min');
+    var gaRocSingle = rocFromCurves(DATA['fig5-10'].weightCurves, destDaFt, inp.ldgWeight);
     $('gaRocSingle').textContent = fmt(gaRocSingle, 'ft/min') + (gaRocSingle <= 0 ? ' — at or above single-engine service ceiling' : '');
 
     // Climb (at departure altitude/takeoff weight — initial climb-out performance)
-    var vvDep = vxvy(inp.depAltFt);
+    var vvDep = vxvy(depDaFt);
     $('vxMulti').textContent = fmt(vvDep.multiVx, 'mph');
     $('vyMulti').textContent = fmt(vvDep.multiVy, 'mph');
     $('vxSingle').textContent = fmt(vvDep.singleVx, 'mph') + (vvDep.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
     $('vySingle').textContent = fmt(vvDep.singleVy, 'mph') + (vvDep.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
     $('vxyMultiCas').textContent = 'CAS: ' + fmt(casFromIas(vvDep.multiVx, false), 'mph') + ' / ' + fmt(casFromIas(vvDep.multiVy, false), 'mph');
     $('vxySingleCas').textContent = 'CAS: ' + fmt(casFromIas(vvDep.singleVx, false), 'mph') + ' / ' + fmt(casFromIas(vvDep.singleVy, false), 'mph');
-    $('rocMulti').textContent = fmt(rocFromCurves(DATA['fig5-09'].weightCurves, inp.depAltFt, inp.toWeight), 'ft/min');
-    var rocSingle = rocFromCurves(DATA['fig5-10'].weightCurves, inp.depAltFt, inp.toWeight);
+    $('rocMulti').textContent = fmt(rocFromCurves(DATA['fig5-09'].weightCurves, depDaFt, inp.toWeight), 'ft/min');
+    var rocSingle = rocFromCurves(DATA['fig5-10'].weightCurves, depDaFt, inp.toWeight);
     $('rocSingle').textContent = fmt(rocSingle, 'ft/min') + (rocSingle <= 0 ? ' — at or above single-engine service ceiling' : '');
 
     var meCeilAbs = ceilingDa(DATA['fig5-09'].weightCurves, inp.toWeight, 0);
@@ -285,9 +291,9 @@
     $('ceilSingle').textContent = fmt(seCeilAbs, 'ft') + ' / ' + fmt(seCeilSvc, 'ft');
 
     // Cruise (referenced to departure altitude as the climb-out continues from there)
-    $('tas').textContent = fmt(byPower(DATA['fig5-12'].powerCurves, inp.depAltFt, inp.power), 'mph TAS');
-    var fullRange = byPower(DATA['fig5-13'].powerCurves, inp.depAltFt, inp.power);
-    var fullEndurance = byPower(DATA['fig5-14'].powerCurves, inp.depAltFt, inp.power);
+    $('tas').textContent = fmt(byPower(DATA['fig5-12'].powerCurves, depDaFt, inp.power), 'mph TAS');
+    var fullRange = byPower(DATA['fig5-13'].powerCurves, depDaFt, inp.power);
+    var fullEndurance = byPower(DATA['fig5-14'].powerCurves, depDaFt, inp.power);
     var fuelFraction = inp.fuel / DATA['fig5-13'].fuelGal;
     $('range').textContent = fmt(fullRange * fuelFraction, 'sm');
     $('endurance').textContent = fmt1(fullEndurance * fuelFraction, 'hr');
@@ -1044,14 +1050,31 @@
     return Math.round(alt + (29.92 - altimeter) * 1000);
   }
 
+  // The manually-entered enroute temperature (Route card), in Celsius, or
+  // null if left blank. Shared by the cruise DA display, the manual
+  // winds-aloft override, and the climb/cruise/descent phase DA lookups.
+  function manualCruiseOatC() {
+    var oatRaw = parseFloat($('cruiseOat').value);
+    if (isNaN(oatRaw)) return null;
+    return $('cruiseOatUnit').value === 'F' ? (oatRaw - 32) * 5 / 9 : oatRaw;
+  }
+
+  // Density altitude at a given pressure altitude, using the manually-
+  // entered enroute temperature if provided, else falling back to the ISA
+  // standard temperature at that altitude (i.e. DA = PA, today's behavior
+  // when no temperature is known).
+  function cruiseDaFt(paFt) {
+    var oatC = manualCruiseOatC();
+    return densityAltitude(paFt, oatC === null ? isaTempC(paFt) : oatC);
+  }
+
   function renderCruisePa() {
     var pa = cruisePaFt();
     $('cruisePA').textContent = fmt(pa, 'ft');
 
-    var oatRaw = parseFloat($('cruiseOat').value);
+    var oatC = manualCruiseOatC();
     var daEl = $('cruiseDA');
-    if (isNaN(oatRaw)) { daEl.textContent = '—'; return; }
-    var oatC = $('cruiseOatUnit').value === 'F' ? (oatRaw - 32) * 5 / 9 : oatRaw;
+    if (oatC === null) { daEl.textContent = '—'; return; }
     daEl.textContent = fmt(densityAltitude(pa, oatC), 'ft');
   }
 
@@ -1066,9 +1089,7 @@
     var dirRaw = parseFloat($('manualWindDir').value);
     var spdRaw = parseFloat($('manualWindSpeed').value);
     if (isNaN(dirRaw) || isNaN(spdRaw)) return null;
-    var oatRaw = parseFloat($('cruiseOat').value);
-    var tempC = isNaN(oatRaw) ? null : ($('cruiseOatUnit').value === 'F' ? (oatRaw - 32) * 5 / 9 : oatRaw);
-    return { dir: ((dirRaw % 360) + 360) % 360, spd: Math.max(0, spdRaw), temp: tempC };
+    return { dir: ((dirRaw % 360) + 360) % 360, spd: Math.max(0, spdRaw), temp: manualCruiseOatC() };
   }
 
   function windComponentHtml(headwindKt, xwKt) {
@@ -1340,16 +1361,23 @@
   function renderClimbCruiseDescent(wps, legsResult, windUnavailable) {
     var inp = readInputs();
     var depPa = inp.depAltFt, destPa = inp.destAltFt, cruisePa = cruisePaFt();
+    // Fig 5-09/5-10/5-12 (ROC and TAS) are DA-indexed in the real POH --
+    // pressure altitude alone misses temperature entirely. Climb/descent use
+    // the actual departure/destination OAT; cruise uses the Route card's
+    // manually-entered enroute temperature if given, else ISA standard (DA=PA).
+    var depDaFt = densityAltitude(depPa, inp.depOatC);
+    var destDaFt = densityAltitude(destPa, inp.destOatC);
+    var cruiseDaFtVal = cruiseDaFt(cruisePa);
     var descentRate = Math.max(100, parseFloat($('descentRate').value) || 500);
     var dep = routeEndpoints.dep, dest = routeEndpoints.dest;
 
     // Climb: departure field elevation -> cruise altitude, 75% power, at takeoff weight.
-    var rocDep = rocFromCurves(DATA['fig5-09'].weightCurves, depPa, inp.toWeight);
-    var rocCruise = rocFromCurves(DATA['fig5-09'].weightCurves, cruisePa, inp.toWeight);
+    var rocDep = rocFromCurves(DATA['fig5-09'].weightCurves, depDaFt, inp.toWeight);
+    var rocCruise = rocFromCurves(DATA['fig5-09'].weightCurves, cruiseDaFtVal, inp.toWeight);
     var climbAvgRoc = (rocDep + rocCruise) / 2;
     var climbAltFt = Math.max(0, cruisePa - depPa);
     var climbTimeHr = climbAvgRoc > 0 ? (climbAltFt / climbAvgRoc) / 60 : null;
-    var climbTasKt = ((byPower(DATA['fig5-12'].powerCurves, depPa, 75) + byPower(DATA['fig5-12'].powerCurves, cruisePa, 75)) / 2) / KT_TO_MPH;
+    var climbTasKt = ((byPower(DATA['fig5-12'].powerCurves, depDaFt, 75) + byPower(DATA['fig5-12'].powerCurves, cruiseDaFtVal, 75)) / 2) / KT_TO_MPH;
     var climbCourse = wps.length > 1 ? initialBearingDeg(wps[0].lat, wps[0].lon, wps[1].lat, wps[1].lon) : null;
     var climbHw = (!windUnavailable && climbCourse !== null) ? headwindAt(dep.lat, dep.lon, (depPa + cruisePa) / 2, climbCourse) : null;
     var climbGsKt = climbHw === null ? climbTasKt : (climbTasKt - climbHw);
@@ -1359,7 +1387,7 @@
     // Descent: cruise altitude -> destination field elevation, 55% power, at the planned descent rate.
     var descentAltFt = Math.max(0, cruisePa - destPa);
     var descentTimeHr = (descentAltFt / descentRate) / 60;
-    var descentTasKt = ((byPower(DATA['fig5-12'].powerCurves, destPa, 55) + byPower(DATA['fig5-12'].powerCurves, cruisePa, 55)) / 2) / KT_TO_MPH;
+    var descentTasKt = ((byPower(DATA['fig5-12'].powerCurves, destDaFt, 55) + byPower(DATA['fig5-12'].powerCurves, cruiseDaFtVal, 55)) / 2) / KT_TO_MPH;
     var n = wps.length;
     var descentCourse = n > 1 ? initialBearingDeg(wps[n - 2].lat, wps[n - 2].lon, wps[n - 1].lat, wps[n - 1].lon) : null;
     var descentHw = (!windUnavailable && descentCourse !== null) ? headwindAt(dest.lat, dest.lon, (destPa + cruisePa) / 2, descentCourse) : null;
@@ -1373,7 +1401,7 @@
     var usedNm = (climbDistNm || 0) + descentDistNm;
     var tooShort = usedNm > totalNm;
     var cruiseDistNm = Math.max(0, totalNm - usedNm);
-    var cruiseTasKt = byPower(DATA['fig5-12'].powerCurves, cruisePa, inp.power) / KT_TO_MPH;
+    var cruiseTasKt = byPower(DATA['fig5-12'].powerCurves, cruiseDaFtVal, inp.power) / KT_TO_MPH;
     var weightedHwSum = 0, weightedDistSum = 0;
     legsResult.legs.forEach(function (leg) {
       if (leg.headwindKt === null) return;

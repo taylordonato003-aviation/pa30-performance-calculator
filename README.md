@@ -55,7 +55,8 @@ features were added:
   C.G. for departure and destination), manually-entered winds aloft (and the
   cruise density altitude that depends on its temperature field), and the
   destination forecast at ETA.
-- **Performance** — the flight itself, Takeoff → Climb → Cruise → Descent →
+- **Performance** — a Trip Summary (total time/distance/fuel) right under
+  the header, then the flight itself, Takeoff → Climb → Cruise → Descent →
   Landing in order, each as its own labeled subsection in one card rather
   than five separate ones. Each of Climb/Cruise/Descent has both a
   quick-reference block (Vx/Vy, ROC, ceilings; TAS/range/endurance) and that
@@ -375,9 +376,11 @@ Breaks the route into three phases, each with its own time/distance/fuel.
 The three phases' results appear under their respective Climb/Cruise/Descent
 subsections of the Performance card (in the same flight-sequence order as
 the rest of the app — see "Card order" below) rather than one combined
-table, with a Trip Summary right after Descent. The destination forecast at
-ETA lives in the Environment card instead (see below) — it's forecast
-weather, the same category of thing as the rest of that card, not a
+table. A Trip Summary (total time, distance, and fuel burn) sits right at
+the top of the Performance card, under its header, ahead of the phase-by-
+phase breakdown. The destination forecast at ETA lives in the Environment
+card instead (see below) — it's forecast weather, the same category of
+thing as the rest of that card, not a
 performance number:
 
 - **Climb** — departure field elevation to cruise altitude, 75% power, at

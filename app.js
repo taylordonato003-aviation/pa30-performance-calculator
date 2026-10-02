@@ -1473,8 +1473,7 @@
     var summaryHtml = resultsTable(
       resultTile('Total time', hm(totalTimeHr)) +
       resultTile('Total distance', Math.round(totalNm) + ' nm') +
-      resultTile('Total fuel burn', totalFuelGal.toFixed(1) + ' gal') +
-      resultTile('Fuel remaining at destination', (fuelOnBoard - totalFuelGal).toFixed(1) + ' gal', 'of ' + fuelOnBoard + ' gal on board')
+      resultTile('Total fuel burn', totalFuelGal.toFixed(1) + ' gal')
     );
     if (totalFuelGal > fuelOnBoard) {
       summaryHtml += '<p class="route-status bad">Total fuel burn (' + totalFuelGal.toFixed(1) + ' gal) exceeds the ' + fuelOnBoard + ' gal entered above.</p>';

@@ -3,7 +3,7 @@
 // registration accordingly, so this file is simply never loaded when the
 // app is opened directly from disk.
 
-var CACHE_NAME = 'pa30-calc-v27';
+var CACHE_NAME = 'pa30-calc-v28';
 var ASSETS = [
   './index.html',
   './style.css',
@@ -62,8 +62,14 @@ self.addEventListener('fetch', function (event) {
     /\/(index\.html)?$/.test(url.pathname) || /\/app\.js$/.test(url.pathname);
 
   if (isAppShellEntry) {
+    // `cache: 'reload'` forces an actual round-trip to the server, bypassing
+    // the browser's own HTTP cache (not just this service worker's
+    // CacheStorage) -- without it, a plain fetch(event.request) can still be
+    // satisfied from the browser's HTTP cache if GitHub Pages sent a
+    // Cache-Control allowing it, silently defeating "network-first" and
+    // serving a stale app.js alongside a fresh index.html (or vice versa).
     event.respondWith(
-      fetch(event.request).then(function (resp) {
+      fetch(event.request, { cache: 'reload' }).then(function (resp) {
         if (resp && resp.ok) {
           var copy = resp.clone();
           caches.open(CACHE_NAME).then(function (cache) { cache.put(event.request, copy); });

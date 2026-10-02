@@ -248,8 +248,10 @@
 
     // Takeoff (at departure pressure altitude/wind)
     $('toGroundRun').textContent = fmt(ladderResult('fig5-06', inp.depAltFt, inp.depOatF, inp.toWeight, inp.depWind), 'ft');
-    $('toDist50').textContent = fmt(ladderResult('fig5-07', inp.depAltFt, inp.depOatF, inp.toWeight, inp.depWind), 'ft');
-    $('accelStop').textContent = fmt(ladderResult('fig5-08', inp.depAltFt, inp.depOatF, inp.toWeight, inp.depWind), 'ft');
+    var toDist50Ft = ladderResult('fig5-07', inp.depAltFt, inp.depOatF, inp.toWeight, inp.depWind);
+    $('toDist50').textContent = fmt(toDist50Ft, 'ft');
+    var accelStopFt = ladderResult('fig5-08', inp.depAltFt, inp.depOatF, inp.toWeight, inp.depWind);
+    $('accelStop').textContent = fmt(accelStopFt, 'ft');
 
     // Takeoff - immediate return & land (landing charts at departure altitude/wind/OAT, at takeoff weight)
     $('irGroundRoll').textContent = fmt(ladderResult('fig5-15', inp.depAltFt, inp.depOatF, inp.toWeight, inp.depWind), 'ft');
@@ -289,6 +291,14 @@
     var seCeilAbs = ceilingDa(DATA['fig5-10'].weightCurves, inp.toWeight, 0);
     var seCeilSvc = ceilingDa(DATA['fig5-10'].weightCurves, inp.toWeight, 50);
     $('ceilSingle').textContent = fmt(seCeilAbs, 'ft') + ' / ' + fmt(seCeilSvc, 'ft');
+
+    // The three figures a pilot would check first -- surfaced at the top of
+    // the (collapsible) Performance card so they're visible even collapsed.
+    $('perfCriticalResults').innerHTML = resultsTable(
+      resultTile('Accelerate-stop distance', fmt(accelStopFt, 'ft')) +
+      resultTile('Takeoff dist, 50 ft obstacle', fmt(toDist50Ft, 'ft')) +
+      resultTile('SE service ceiling', fmt(seCeilSvc, 'ft'))
+    );
 
     // Cruise (referenced to departure altitude as the climb-out continues from there)
     $('tas').textContent = fmt(byPower(DATA['fig5-12'].powerCurves, depDaFt, inp.power), 'mph TAS');

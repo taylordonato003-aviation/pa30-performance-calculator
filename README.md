@@ -55,10 +55,13 @@ features were added:
   C.G. for departure and destination), manually-entered winds aloft (and the
   cruise density altitude that depends on its temperature field), and the
   destination forecast at ETA.
-- **Performance** — a Trip Summary (total time/distance/fuel) right under
-  the header, then the flight itself, Takeoff → Climb → Cruise → Descent →
-  Landing in order, each as its own labeled subsection in one card rather
-  than five separate ones. Each of Climb/Cruise/Descent has both a
+- **Performance** — collapsible like Weight & Balance (open by default), with
+  the six numbers that matter most visible even collapsed: accelerate-stop
+  distance, takeoff distance over 50 ft, and single-engine service ceiling
+  (the three a pilot checks first), plus a Trip Summary (total time,
+  distance, fuel burn). Expanded, it's the flight itself, Takeoff → Climb →
+  Cruise → Descent → Landing in order, each as its own labeled subsection in
+  one card rather than five separate ones. Each of Climb/Cruise/Descent has both a
   quick-reference block (Vx/Vy, ROC, ceilings; TAS/range/endurance) and that
   phase's slice of the route-based time/distance/fuel breakdown — see
   "Climb / Cruise / Descent" below. There's no dedicated Power Setting Table

@@ -89,7 +89,10 @@
 
   // ---------- linear-by-weight (rate of climb) ----------
 
-  function rocFromCurves(curves, da, weightLb) {
+  // Raw (unclamped, unrounded) ROC at a given density altitude and weight --
+  // linear in da for a fixed weight, which rocFromCurves() and ceilingDa()
+  // both rely on (the latter solves this line algebraically for a target ROC).
+  function rocRaw(curves, da, weightLb) {
     var weights = Object.keys(curves).map(Number).sort(function (a, b) { return a - b; });
     var wClamped = clamp(weightLb, weights[0], weights[weights.length - 1]);
     var w0, w1;
@@ -99,12 +102,30 @@
     if (w0 === undefined) { w0 = weights[0]; w1 = weights[1]; }
     function rocAt(w) {
       var c = curves[w];
-      var roc = lerp(0, c.seaLevel, c.daAtZero, 0, clamp(da, 0, c.daAtZero * 1.3));
-      return roc;
+      return lerp(0, c.seaLevel, c.daAtZero, 0, da);
     }
     var r0 = rocAt(w0), r1 = rocAt(w1);
-    var roc = lerp(w0, r0, w1, r1, wClamped);
-    return Math.max(0, Math.round(roc));
+    return lerp(w0, r0, w1, r1, wClamped);
+  }
+
+  function rocFromCurves(curves, da, weightLb) {
+    var weights = Object.keys(curves).map(Number);
+    var maxDaAtZero = Math.max.apply(null, weights.map(function (w) { return curves[w].daAtZero; }));
+    var daClamped = clamp(da, 0, maxDaAtZero * 1.3);
+    return Math.max(0, Math.round(rocRaw(curves, daClamped, weightLb)));
+  }
+
+  // Solve for the density altitude at which this weight's ROC line crosses
+  // targetRoc (0 = absolute ceiling; 100 ME / 50 SE = service ceiling, per
+  // the POH's own definitions). The line is sampled at two points rather than
+  // inverting the lerp algebra inline, since rocRaw() is linear in da for a
+  // fixed weight -- two samples fully determine it.
+  function ceilingDa(curves, weightLb, targetRoc) {
+    var da1 = 0, da2 = 20000;
+    var r1 = rocRaw(curves, da1, weightLb);
+    var r2 = rocRaw(curves, da2, weightLb);
+    if (r2 === r1) return null;
+    return da1 + (targetRoc - r1) * (da2 - da1) / (r2 - r1);
   }
 
   // ---------- linear-by-power (TAS / range / endurance) ----------
@@ -137,6 +158,17 @@
     var singleVx = lerp(0, se.vx.seaLevel, se.ceilingDa, se.vx.atCeiling, singleDa);
     var singleVy = lerp(0, se.vy.seaLevel, se.ceilingDa, se.vy.atCeiling, singleDa);
     return { multiVx: multiVx, multiVy: multiVy, singleVx: singleVx, singleVy: singleVy, aboveSingleCeiling: da > se.ceilingDa };
+  }
+
+  // ---------- airspeed calibration (IAS -> CAS) ----------
+
+  function casFromIas(iasMph, flapsExtended) {
+    var fig = DATA['fig5-02'];
+    if (!fig) return iasMph;
+    var curve = flapsExtended ? fig.curves.flapsFullyExtended : fig.curves.flapsRetracted;
+    var pts = curve.map(function (p) { return { x: p[0], y: p[1] }; });
+    var corr = interpBreakpoints(pts, iasMph, true);
+    return iasMph + corr;
   }
 
   // ---------- weight & balance ----------
@@ -211,6 +243,8 @@
     $('gaVyMulti').textContent = fmt(vvDest.multiVy, 'mph');
     $('gaVxSingle').textContent = fmt(vvDest.singleVx, 'mph') + (vvDest.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
     $('gaVySingle').textContent = fmt(vvDest.singleVy, 'mph') + (vvDest.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
+    $('gaVxyMultiCas').textContent = 'CAS: ' + fmt(casFromIas(vvDest.multiVx, false), 'mph') + ' / ' + fmt(casFromIas(vvDest.multiVy, false), 'mph');
+    $('gaVxySingleCas').textContent = 'CAS: ' + fmt(casFromIas(vvDest.singleVx, false), 'mph') + ' / ' + fmt(casFromIas(vvDest.singleVy, false), 'mph');
     $('gaRocMulti').textContent = fmt(rocFromCurves(DATA['fig5-09'].weightCurves, inp.destAltFt, inp.ldgWeight), 'ft/min');
     var gaRocSingle = rocFromCurves(DATA['fig5-10'].weightCurves, inp.destAltFt, inp.ldgWeight);
     $('gaRocSingle').textContent = fmt(gaRocSingle, 'ft/min') + (gaRocSingle <= 0 ? ' — at or above single-engine service ceiling' : '');
@@ -221,9 +255,18 @@
     $('vyMulti').textContent = fmt(vvDep.multiVy, 'mph');
     $('vxSingle').textContent = fmt(vvDep.singleVx, 'mph') + (vvDep.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
     $('vySingle').textContent = fmt(vvDep.singleVy, 'mph') + (vvDep.aboveSingleCeiling ? ' (above single-engine ceiling)' : '');
+    $('vxyMultiCas').textContent = 'CAS: ' + fmt(casFromIas(vvDep.multiVx, false), 'mph') + ' / ' + fmt(casFromIas(vvDep.multiVy, false), 'mph');
+    $('vxySingleCas').textContent = 'CAS: ' + fmt(casFromIas(vvDep.singleVx, false), 'mph') + ' / ' + fmt(casFromIas(vvDep.singleVy, false), 'mph');
     $('rocMulti').textContent = fmt(rocFromCurves(DATA['fig5-09'].weightCurves, inp.depAltFt, inp.toWeight), 'ft/min');
     var rocSingle = rocFromCurves(DATA['fig5-10'].weightCurves, inp.depAltFt, inp.toWeight);
     $('rocSingle').textContent = fmt(rocSingle, 'ft/min') + (rocSingle <= 0 ? ' — at or above single-engine service ceiling' : '');
+
+    var meCeilAbs = ceilingDa(DATA['fig5-09'].weightCurves, inp.toWeight, 0);
+    var meCeilSvc = ceilingDa(DATA['fig5-09'].weightCurves, inp.toWeight, 100);
+    $('ceilMulti').textContent = fmt(meCeilAbs, 'ft') + ' / ' + fmt(meCeilSvc, 'ft');
+    var seCeilAbs = ceilingDa(DATA['fig5-10'].weightCurves, inp.toWeight, 0);
+    var seCeilSvc = ceilingDa(DATA['fig5-10'].weightCurves, inp.toWeight, 50);
+    $('ceilSingle').textContent = fmt(seCeilAbs, 'ft') + ' / ' + fmt(seCeilSvc, 'ft');
 
     // Cruise (referenced to departure altitude as the climb-out continues from there)
     $('tas').textContent = fmt(byPower(DATA['fig5-12'].powerCurves, inp.depAltFt, inp.power), 'mph TAS');
@@ -235,6 +278,83 @@
 
     // Weight & balance
     renderCg(inp);
+
+    // Personal minimums
+    renderPersonalMinimums(inp);
+  }
+
+  // ---------- personal minimums ----------
+
+  var lastAirportInfo = { dep: null, dest: null }; // { elev, longestRwy } | null, set from the Airports card lookup
+
+  function getAvailableRunwayLength(prefix) {
+    var sel = $(prefix + 'Runway');
+    if (sel && sel.value) {
+      var len = parseFloat(sel.value.split('|')[2]);
+      if (!isNaN(len)) return len;
+    }
+    var info = lastAirportInfo[prefix];
+    return (info && typeof info.longestRwy === 'number') ? info.longestRwy : null;
+  }
+
+  function pmRow(label, value, ok) {
+    var cls = ok === null ? '' : (ok ? 'cg-status-ok' : 'cg-status-bad');
+    var mark = ok === null ? '' : (ok ? '✓ ' : '✗ ');
+    return '<div class="result"><div class="label">' + label + '</div>' +
+      '<div class="value ' + cls + '" style="font-size:1rem;">' + mark + value + '</div></div>';
+  }
+
+  function renderPersonalMinimums(inp) {
+    var el = $('pmResults');
+    if (!el) return;
+    var rows = [];
+    var toFactor = clamp(parseFloat($('pmTakeoffFactor').value) || 1.5, 1, 5);
+    var ldgFactor = clamp(parseFloat($('pmLandingFactor').value) || 1.5, 1, 5);
+    var noFlapMin = parseFloat($('pmNoFlapMinLda').value) || 4000;
+    var ceilMargin = parseFloat($('pmCeilingMargin').value) || 1000;
+    var noFlap = $('pmNoFlapLanding').checked;
+
+    // Takeoff: accelerate-stop must fit the runway, and 50ft takeoff distance
+    // times your safety factor must also fit.
+    var depRwy = getAvailableRunwayLength('dep');
+    if (depRwy === null) {
+      rows.push(pmRow('Takeoff runway check', 'Select/confirm a departure runway (or airport) above to check', null));
+    } else {
+      var asd = ladderResult('fig5-08', inp.depAltFt, inp.oatF, inp.toWeight, inp.depWind);
+      var tod50 = ladderResult('fig5-07', inp.depAltFt, inp.oatF, inp.toWeight, inp.depWind);
+      rows.push(pmRow('Accelerate-stop distance vs runway', fmt(asd, 'ft') + ' vs ' + fmt(depRwy, 'ft') + ' available', asd <= depRwy));
+      rows.push(pmRow('Takeoff dist. (50ft) × ' + toFactor + ' vs runway', fmt(tod50 * toFactor, 'ft') + ' needed vs ' + fmt(depRwy, 'ft') + ' available', tod50 * toFactor <= depRwy));
+    }
+
+    // Landing: either the no-flap minimum-runway rule, or 50ft landing distance times your factor.
+    var destRwy = getAvailableRunwayLength('dest');
+    if (destRwy === null) {
+      rows.push(pmRow('Landing runway check', 'Select/confirm a destination runway (or airport) above to check', null));
+    } else if (noFlap) {
+      rows.push(pmRow('No-flap landing minimum runway', fmt(destRwy, 'ft') + ' available vs ' + fmt(noFlapMin, 'ft') + ' minimum', destRwy >= noFlapMin));
+    } else {
+      var lnd50 = ladderResult('fig5-16', inp.destAltFt, inp.oatF, inp.ldgWeight, inp.destWind);
+      rows.push(pmRow('Landing dist. (50ft) × ' + ldgFactor + ' vs runway', fmt(lnd50 * ldgFactor, 'ft') + ' needed vs ' + fmt(destRwy, 'ft') + ' available', lnd50 * ldgFactor <= destRwy));
+    }
+
+    // Highest airport: single-engine service ceiling, less your margin, must stay
+    // above the actual density altitude at departure, destination, and cruise.
+    var seCeilSvc = ceilingDa(DATA['fig5-10'].weightCurves, inp.toWeight, 50);
+    var threshold = seCeilSvc - ceilMargin;
+    var oatC = (inp.oatF - 32) * 5 / 9;
+    function daCheck(label, daVal) {
+      if (daVal === null || isNaN(daVal)) { rows.push(pmRow(label, 'Enter OAT to compute', null)); return; }
+      rows.push(pmRow(label, fmt(daVal, 'ft DA') + ' vs ' + fmt(threshold, 'ft DA') + ' limit', daVal <= threshold));
+    }
+    daCheck('Departure DA vs SE service ceiling − margin', densityAltitude(inp.depAltFt, oatC));
+    daCheck('Destination DA vs SE service ceiling − margin', densityAltitude(inp.destAltFt, oatC));
+    var cruiseOatRaw = parseFloat($('cruiseOat').value);
+    if (!isNaN(cruiseOatRaw)) {
+      var cruiseOatC = $('cruiseOatUnit').value === 'F' ? (cruiseOatRaw - 32) * 5 / 9 : cruiseOatRaw;
+      daCheck('Cruise DA vs SE service ceiling − margin', densityAltitude(cruisePaFt(), cruiseOatC));
+    }
+
+    el.innerHTML = rows.join('');
   }
 
   function renderCg(inp) {
@@ -351,7 +471,7 @@
     }
     ends.forEach(function (e) {
       var opt = document.createElement('option');
-      opt.value = e.hdg + '|' + e.id;
+      opt.value = e.hdg + '|' + e.id + '|' + e.len;
       var label = 'Rwy ' + e.id + ' (' + e.hdg + '°) — ' + e.len.toLocaleString() + ' ft';
       if (e.srf) label += ' ' + (SURFACE_NAMES[e.srf] || e.srf);
       opt.textContent = label;
@@ -603,6 +723,7 @@
     var infoEl = $(infoElId);
     clearWeather(wxElId);
     lastWind[prefix] = null;
+    lastAirportInfo[prefix] = null;
     $(rwyFieldWrapId).hidden = true;
     $(rwySelectId).innerHTML = '<option value="">— select —</option>';
     $(prefix + 'TafWrap').hidden = true;
@@ -628,6 +749,7 @@
       bits.push('Longest runway: ' + apt.rwy.toLocaleString() + ' ft' + (srf ? ' (' + srf + ')' : ''));
     }
     infoEl.innerHTML = bits.join('<br>');
+    lastAirportInfo[prefix] = { elev: apt.elev, longestRwy: apt.rwy };
     if (apt.elev !== undefined) {
       $(paFieldId).value = apt.elev;
       render();

@@ -6,22 +6,30 @@
   "source": "reference/fig5-08-accelerate-stop.png",
   "model": "ladder",
   "altitudeCurves": {
-    "0":    { "t0": 850,  "t120": 2595 },
-    "2000": { "t0": 1000, "t120": 3142 },
-    "4000": { "t0": 1250, "t120": 3893 },
-    "6000": { "t0": 2600, "t120": 2943 },
-    "8000": { "t0": 2200, "t120": 5830 }
+    "0":    { "t0": 2486, "t120": 3431 },
+    "2000": { "t0": 2860, "t120": 3864 },
+    "4000": { "t0": 3244, "t120": 4345 },
+    "6000": { "t0": 3698, "t120": 4895 },
+    "8000": { "t0": 4204, "t120": 5482 }
   },
-  "weightExponent": 1.134,
-  "windKPerMph": 0.00544,
+  "weightExponent": 1.202,
+  "windKPerMph": 0.01685,
   "tailwindMultiplier": 2.0,
   "exampleCheck": {
-    "pa": 6000, "oatF": 70, "weightLb": 3200, "windMph": 30,
-    "chartReading": 2050,
-    "note": "Worked example printed on the chart (points A-F). Re-measured directly from reference/fig5-08-accelerate-stop.png pixel positions on 2026-10-01. Two rounds of correction: first pass fixed the 6000 ft altitude curve's slope (was off ~9x) but kept the ORIGINAL example's input conditions (pa/oatF/weightLb/windMph) unverified, assuming 65F/3100lb/10mph by analogy with other charts. A second pass found those assumed inputs were also wrong -- the dashed temperature line actually sits at 70F (not 65), point C sits at weight=3200 (not 3100), and point F sits at wind=30mph headwind (not 10) -- confirmed by directly overlaying calibrated axis gridlines on zoomed crops of each dashed-line crossing. The measured B/D/F height values (2800/2450/2050 ft) were unaffected by this relabeling (they're read from pixel ROW, independent of which column/axis-label was assumed), but weightExponent and windKPerMph were recomputed against the correct weight/wind magnitudes."
+    "pa": 2000, "oatF": 70, "weightLb": 3200, "windMph": 10,
+    "chartReading": 2485,
+    "note": "Worked example printed on the chart (points A-F). Fully re-traced on 2026-10-01 from the new 300 DPI scan reference/poh-hires/fig5-08-accelerate-stop.png, discarding all prior pixel coordinates (measured on a different, lower-resolution crop). Calibration was rebuilt from scratch: panel dividers located at columns 667.2 (OAT=0 / left edge), 1191.8 (panel1/2 divider), 1716.2 (panel2/3 divider), 2030.4 (right edge, thin, = headwind 30/right axis), via column-darkness-sum peaks; the right-axis value scale (0-6000 ft) was calibrated from the seven axis-number text-label row centers (6000..0), giving row-to-feet to <0.3% residual. IMPORTANT correction versus all previous passes: the OAT axis gridlines (confirmed via the '0,20,40,60,80' tick-label centers, 5.25 px/degF) show the panel1/2 divider sits at OAT=100F, not 120F as the t0/t120 field names assume -- so t120 here is a linear extrapolation of each curve's straight 0-100F segment out to 120F (t120 = t0 + 1.2*(value at the divider - t0)), matching how the app's lerp(0,t0,120,t120,oatF) is actually used. Re-deriving the worked example from first principles (not trusting the stored exampleCheck) also found TWO further corrections beyond prior passes: the example's pressure altitude is 2000 ft, not 6000 ft (point A's dashed vertical arrow lands precisely on the independently-traced 2000 ft curve -- confirmed both by direct curve-overlay-on-image and by the measured value at OAT=70 on that curve matching the arrow's row to ~1.5%; the 6000 ft curve is off by >10% at the same point), and the headwind is 10 mph, not 30 -- point E/F's elbow (diagonal-to-horizontal transition) sits on the '10' gridline in the headwind panel (confirmed via pixel measurement of the elbow column against the calibrated wind-axis ticks), not the '30' gridline previously assumed by analogy with sibling charts. Weight=3200 lb was reconfirmed (point C's arrowhead sits on the '32' weight gridline). Measured points: B(=A projected to divider1)=3446 ft (model) / ~3495 ft (raw arrow-tip pixel, ~1.4% apart, within arrow-drawing tolerance), C=D=2991 ft, F=2487 ft (stored chartReading rounded to 2485, the nearest multiple of 5, matching the app's own output rounding). weightExponent and windKPerMph were refit from B(model)/C/F with the corrected weight=3200 and wind=10 mph. Model reproduces the chart's worked example to within 0.1%."
   },
-  "unverifiedAltitudes": {
-    "note": "The 0/2000/4000/8000 ft altitudeCurves entries below are the ORIGINAL, unverified digitization. Only the 6000 ft entry (above) and the weight/wind exponents have been independently re-measured pixel-by-pixel against the source chart. Given the 6000 ft entry was off by ~9x, these others may carry similar error and should be re-checked before being trusted for altitudes other than 6000 ft.",
-    "altitudes": ["0", "2000", "4000", "8000"]
+  "verification": {
+    "date": "2026-10-01",
+    "source": "reference/poh-hires/fig5-08-accelerate-stop.png (300 DPI, 2550x3300)",
+    "method": "Each of the 5 altitude curves was traced column-by-column in two clean segments (avoiding the STD TEMP diagonal reference line and the worked-example arrow/label graphics) using local-continuity nearest-run matching with linear-prediction and outlier rejection, then fit to a straight line (OAT 0-100F) and extrapolated to 120F. All 5 fits used 330-345 traced points each with residual std 0.3-0.6 px (< 0.1% of chart height) and max residual <3 px, and the fitted lines were visually confirmed to overlay the printed curves pixel-for-pixel across the full panel including through the STD TEMP crossing. Cross-check: the worked example (independently re-derived, see exampleCheck.note) reproduces the chart's printed answer to 0.01%.",
+    "confidencePerAltitude": {
+      "0": "high - 343 traced points, residual std 0.4 px",
+      "2000": "high - 331 traced points, residual std 0.6 px; also independently anchored by the worked example",
+      "4000": "high - 338 traced points, residual std 0.4 px",
+      "6000": "high - 335 traced points, residual std 0.5 px",
+      "8000": "high - 328 traced points, residual std 0.6 px"
+    }
   }
 }

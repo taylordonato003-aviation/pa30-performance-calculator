@@ -186,11 +186,11 @@
     <div class="results-grid">
       <div class="result">
         <div class="label">V<sub>X</sub> / V<sub>Y</sub>, both engines</div>
-        <div class="value"><span id="gaVxMulti">—</span> / <span id="gaVyMulti">—</span></div>
+        <div class="value"><span id="gaVxMulti">—</span> / <span id="gaVyMulti">—</span><small id="gaVxyMultiCas"></small></div>
       </div>
       <div class="result">
         <div class="label">V<sub>X</sub> / V<sub>Y</sub>, single engine</div>
-        <div class="value"><span id="gaVxSingle">—</span> / <span id="gaVySingle">—</span></div>
+        <div class="value"><span id="gaVxSingle">—</span> / <span id="gaVySingle">—</span><small id="gaVxySingleCas"></small></div>
       </div>
       <div class="result">
         <div class="label">Rate of climb, both engines (clean config)</div>
@@ -208,11 +208,11 @@
     <div class="results-grid">
       <div class="result">
         <div class="label">V<sub>X</sub> / V<sub>Y</sub>, both engines <span class="fig">Fig 5-11</span></div>
-        <div class="value"><span id="vxMulti">—</span> / <span id="vyMulti">—</span></div>
+        <div class="value"><span id="vxMulti">—</span> / <span id="vyMulti">—</span><small id="vxyMultiCas"></small></div>
       </div>
       <div class="result">
         <div class="label">V<sub>X</sub> / V<sub>Y</sub>, single engine <span class="fig">Fig 5-11</span></div>
-        <div class="value"><span id="vxSingle">—</span> / <span id="vySingle">—</span></div>
+        <div class="value"><span id="vxSingle">—</span> / <span id="vySingle">—</span><small id="vxySingleCas"></small></div>
       </div>
       <div class="result">
         <div class="label">Rate of climb, both engines <span class="fig">Fig 5-09</span></div>
@@ -222,7 +222,17 @@
         <div class="label">Rate of climb, single engine <span class="fig">Fig 5-10</span></div>
         <div class="value" id="rocSingle">—</div>
       </div>
+      <div class="result">
+        <div class="label">Absolute / service ceiling, both engines <span class="fig">Fig 5-09</span></div>
+        <div class="value" id="ceilMulti">—</div>
+      </div>
+      <div class="result">
+        <div class="label">Absolute / service ceiling, single engine <span class="fig">Fig 5-10</span></div>
+        <div class="value" id="ceilSingle">—</div>
+      </div>
     </div>
+    <p class="hint">Ceilings are density altitude, at takeoff weight — service ceiling is 100 ft/min ROC (both engines) or 50 ft/min (single engine); absolute ceiling is 0 ft/min.</p>
+    <p class="hint">CAS shown under V<sub>X</sub>/V<sub>Y</sub> is corrected from IAS via <span class="fig">Fig 5-02</span>, flaps retracted.</p>
   </section>
 
   <section class="card">
@@ -290,6 +300,33 @@
     <p class="hint">Departure and destination here always match the airports entered above. With no fixes added, route distance is the direct great-circle distance between them. Each fix you add inserts a leg, point to point, in the order added. Fixes accept a 4-letter ICAO airport, a VOR/NDB identifier, or a 5-letter RNAV/GPS fix — type one and press Enter or Tab. If more than one navaid shares that identifier, you'll get a dropdown to pick the right one by name/country. Winds/temps aloft are a forecast product (not a live observation) from the same live-data source as METAR, interpolated to your cruise altitude from the nearest reporting station to each leg — a convenience estimate for situational awareness, not a substitute for a real weather briefing.</p>
 
     <div id="routeLegs"></div>
+  </section>
+
+  <section class="card">
+    <h2>Personal Minimums</h2>
+    <p class="hint">Your own safety margins, checked against the numbers computed above. Nothing here is a POH limit — adjust the factors to match your own standards. Select a specific departure/destination runway above for the runway checks to compare against; otherwise the airport's longest runway is used.</p>
+    <div class="input-grid">
+      <div class="field">
+        <label for="pmTakeoffFactor">Takeoff: 50ft distance × factor vs runway</label>
+        <input type="number" id="pmTakeoffFactor" value="1.5" step="0.1" min="1">
+      </div>
+      <div class="field">
+        <label for="pmLandingFactor">Landing: 50ft distance × factor vs runway</label>
+        <input type="number" id="pmLandingFactor" value="1.5" step="0.1" min="1">
+      </div>
+      <div class="field">
+        <label for="pmNoFlapMinLda">No-flap landing: minimum runway (ft)</label>
+        <input type="number" id="pmNoFlapMinLda" value="4000" step="100" min="0">
+      </div>
+      <div class="field">
+        <label for="pmCeilingMargin">Required margin above SE service ceiling (ft)</label>
+        <input type="number" id="pmCeilingMargin" value="1000" step="100" min="0">
+      </div>
+    </div>
+    <div class="field" style="margin-top:12px;">
+      <label><input type="checkbox" id="pmNoFlapLanding"> Planning a no-flap landing at destination</label>
+    </div>
+    <div id="pmResults" class="results-grid" style="margin-top:14px;"></div>
   </section>
 
   <section class="card">

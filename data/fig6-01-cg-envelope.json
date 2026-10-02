@@ -3,23 +3,18 @@
   "title": "Approved C.G. Range and Weight",
   "units": "inches aft of datum / lb",
   "conditions": "Standard (non tip-tank) configuration, max gross weight 3600 lb",
-  "source": "reference/fig6-01-cg-envelope.png",
+  "source": "reference/poh-hires/fig6-01-cg-envelope.png",
   "model": "polygon",
   "forwardLimitLabel": "7.0% MAC",
   "aftLimitLabel": "26.3% MAC",
   "polygon": [
     [81.0, 2300],
-    [81.0, 2500],
-    [81.2, 2730],
-    [81.6, 3010],
-    [82.0, 3150],
-    [82.4, 3230],
-    [83.2, 3310],
-    [84.2, 3415],
-    [85.0, 3500],
-    [85.9, 3600],
+    [81.0, 2450],
+    [83.0, 3200],
+    [86.5, 3600],
     [92.0, 3600],
     [92.0, 2300]
   ],
-  "verificationNote": "Re-measured pixel-by-pixel against reference/fig6-01-cg-envelope.png on 2026-10-01. Two errors found in the original digitization: (1) the top-left bend was stored as (87.3, 3200), but the real forward-limit line bends at approximately (82.2, 3200) — off by ~5 inches of CG; (2) the chart's top axis label was misread as 3800 instead of 3600, which (if left uncorrected) would have shifted every weight reading on this chart. The boundary from the lower bend to the top is not a single straight line — it has two distinct slopes (~355 lb/inch below 3200 lb, ~105 lb/inch above), now represented as a denser polygon rather than one bend point, for a closer fit to the actual printed curve."
+  "unmodeled": "A dashed line above the solid envelope (roughly (86.5,3600) up to ~3750, flat to ~(92,3750), back down to (92,3600)) appears on the chart but is unlabeled in this source and not covered by the limits table below it. Not digitized — likely a ferry/non-standard-category weight extension rather than a normal operating limit. Do not treat gross weights between 3600 and ~3750 lb as approved without checking the POH text for what this dashed line represents.",
+  "verificationNote": "Re-derived on 2026-10-01 directly from the printed C.G. limits table accompanying Figure 6-01 (reference/poh-hires/fig6-01-cg-limits-table.png), which gives exact forward/aft CG limits by weight: 3,600 lb -> fwd 86.5 / aft 92.0; 3,200 lb -> fwd 83.0 / aft 92.0; 2,450 lb or less -> fwd 81.0 / aft 92.0. This is authoritative printed numeric data, not a pixel trace, and supersedes the prior pixel-measured polygon (which had already corrected an earlier 3800-vs-3600 axis mislabel and a bend point error, but was still an approximation of the curve with a dense multi-point fit). The envelope is exactly 3 straight segments on the forward-limit side: (81.0,2300)-(81.0,2450) flat, (81.0,2450)-(83.0,3200), (83.0,3200)-(86.5,3600); the aft limit is a constant 92.0 (vertical line) across the full weight range. Chart image confirms these exact breakpoints visually: the forward-limit line bends precisely on the gridlines at (81.0 in, 2450 lb), (83.0 in, 3200 lb), and (86.5 in, 3600 lb)."
 }

@@ -6,22 +6,30 @@
   "source": "reference/fig5-15-landing-ground-roll.png",
   "model": "ladder",
   "altitudeCurves": {
-    "0":    { "t0": 621, "t120": 784 },
-    "2000": { "t0": 679, "t120": 842 },
-    "4000": { "t0": 722, "t120": 865 },
-    "6000": { "t0": 780, "t120": 969 },
-    "8000": { "t0": 837, "t120": 1052 }
+    "0":    { "t0": 617, "t120": 778 },
+    "2000": { "t0": 675, "t120": 834 },
+    "4000": { "t0": 718, "t120": 896 },
+    "6000": { "t0": 775, "t120": 965 },
+    "8000": { "t0": 833, "t120": 1043 }
   },
-  "weightExponent": 0.935,
-  "windKPerMph": 0.00833,
+  "weightExponent": 1.086,
+  "windKPerMph": 0.02126,
   "tailwindMultiplier": 2.0,
   "exampleCheck": {
-    "pa": 4000, "oatF": 70, "weightLb": 3100, "windMph": 30,
-    "chartReading": 525,
-    "note": "Worked example printed on the chart (points A-F). Re-measured directly from reference/fig5-15-landing-ground-roll.png pixel positions on 2026-10-01. TWO prior assumptions were wrong, not just the chart-reading target: the example's pressure altitude is 4000 ft, not the originally assumed 6000 ft (point A's traced curve matches the independently-identified '4000' curve's slope/t0 almost exactly, not '6000's), and its OAT is 70 F, not 65 F (the dashed vertical line sits at pixel x=351.5, which calibrates to ~70 F, not 65 F -- 65 F would be at x=341). Weight (3100 lb) confirmed correct. A follow-up check found the wind input was ALSO wrong: point F sits almost exactly on the '30' gridline in the headwind panel, not '10' as previously claimed -- the same wind=30 pattern independently confirmed on fig5-06, fig5-07, fig5-08, and fig5-16, suggesting all five ladder charts' worked examples use 30 mph headwind. windKPerMph refit accordingly from directly-measured B/D/F points (805/700/525) with windMph=30. Model reproduces the chart's worked example to within 0.01%."
+    "pa": 4000, "oatF": 70, "weightLb": 3100, "windMph": 10,
+    "chartReading": 550,
+    "note": "Worked example printed on the chart (points A-F). Fully re-traced on 2026-10-01 from the new 300 DPI scan reference/poh-hires/fig5-15-landing-ground-roll.png, discarding all prior pixel coordinates (measured on a different, lower-resolution crop). Calibration rebuilt from scratch: panel dividers at columns 659.3 (OAT=0/left edge), 1184.4 (panel1/2 divider), 1708.2 (panel2/3 divider), ~2026 (right edge); the right-axis value scale (0-1200 ft) calibrated from the six axis-number label row centers (1200..200, the '0' label excluded as an outlier due to single-digit glyph centering), giving row-to-feet to <1 px residual, cross-checked against the independently-located solid 'value=0' gridline (row 2500, matches calibration's row 2499.1 almost exactly). As in fig5-08, the OAT-axis tick labels show the panel1/2 divider sits at OAT=100F (not 120F), so t120 is a linear extrapolation of each curve's straight 0-100F segment (t120 = t0 + 1.2*(divider value - t0)), matching how the app's lerp(0,t0,120,t120,oatF) is used. PA=4000 and OAT=70F (prior pass's correction from 6000/65F) were reconfirmed here independently: point A's dashed arrow lands on the freshly-traced 4000 ft curve (confirmed by curve-overlay-on-image), and the model's predicted value for that curve at OAT=70F (821.4 ft) matches the directly-measured arrow-tip row (821.9 ft) to 0.05%. Weight=3100 lb was reconfirmed (point C sits close to the '31' position on the weight axis, between the '32' and '30' gridlines). However, the wind input is corrected AGAIN here: careful re-measurement of the diagonal-to-horizontal elbow at point E (not just a rough gridline glance) places it at the '10' mph headwind gridline, not '30' -- the same correction independently found on fig5-08's worked example in this same pass, which casts doubt on the earlier claim (from a lower-resolution pass) that a 30 mph pattern was confirmed across multiple sibling charts; that claim was not re-examined here since fig5-06/07/16 are out of scope for this pass, but it should be treated with suspicion. Measured points (using the carefully-isolated arrow/elbow pixels, not coincidentally-overlapping background gridlines, which caused this pass's first-draft readings of B and C to be off by several percent before being caught): B=822 ft, C=D=698 ft, F=550 ft. weightExponent and windKPerMph were refit from these with weight=3100 lb and wind=10 mph. Model reproduces the chart's worked example to within 0.05%."
   },
-  "unverifiedAltitudes": {
-    "note": "Only the 4000 ft entry (above) is anchored to the worked example and independently verified to ~0% error. The 0/2000/6000/8000 ft entries were re-traced from the source chart (an improvement on the original guesses) using a shorter, less-anchored pixel baseline (two trace points ~82px apart, then extrapolated out to t0 and t120) and cross-checked by visually confirming each curve against its printed altitude label, but are not confirmed against an independent worked example the way 4000 ft is. Medium confidence, not exact.",
-    "altitudes": ["0", "2000", "6000", "8000"]
+  "verification": {
+    "date": "2026-10-01",
+    "source": "reference/poh-hires/fig5-15-landing-ground-roll.png (300 DPI, 2550x3300)",
+    "method": "Each of the 5 altitude curves was traced column-by-column across the full panel using local-continuity nearest-run matching with linear slope prediction and an added guard that rejects any step implying a strongly positive slope (which otherwise causes the tracer to jump onto the STD TEMP reference line, which crosses all 5 curves at a steeper, opposite-sign slope). Fits used 350-375 traced points each with residual std 0.27-0.44 px and max residual <2.1 px, and the fitted lines were visually confirmed to overlay the printed curves pixel-for-pixel across the full panel, including through the STD TEMP crossing. Cross-check: the independently re-derived worked example reproduces the chart's printed answer to 0.05%.",
+    "confidencePerAltitude": {
+      "0": "high - 375 traced points, residual std 0.27 px",
+      "2000": "high - 375 traced points, residual std 0.43 px",
+      "4000": "high - 350 traced points, residual std 0.28 px; also independently anchored by the worked example",
+      "6000": "high - 360 traced points, residual std 0.44 px",
+      "8000": "high - 366 traced points, residual std 0.44 px"
+    }
   }
 }

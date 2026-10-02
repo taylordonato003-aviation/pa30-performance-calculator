@@ -6,24 +6,24 @@
   "source": "reference/fig5-12-true-airspeed.png",
   "model": "linear-by-power",
   "powerCurves": {
-    "45": { "seaLevel": 143.6, "at16000": 152.5 },
-    "55": { "seaLevel": 156.6, "at16000": 159.3 },
-    "65": { "seaLevel": 167.9, "at16000": 169.0 },
-    "75": { "seaLevel": 176.7, "at16000": 192.5 }
+    "45": { "seaLevel": 137.6, "at16000": 149.4 },
+    "55": { "seaLevel": 154.6, "at16000": 171.8 },
+    "65": { "seaLevel": 169.6, "at16000": 191.2 },
+    "75": { "seaLevel": 181.7, "at16000": 205.7 }
   },
   "verification": {
-    "note": "Re-measured pixel-by-pixel against reference/fig5-12-true-airspeed.png on 2026-10-01. The chart's curves do NOT all extend to 16000 ft -- each %power setting has its own real ceiling (the altitude where full throttle is required, i.e. where the curve bends into the '2400 RPM FULL THROTTLE' or '2700 RPM FULL THROTTLE' envelope line, or simply stops). app.js's linear-by-power model only supports a {seaLevel, at16000} pair, so values beyond each curve's real ceiling are a straight-line extrapolation of the measured slope, not real chart data.",
+    "note": "Re-measured pixel-by-pixel against the 300 DPI hi-res scan (reference/poh-hires/fig5-12-true-airspeed.png) on 2026-10-01, with calibration (DA axis and the two separate mph/knots axis strips) re-derived fresh from this image's own gridlines and axis-label text, not reused from the prior pass. Each curve was fit with linear least-squares over ~180 clean pixel points near SL (residuals <0.2 mph) to get seaLevel, and separately traced upward (narrow-window curve-following, gridlines masked out) to locate its real bend/termination point. The chart's curves do NOT all extend to 16000 ft -- each %power setting has its own real ceiling (the altitude where full throttle is required, i.e. where the curve bends into the '2400 RPM FULL THROTTLE' or '2700 RPM FULL THROTTLE' envelope line, or simply stops). app.js's linear-by-power model only supports a {seaLevel, at16000} pair, so at16000 values beyond each curve's real ceiling are a straight-line extrapolation of that curve's own measured near-SL slope, not real chart data.",
     "realCeilings": {
-      "45": { "ft": 16000, "tasMph": 152.5, "note": "Curve's real top matches the schema's 16000 ft point exactly -- no extrapolation needed." },
-      "55": { "ft": 14667, "tasMph": 159.1, "note": "Curve plainly terminates (flat end, no envelope bend) at ~14667 ft. The at16000 value above is extrapolated ~1300 ft past the real curve on its measured slope -- small, low-risk extrapolation." },
-      "65": { "ft": 15967, "tasMph": 169.0, "note": "Sharp peak where curve meets the 2400 RPM FULL THROTTLE envelope, at essentially 16000 ft -- matches the schema point almost exactly." },
-      "75": { "ft": 8000, "tasMph": 184.6, "note": "Sharp peak where curve meets the 2700 RPM FULL THROTTLE envelope, at 8000 ft. The at16000 value above is extrapolated a full 8000 ft past the real curve -- the original stored value (205) was even further from reality. Treat any 75%-power TAS figure above 8000 ft density altitude as unsupported by this chart; a future app.js change should probably cap/flag %power settings above each curve's real ceiling instead of silently extrapolating." }
+      "45": { "ft": 16000, "tasMph": 149.4, "note": "Curve's real top (flat termination, no envelope merge) matches the schema's 16000 ft point almost exactly -- re-confirmed." },
+      "55": { "ft": 15970, "tasMph": 171.7, "note": "MAJOR CORRECTION from the prior pass (was ft:14667, tasMph:159.1). On the hi-res image, 55%'s curve rises smoothly and nearly perfectly linearly (matching its own SL-region fit to within ~0.1 mph) almost all the way to 16000 ft, where it comes to a sharp peak merging into the 2400 RPM FULL THROTTLE envelope line -- essentially the same altitude as 45%'s termination, not ~1300 ft lower. The prior pass's 14667 ft figure does not correspond to any feature found on this curve in the hi-res image." },
+      "65": { "ft": 11900, "tasMph": 185.7, "note": "MAJOR CORRECTION from the prior pass (was ft:15967, tasMph:169.0). The sharp peak near 16000 ft that merges into the 2400 RPM FULL THROTTLE envelope belongs to the 55% curve, not 65% (confirmed by matching each curve's own independently-fit SL slope against the peak's measured mph -- the ~16000ft peak's mph matches 55%'s extrapolation to within 0.1 mph and is 10%+ off from 65%'s). 65% actually separates from that envelope much lower, following its own smooth, tightly-linear path from SL (deviating <0.1 mph from a pure straight line) and bending into the SAME 2400 RPM envelope at a sharp peak around 11900 ft / 185.7 mph instead. In effect, the prior pass's 55% and 65% real-ceiling readings were swapped onto the wrong curves, in the chart's visually crowded mid-altitude region where the two power curves and the 2400 RPM envelope line all run close together." },
+      "75": { "ft": 8020, "tasMph": 193.6, "note": "Altitude re-confirmed close to the prior pass (8000 -> 8020 ft, within tolerance), but the mph value is corrected substantially (184.6 -> 193.6, +4.9%) now that the curve's seaLevel point itself has been corrected upward (176.7 -> 181.7). Sharp peak where the curve meets the 2700 RPM FULL THROTTLE envelope, confirmed via direct pixel read of the peak (193.6 mph) matching the SL-fit's extrapolation to 8020 ft (193.7 mph) to within 0.1 mph." }
     },
     "confidence": {
-      "45": "high - clean, unambiguous curve, no interference from overlapping lines",
-      "65": "high - clean sharp peak, unambiguous",
-      "75": "high for both measured points (177/185 clean); the schema's at16000 extrapolation is necessarily low-confidence since it's 8000 ft beyond real data",
-      "55": "medium - sea level point is clean, but the curve's flat termination point sits almost exactly on a minor gridline, making the exact pixel read harder to pin down than the other three; the small total rise (only ~2.4 mph from SL to ceiling) is also harder to measure precisely than the steeper curves. Worth a second look if this number matters."
+      "45": "high - clean, unambiguous flat termination, closely matches prior pass",
+      "75": "high - clean sharp peak, altitude confirmed, mph corrected and cross-validated by two independent methods (direct pixel read and SL-fit extrapolation) agreeing to within 0.1 mph",
+      "55": "high (upgraded from the prior pass's medium confidence) - the hi-res image resolves the gridline-adjacent ambiguity the prior pass flagged, and firmly relocates this curve's real ceiling to ~16000 ft instead of 14667 ft; ~180-point SL fit plus the peak match to that fit leave little ambiguity",
+      "65": "high - correcting a structural mix-up with 55% (not just a magnitude error) from the prior pass; the ~12000 ft peak's mph matches 65%'s own independently-fit slope (extrapolated from ~180 clean SL-region points) to within 0.1 mph over a very long, well-constrained clean tracked segment (SL to ~11850 ft with <0.1 mph deviation throughout)"
     }
   }
 }

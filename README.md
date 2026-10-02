@@ -62,8 +62,11 @@ sw.js               Service worker for offline caching (no-ops on file://)
 icon-192.png / icon-512.png / apple-touch-icon.png   App icons
 data/*.json         The same datasets as plain, human-readable JSON —
                     edit these if you want to hand-correct a value
-reference/*.png     The 13 original scanned POH chart pages this tool
+reference/*.png     The original scanned POH chart pages this tool
                     was digitized from, for comparison
+reference/poh-hires/ 300 DPI scans (the current source of truth for all
+                    13 Section 5 charts) plus the Section 6 C.G. envelope
+                    page and its limits table
 cloudflare-worker/  The CORS proxy that fetches live METAR/winds-aloft
 metar-proxy.js       (see "Airport lookup" below) — not deployed as part
                     of this static site, lives separately on Cloudflare
@@ -110,35 +113,81 @@ point.
 
 ### Per-chart digitization confidence
 
-As of 2026-10-01, every chart has been re-measured pixel-by-pixel against its
-source scan in `reference/`, following a full re-verification pass that found
-two systematic errors in the original digitization: **every one of the five
-ladder charts' printed worked examples actually uses a 30 mph headwind, not
-the 10 mph originally assumed** (confirmed by direct pixel measurement — point
-F sits on the chart's own "30" gridline in all five cases), and several
-charts' pressure-altitude/OAT/weight example inputs were also misread (e.g.
-fig 5-15's example is at 4000 ft/70°F, not the originally assumed 6000 ft/65°F).
-All five ladder charts now reproduce their own chart's worked example to
-within 0.06%.
+As of 2026-10-01, every chart (13 of 14 — see the Fig 6-01 note below) has
+been re-digitized from a 300 DPI scan of the actual POH pages (`reference/poh-hires/`),
+replacing an earlier pass done against much lower-resolution web-scraped
+images. The low-res source made it genuinely hard to disentangle the five
+ladder charts' closely-spaced, crossing altitude curves — and it caused a
+real error: **all five ladder charts' printed worked examples actually use a
+10 mph headwind**, not the 30 mph a prior (low-res) pass had concluded "was
+confirmed across every chart." That 30 mph belief turned out to be wrong for
+all five charts, not just some of them, and several charts' pressure-altitude/
+weight example inputs were also mislabeled (e.g. fig 5-06 and 5-07's examples
+are both at PA=4000 ft, not the originally-assumed 6000 ft). Every correction
+below was independently cross-checked by directly measuring the relevant
+pixel/gridline alignment at least twice, by two different methods or passes,
+before being accepted — not taken on a single trace's word.
+
+Four of the five ladder charts now reproduce their own worked example to
+within 0.6%. The fifth (5-07) has a known, inherent ~8% gap explained in its
+table row below — a real limitation of the 2-point straight-line model on a
+chart whose curve is visibly non-linear, not a measurement error.
 
 | Figure | Chart | Self-check vs. printed example | Confidence |
 |---|---|---|---|
-| 5-06 | Takeoff ground run | computed 850 ft vs. chart 850 ft (−0.01%) | Good at the example point (PA=6000 ft). An earlier pass used the wrong right-axis calibration and an unverified example condition (assumed 65°F/3100 lb/10 mph instead of the real 65°F/3000 lb/30 mph headwind) — both now corrected. 0/2000/4000/8000 ft curves unverified, see `unverifiedAltitudes` |
-| 5-07 | Takeoff distance, 50 ft obstacle | computed 2318 ft vs. chart 2318 ft (0.00%) | Good at the example point (PA=6000 ft). An earlier automated trace misidentified which curve point A/B sit on; re-measured from scratch at the correct conditions (70°F/3200 lb/30 mph headwind, not 65°F/3100 lb/10 mph). 0/2000/4000/8000 ft curves unverified |
-| 5-08 | Accelerate-stop distance | computed 2050 ft vs. chart 2050 ft (0.01%) | Good at the example point (PA=6000 ft). Original digitization had a 6000 ft altitude curve off by ~9x in slope, a misread chart target, *and* wrong example conditions (actual: 70°F/3200 lb/30 mph headwind) — all corrected. 0/2000/4000/8000 ft curves unverified |
-| 5-15 | Landing ground roll | computed 525 ft vs. chart 525 ft (0.06%) | Good at the example point (PA=4000 ft, not the originally assumed 6000 ft). Weight (3100 lb) confirmed correct; wind corrected 10→30 mph. 0/2000/6000/8000 ft curves unverified |
-| 5-16 | Landing distance, 50 ft obstacle | computed 1701 ft vs. chart 1700 ft (0.06%) | Good at the example point (PA=2000 ft, not the originally assumed 6000 ft). Weight corrected 3100→3200 lb; wind corrected 10→30 mph. 0/4000/6000/8000 ft curves unverified |
-| 5-09 | Multi-engine rate of climb | no worked example on this chart to self-check against; each of the 3 weight curves independently re-measured at 3 pixel-calibrated altitudes, fit to <1% | Good |
-| 5-10 | Single-engine rate of climb | same method as 5-09; sea-level points were significantly revised (up to 73% relative, though small in absolute ft/min), ceilings were already close | Good |
-| 5-11 | Vx/Vy vs density altitude | re-measured at 6 altitudes per curve (multi-engine); found and fixed a structural error where single-engine Vx/Vy were modeled converging to two different ceiling speeds instead of one | Good |
-| 5-12 | True airspeed vs DA | re-measured; found each %power curve has its own real ceiling (e.g. 75% power tops out at 8000 ft, not 16000 ft) — confirmed visually against the chart | Good, except the 55% curve's exact termination point (medium — sits close to a gridline) |
-| 5-13 | Range profile | basic-fuel (84 gal) curves only; 75% curve was off ~24% in the original, others more minor | Good |
-| 5-14 | Endurance profile | basic-fuel only; original `at16000` values used a suspicious uniform +1.0 hr bump for every curve — replaced with per-curve measured ceilings | Good, except the 45% curve's top end (medium — crosses close to the 55% curve on the chart, hard to separate pixel-by-pixel) |
-| 6-01 | C.G. envelope | polygon re-measured directly off the chart's gridlines; found the original top-left bend point was misplaced by ~5 inches of C.G., and the axis top label had been misread (3800 instead of 3600) | Good |
-| 5-17 | Power setting table | transcribed directly, cell by cell; spot-checked two full rows against the image, exact match | Exact transcription |
+| 5-02 | Airspeed calibration (IAS→CAS) | no worked example on this chart; both curves (flaps retracted / flaps fully extended) traced row-by-row and sampled every 5 mph IAS | Good — new chart, not in the prior digitization set |
+| 5-06 | Takeoff ground run | computed 1140 ft vs. chart 1134 ft (+0.5%) | Good. Worked example is PA=4000 ft / 60°F / 3200 lb / 10 mph headwind / 1134 ft — all five inputs independently re-derived and cross-checked pixel-by-pixel (a casual visual recount of the parallel altitude curves was initially wrong about which curve point A sits on; resolved by precisely matching the curve's traced peak row against point B's measured row, which is unambiguous). All 5 altitude curves (0/2000/4000/6000/8000 ft) now independently traced and verified |
+| 5-07 | Takeoff distance, 50 ft obstacle | computed 2125 ft vs. chart 2311 ft (−8.0%) | Good data, known model-fit gap. Worked example: PA=4000 ft/70°F/3200 lb/10 mph/2311 ft. This chart's altitude curves are visibly curved rather than straight (confirmed by direct pixel sampling along the curve, which bows 25–50 px above the straight line its own two stored endpoints would imply) — the app's 2-point linear t0/t120 model can't close that gap without hurting accuracy elsewhere on the same curve. All 5 altitude curves independently traced |
+| 5-08 | Accelerate-stop distance | computed 2485 ft vs. chart 2485 ft (0.00%) | Good. Worked example: PA=2000 ft/70°F/3200 lb/10 mph/2485 ft (PA and wind both corrected from the prior pass's 6000 ft/30 mph). All 5 altitude curves independently traced |
+| 5-15 | Landing ground roll | computed 550 ft vs. chart 550 ft (0.00%) | Good. Worked example: PA=4000 ft/70°F/3100 lb/10 mph/550 ft (wind corrected from 30 mph). All 5 altitude curves independently traced |
+| 5-16 | Landing distance, 50 ft obstacle | computed 1700 ft vs. chart 1700 ft (0.00%) | Good. Worked example: PA=2000 ft/65°F/3200 lb/10 mph/1700 ft. A prior pass in this same re-verification round re-confirmed PA/weight correctly but initially carried forward the old wind=30 assumption without independently re-checking it — caught and corrected by directly measuring point E's column against the chart's own printed "10" tick label (exact match to within 1 px). All 5 altitude curves independently traced |
+| 5-09 | Multi-engine rate of climb | no worked example; each of 3 weight curves re-measured at 3+ pixel-calibrated points | Good. Sea-level ROC values revised up ~8% after finding the DA axis actually spans 0–32,000 ft (2 unlabeled minor gridlines above "28000"), not 0–28,000 as a prior pass assumed |
+| 5-10 | Single-engine rate of climb | same method as 5-09 | Good. Service-ceiling values revised up 1–2% on re-measurement (e.g. 3600 lb: 6925→7085 ft) |
+| 5-11 | Vx/Vy vs density altitude | re-measured at 6 points/curve (multi-engine), plus branch-intersection + direct pixel read for the single-engine "tent" apex | Good. Single-engine `ceilingDa` corrected 7189→6189 ft (~14% lower), confirmed by three independent methods agreeing to ~20 ft |
+| 5-12 | True airspeed vs DA | re-measured; each %power curve's real ceiling confirmed by per-curve slope fit | Good. Found the 55%/65% real-ceiling readings had been swapped onto the wrong curves in a prior pass (crowded mid-altitude region) — corrected |
+| 5-13 | Range profile | basic-fuel (84 gal) curves only | Good. Real ceiling altitudes corrected (45%/55% both actually terminate together at ~15,000 ft, not 16,000/14,667 separately) |
+| 5-14 | Endurance profile | basic-fuel only | Good. Sea-level values corrected up 13–19% against a gridline overlay; confirmed 65% runs continuously to ~15,000 ft (no separate ~12,000 ft ceiling like the analogous range chart) — only 75% keeps a distinct, much lower ceiling |
+| 6-01 | C.G. envelope | re-derived from the printed C.G. *limits table* accompanying the figure (exact numbers, not a pixel trace) | Exact — forward-limit breakpoints (81.0in/2450lb, 83.0in/3200lb, 86.5in/3600lb) and the constant 92.0in aft limit are all printed values. **Not covered by the 300 DPI Section 5 scan** (that PDF is Section 5/Performance only) — this chart's source is a separately-provided page image of Section 6/Weight & Balance |
+| 5-17 | Power setting table | every row cross-checked against the hi-res scan (not just a sample) | Exact transcription, no changes needed |
 
 Re-run the self-check anytime by opening the browser console after loading
 `index.html` — `app.js` logs a one-line summary per ladder chart on load.
+
+### Airspeed calibration (IAS → CAS)
+
+Fig 5-02 gives the correction to add to Indicated Airspeed to get Calibrated
+Airspeed, as two curves (flaps retracted / flaps fully extended) over the
+chart's charted IAS range. The Climb and Go-Around cards show this CAS value
+under each V<sub>X</sub>/V<sub>Y</sub> reading (flaps-retracted curve, matching
+Fig 5-11's own "wing flaps retracted" condition). The Cruise card's true
+airspeed is still read directly off Fig 5-12 (TAS vs density altitude at a
+given % power) rather than derived from CAS — that chart already gives TAS
+directly, so there's no CAS step in that particular chain.
+
+### Absolute and service ceiling
+
+The Climb card derives the both-engines and single-engine absolute and
+service ceilings directly from the same rate-of-climb data (Fig 5-09 / 5-10)
+used for the ROC readings above them, at your takeoff weight. Per the POH's
+own definitions: absolute ceiling is the density altitude where ROC reaches
+0 ft/min; service ceiling is 100 ft/min (both engines) or 50 ft/min (single
+engine). Since each weight curve's ROC-vs-DA relationship is already modeled
+as a straight line from sea level down to 0 at `daAtZero`, and interpolating
+between two weight curves at a fixed DA stays linear, the ceiling for any
+target ROC is solved directly (two-point line fit, not a search) rather than
+approximated.
+
+### Personal minimums
+
+A dedicated card lets you set your own safety margins — none of this is a
+POH limit, just a convenience for checking the computed numbers above against
+the actual runway/airport before you fly: accelerate-stop distance and (your
+factor) × takeoff distance over 50 ft against the departure runway; (your
+factor) × landing distance over 50 ft against the destination runway (or a
+flat no-flap-landing minimum runway, if you check that box); and departure/
+destination/cruise density altitude against the single-engine service ceiling
+less your chosen margin. It uses the specific runway selected above if you
+picked one, otherwise the airport's longest runway.
 
 ### Why `data.js` duplicates `data/*.json`
 

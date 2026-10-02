@@ -7,25 +7,25 @@
   "model": "linear-by-power",
   "fuelGal": 84,
   "powerCurves": {
-    "45": { "seaLevel": 997, "at16000": 1045 },
-    "55": { "seaLevel": 961, "at16000": 1011 },
-    "65": { "seaLevel": 928, "at16000": 956 },
-    "75": { "seaLevel": 868, "at16000": 880 }
+    "45": { "seaLevel": 983.4, "at16000": 1050.3 },
+    "55": { "seaLevel": 947.3, "at16000": 1020.7 },
+    "65": { "seaLevel": 914.8, "at16000": 983.3 },
+    "75": { "seaLevel": 854.7, "at16000": 923.7 }
   },
   "verification": {
-    "note": "Re-measured pixel-by-pixel against reference/fig5-13-range-profile.png on 2026-10-01 (BASIC FUEL 84 gal solid curves only -- the TIP TANK FUEL dashed curves on the same chart were ignored, out of scope). Like fig 5-12, not all curves reach 16000 ft -- each terminates where the aircraft can no longer sustain that %power (full-throttle limit).",
+    "note": "Re-measured pixel-by-pixel against the 300 DPI hi-res scan (reference/poh-hires/fig5-13-range-profile.png) on 2026-10-01, with the DA-axis and range-axis calibration re-derived fresh from this image's own gridlines and axis-label text (BASIC FUEL 84 gal solid curves only -- the TIP TANK FUEL dashed curves on the same chart were ignored, out of scope). Each curve was fit with linear least-squares over ~100-180 clean pixel points near SL (residuals mostly <0.2 mi, one curve briefly to ~1.1 mi where a dashed tip-tank line passes close by) to get seaLevel, and separately traced upward to its real flat-topped termination point. Like fig 5-12, not all curves reach 16000 ft -- each terminates where the aircraft can no longer sustain that %power (full-throttle limit).",
     "realCeilings": {
-      "45": { "ft": 16000, "mi": 1045, "note": "Terminates essentially exactly at 16000 ft -- matches the schema point, no extrapolation." },
-      "55": { "ft": 16000, "mi": 1011, "note": "Same -- terminates essentially exactly at 16000 ft." },
-      "65": { "ft": 12000, "mi": 948, "note": "Terminates at 12000 ft. The at16000 value above (956) is extrapolated ~4000 ft past the real curve on its measured slope." },
-      "75": { "ft": 8000, "mi": 874, "note": "Terminates at 8000 ft. The at16000 value above (880) is extrapolated a full 8000 ft past the real curve -- same caveat as fig 5-12's 75% TAS curve." }
+      "45": { "ft": 15000, "mi": 1046, "note": "CORRECTED from the prior pass (was ft:16000). The curve's flat top is clearly one major gridline interval below the chart's 16000 ft top border, not at it -- confirmed by direct pixel measurement of the termination row and cross-checked against the SL-region fit extrapolated to that altitude (1050 vs the measured 1046, a 0.4% match). The mi value itself was already close in the prior pass (1045); only the altitude was off." },
+      "55": { "ft": 15000, "mi": 1015, "note": "CORRECTED from the prior pass (was ft:14667). On the hi-res image, 55% terminates (flat top, no further curve above) at essentially the SAME altitude as 45% -- both curves' tops sit side by side at the same row, about 1300 ft higher than the prior pass's reading. Matches the SL-region fit extrapolated to that altitude (1021 vs measured ~1015, within 0.6%)." },
+      "65": { "ft": 12000, "mi": 967, "note": "Altitude re-confirmed closely (was 12000, now measured ~11990). mi value revised 948 -> 967 (+2%), based on a direct pixel read of the termination point matching the SL-fit extrapolation (966 predicted vs 967 measured) to within 0.1 mi. Re-verified with a sensitive low-threshold rescan of the gap just above this point (DA ~12000-15000) confirming genuinely blank ink there -- not a faint/missed continuation. Note: the companion fig5-14 endurance chart's 65% curve does NOT show this same 12000 ft cutoff (it runs continuously to ~15000 ft there); that is a real difference between the two charts for this curve, not a measurement error in either one." },
+      "75": { "ft": 8000, "mi": 890, "note": "Altitude re-confirmed closely (was 8000, now measured ~7990). mi value revised 874 -> 890 (+1.8%), consistent with the corrected, slightly higher seaLevel point; direct pixel read of the termination matches the SL-fit extrapolation (889.9) almost exactly." }
     },
-    "correctionVsOriginal": "The original seaLevel values for 55/65/75% (930/870/700) were reasonably close to re-measured (961/928/868) except 75%, which was off by a large margin (700 vs. the measured ~868 -- a ~24% error, re-confirmed by three independent pixel reads at different rows). The 45% value was also revised slightly (970 -> 997). All four curves' relative ordering (45 > 55 > 65 > 75, i.e. lower power = longer range) was already correct in the original data and remains so.",
+    "correctionVsOriginal": "seaLevel values for all four curves are revised slightly upward from the prior pass (45: 997->983.4, 55: 961->947.3, 65: 928->914.8, 75: 868->854.7), a consistent ~1.3-1.5% shift in the same direction across all four curves -- most likely a small systematic calibration difference between the prior pass's lower-resolution source image and this fresh hi-res calibration, re-derived independently per the task's instructions. More importantly, the REAL CEILING altitudes for 45% and 55% are corrected: the prior pass had 45% terminating at exactly 16000 ft and 55% noticeably lower at 14667 ft; the hi-res image shows both curves' flat tops sitting at essentially the SAME altitude, about 15000 ft -- roughly 1000 ft below the chart's 16000 ft top border for 45%, and about 300 ft above the prior reading for 55%. 65% and 75%'s real-ceiling altitudes were already accurate (12000 and 8000 ft) and are reconfirmed; only their mi values at those points are revised up slightly (~2%). All four curves' relative ordering (45 > 55 > 65 > 75, i.e. lower power = longer range) remains correct.",
     "confidence": {
-      "45": "high",
-      "55": "high",
-      "65": "high",
-      "75": "high for the measured 868/874 points; low confidence on the at16000=880 extrapolation since it's 8000 ft beyond real data"
+      "45": "high - clean, unambiguous flat termination, directly visible and pixel-measured one gridline below the chart top",
+      "55": "high - clean, unambiguous flat termination sitting right alongside 45%'s, resolving the prior pass's altitude discrepancy between the two",
+      "65": "high - clean, unambiguous flat termination, altitude closely reconfirmed",
+      "75": "high - clean, unambiguous flat termination, altitude closely reconfirmed"
     }
   }
 }

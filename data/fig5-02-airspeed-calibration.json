@@ -1,0 +1,32 @@
+{
+  "figure": "5-02",
+  "title": "Airspeed Calibration",
+  "units": "mph",
+  "conditions": "Primary pitot-static system, standard pitot-static head. Correction to be added to Indicated Airspeed (IAS) to obtain Calibrated Airspeed (CAS): CAS = IAS + correction.",
+  "source": "reference/poh-hires/fig5-02-airspeed-calibration.png",
+  "model": "table-by-config",
+  "curves": {
+    "flapsRetracted": [
+      [220, -4.03], [215, -3.94], [210, -3.81], [205, -3.56], [200, -3.25],
+      [195, -2.83], [190, -2.10], [185, -1.82], [180, -1.28], [175, -0.87],
+      [170, -0.48], [165, -0.16], [160, 0.15], [155, 0.42], [150, 0.60],
+      [145, 0.69], [140, 0.74], [135, 0.78], [130, 0.79], [125, 0.79],
+      [120, 0.83], [115, 0.87], [110, 0.99], [105, 1.21], [100, 1.46],
+      [95, 1.68], [90, 1.81], [85, 1.90], [80, 1.93], [76, 1.94]
+    ],
+    "flapsFullyExtended": [
+      [125, -3.24], [120, -3.15], [115, -2.85], [110, -2.35], [105, -1.82],
+      [100, -1.33], [95, -0.93], [90, -0.63], [85, -0.42], [80, -0.32],
+      [75, -0.23], [70, -0.20], [69.5, -0.20]
+    ]
+  },
+  "notes": [
+    "flapsRetracted spans the full charted IAS range (76-220 mph); flapsFullyExtended only spans 69.5-125 mph, matching the real printed curves' extents on the chart (flaps are not extended at high speed). Use flapsRetracted for any IAS outside flapsFullyExtended's range even with flaps out, or flag as outside the chart's data.",
+    "The chart has no explicit 'flaps partially extended' curve; treat any intermediate flap setting as flapsRetracted for calibration purposes, consistent with the chart only providing these two curves."
+  ],
+  "verification": {
+    "method": "Digitized 2026-10-01 from the new 300 DPI PDF scan (reference/poh-hires/fig5-02-airspeed-calibration.png), not present in the app's prior digitized chart set. Axis calibration: IAS axis (right scale, MPH) fit from a clean column strip far from both curves, row 896.5px = 220 mph, row 2682.5px = 60 mph (18 gridlines at exactly 10 mph spacing, residual <0.5px). Correction axis fit from the three labeled bold gridlines ('5 MPH DECREASE'/'0'/'5 MPH INCREASE' tick labels), confirmed to land precisely on columns 1303.0/1526.0/1750.5px = -5/0/+5 mph, with all 11 remaining minor gridlines landing within 0.1 mph of exact 2.5 mph multiples using this calibration -- very high confidence fit.",
+    "tracing": "Each curve traced row-by-row (local continuity, previous-row column as search anchor, masked gridline columns) from a confirmed start anchor to its visually-confirmed termination row, sampled every 5 mph. The two curves do not touch or cross at any point (flapsRetracted crosses its own zero-correction gridline around 166 mph, which was verified NOT to be a crossing with the second curve via a zoomed crop -- the second apparent 'line' at that location is the '0' gridline itself, not flapsFullyExtended, which does not start until ~125 mph).",
+    "confidence": "High for both curves -- clean, well-separated ink, unambiguous gridline calibration, curve endpoints confirmed by direct pixel inspection of where each line's ink terminates."
+  }
+}

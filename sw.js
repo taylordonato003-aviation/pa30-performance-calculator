@@ -3,7 +3,7 @@
 // registration accordingly, so this file is simply never loaded when the
 // app is opened directly from disk.
 
-var CACHE_NAME = 'pa30-calc-v6';
+var CACHE_NAME = 'pa30-calc-v7';
 var ASSETS = [
   './index.html',
   './style.css',
@@ -16,6 +16,7 @@ var ASSETS = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
+  './data/fig5-02-airspeed-calibration.json',
   './data/fig5-06-takeoff-ground-run.json',
   './data/fig5-07-takeoff-distance-50ft.json',
   './data/fig5-08-accelerate-stop.json',

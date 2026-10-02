@@ -6,22 +6,18 @@
   "source": "reference/fig5-07-takeoff-distance-50ft.png",
   "model": "ladder",
   "altitudeCurves": {
-    "0":    { "t0": 950,  "t120": 1835 },
-    "2000": { "t0": 1150, "t120": 2238 },
-    "4000": { "t0": 1500, "t120": 2864 },
-    "6000": { "t0": 2650, "t120": 3240 },
-    "8000": { "t0": 2900, "t120": 5370 }
+    "0":    { "t0": 1686, "t120": 2703 },
+    "2000": { "t0": 1968, "t120": 3207 },
+    "4000": { "t0": 2402, "t120": 3414 },
+    "6000": { "t0": 2887, "t120": 3908 },
+    "8000": { "t0": 3429, "t120": 4973 }
   },
-  "weightExponent": 0.642,
-  "windKPerMph": 0.0055,
+  "weightExponent": 1.62,
+  "windKPerMph": 0.0141,
   "tailwindMultiplier": 2.0,
   "exampleCheck": {
-    "pa": 6000, "oatF": 70, "weightLb": 3200, "windMph": 30,
-    "chartReading": 2318,
-    "note": "Worked example printed on the chart (points A-F). Re-measured directly from reference/fig5-07-takeoff-distance-50ft.png pixel positions on 2026-10-01, superseding an earlier pass that had the right-axis calibration correct but (a) misidentified which curve point A sits on during automated tracing, giving a wrong B value, and (b) never independently verified the example's own weight/wind inputs, inheriting an assumed oatF=65/weightLb=3100/windMph=10 from a sibling chart. Correct example inputs, read directly off the dashed line's axis crossings: oatF=70 (not 65), weight=3200 (not 3100), wind=30mph headwind (not 10) -- the same wind=30 pattern confirmed on fig5-06 and fig5-08, and a windKPerMph (0.0055) that matches fig5-06's independently-derived value almost exactly, which is a strong cross-chart consistency check. Measured B=2994 ft, D=2776 ft, F=2318 ft; weightExponent and windKPerMph refit from these. Model reproduces the worked example to within 0.02%."
-  },
-  "unverifiedAltitudes": {
-    "note": "The 0/2000/4000/8000 ft altitudeCurves entries below are the ORIGINAL, unverified digitization. Only the 6000 ft entry (above) and the weight/wind exponents have been independently re-measured pixel-by-pixel against the source chart. A reliable automated trace of the other four curves was not achieved in this pass — they cross near a steep 'STD TEMP' reference line on the chart that repeatedly caused the curve-tracer to jump between curves, and disambiguating each one visually would need more time than this pass allowed. These others likely carry similar error and should be re-checked before being trusted for altitudes other than 6000 ft.",
-    "altitudes": ["0", "2000", "4000", "8000"]
+    "pa": 4000, "oatF": 70, "weightLb": 3200, "windMph": 10,
+    "chartReading": 2311,
+    "note": "Worked example printed on the chart (points A-F). Fully re-traced on 2026-10-01 from the new 300 DPI reference/poh-hires/fig5-07-takeoff-distance-50ft.png, superseding every prior pass. IMPORTANT CORRECTION, same issue found on the sibling fig5-06 chart: every earlier pass (including the one labeled 'independently re-measured and trusted') mislabeled this worked example as pa=6000. Pixel tracing shows the dashed A-B line actually sits on the 4000 ft curve: the dashed vertical line's column corresponds to OAT~69° (matches stored oatF=70), and a direct visual trace from the '4000' axis label, followed continuously along the solid curve, lands exactly on point A, while the '6000' curve visibly passes above point A at that column (same visual pattern as fig5-06's A point, which strongly suggests both worked examples were mislabeled identically in some earlier digitization pass). Re-measured chain: B (4000 ft curve @ OAT 70) = 3257 ft (row 1821.5 on the calibrated right-axis scale); C (weight-corrected) = 2692 ft at a column corresponding to weight ~3200 lb (not 3100 as previously assumed); F (final, wind-corrected) = 2311 ft with the wind leg crossing at a column close to the 10 mph gridline (not 30 mph as previously assumed). weightExponent and windKPerMph were refit from this B/C/F chain with weight=3200, wind=10, giving weightExponent~1.62 and windKPerMph~0.0141 -- both notably different from the prior stored values (0.642 and 0.0055), which were fit against the wrong curve/weight/wind and should not be trusted. CAVEAT (new finding, not present in prior passes): unlike fig5-06, this chart's altitude curves are visibly CURVED rather than straight lines (confirmed by direct pixel sampling at multiple columns along the 4000 ft curve, which runs 25-50 px above the straight line connecting its own two endpoints through the middle of its OAT range). The app's ladder model only supports a straight-line (2-point) interpolation between t0 and t120, so for this chart that is an inherent approximation, not a measurement error: using the t0/t120 values below, the model reproduces this worked example's chartReading to only within ~8% (computed model value ~2124 ft vs the true chart reading 2311 ft measured directly above), versus <0.5% for fig5-06's example. This ~8% gap cannot be closed by re-measuring t0/t120 more precisely -- t0 and t120 are deliberately kept as the curve's true value at OAT=0 and its true (apex-extrapolated) value at OAT=120 so that altitude-to-altitude interpolation between the five stored curves stays correct; shifting them to better-fit this one OAT=70 example would improve this example's number while making the model less accurate elsewhere along the curve. If sub-1% accuracy is ever needed for this chart specifically, the data model would need to support more than 2 OAT breakpoints per altitude. Axis calibration: OAT axis spans 0 to 100°F between the left border (pixel col ~698.5) and the bold panel1/panel2 divider (pixel col ~1222), same 100-not-120 caveat as fig5-06 applies, t120 = t0 + (edgeValue - t0) * 1.2. Right-axis (takeoff distance) calibrated from tick marks at 6000/5000/4000/3000/2000/1000/0 ft, fitted linear value = -4.78958*row + 11981.15 (max residual <6 ft across all 7 ticks)."
   }
 }

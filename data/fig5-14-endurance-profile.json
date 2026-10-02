@@ -7,25 +7,25 @@
   "model": "linear-by-power",
   "fuelGal": 84,
   "powerCurves": {
-    "45": { "seaLevel": 5.85, "at16000": 6.3 },
-    "55": { "seaLevel": 5.14, "at16000": 5.5 },
-    "65": { "seaLevel": 4.56, "at16000": 4.7 },
-    "75": { "seaLevel": 4.0, "at16000": 4.5 }
+    "45": { "seaLevel": 6.95, "at16000": 7.28 },
+    "55": { "seaLevel": 5.89, "at16000": 6.32 },
+    "65": { "seaLevel": 5.18, "at16000": 5.19 },
+    "75": { "seaLevel": 4.6, "at16000": 3.93 }
   },
   "verification": {
-    "note": "Re-measured pixel-by-pixel against reference/fig5-14-endurance-profile.png on 2026-10-01 (BASIC FUEL 84 gal solid curves only). The original at16000 values (all exactly +1.0 hr above seaLevel for every curve) look like an assumed uniform rise rather than a measured one -- the real per-curve rises are much smaller and uneven (0.25 to 0.5 hr), and like fig 5-12/5-13, not every curve reaches 16000 ft.",
+    "note": "Re-measured pixel-by-pixel against the 300 DPI hi-res scan (reference/poh-hires/fig5-14-endurance-profile.png) on 2026-10-01, with DA-axis and endurance-axis calibration re-derived fresh (BASIC FUEL 84 gal solid curves only). seaLevel values come from a ~180-point linear fit very close to SL (residuals ~0.002 hr) and were independently cross-checked with a direct gridline-overlay crop showing exactly where each curve crosses the SL line. MAJOR FINDING: all four seaLevel values are substantially higher than the prior pass (roughly +15 to +19%, in the same direction for all four) -- confirmed unambiguously by the overlay crop, which shows each curve crossing SL well to the right of where the prior pass's values would place it. Each curve was then traced continuously, row by row with gridlines masked out, from SL up to its real termination point; none of the four curves changes endurance monotonically with altitude -- all four dip or bend before any rise appears, which is why a simple SL-to-ceiling slope does not describe the whole curve (the stored at16000 is still just a straight line between the two schema points, per the model's limits).",
     "realCeilings": {
-      "75": { "ft": 8000, "hr": 4.25, "note": "Clean sharp termination at 8000 ft, unambiguous." },
-      "65": { "ft": 12000, "hr": 4.67, "note": "Clean sharp termination at 12000 ft, unambiguous." },
-      "55": { "ft": 15000, "hr": 5.49, "note": "Terminates close to but not exactly at 16000 ft." },
-      "45": { "ft": 15000, "hr": 6.3, "note": "LOWER CONFIDENCE: this curve runs close beside the 55% curve and briefly overlaps/crosses it near the top of the chart, which made the two hard to separate pixel-by-pixel. The seaLevel value (5.85) is solid, but the top-end value is a best estimate, not a clean independent read. Worth a second look with a higher-res source scan if this number matters." }
+      "75": { "ft": 8010, "hr": 4.26, "note": "Altitude re-confirmed (was 8000). hr value corrected 4.25 -> 4.26, consistent with the corrected, higher seaLevel point -- this curve's endurance actually DECREASES from SL to its ceiling (4.60 -> 4.26), not increases; confirmed by continuous pixel tracing with no gaps from SL to this termination." },
+      "65": { "ft": 14980, "hr": 5.19, "note": "MAJOR CORRECTION from the prior pass (was ft:12000, hr:4.67). Direct-labeled ('65 PERCENT POWER') continuous pixel tracing, with no gap, from SL all the way to ~14980 ft found no termination anywhere near 12000 -- the curve dips to a minimum around mid-altitude then recovers, ending almost exactly back at its own seaLevel value (5.18 -> 5.19, essentially flat net change) at essentially the SAME altitude where 55% and 45% also terminate. Verified independently by (a) a direct circle-marker overlay confirming the SL point and a mid-altitude point both lie on the curve labeled 65%, and (b) a sensitive low-threshold re-scan of fig5-13's analogous 65% gap region (different chart) confirming that THAT chart's 65% really does stop at 12000 with genuinely blank ink above it -- i.e. this is a real difference between the range and endurance charts for this curve, not a measurement artifact in either one." },
+      "55": { "ft": 14980, "hr": 6.29, "note": "Altitude re-confirmed (was 15000). hr value corrected 5.49 -> 6.29, consistent with the corrected, higher seaLevel point; terminates at essentially the same altitude as 65% and 45%." },
+      "45": { "ft": 14950, "hr": 7.26, "note": "Altitude re-confirmed (was 15000, previously flagged lower-confidence due to overlap with 55%). The hi-res image cleanly separates this curve from 55% throughout -- no overlap found. hr value corrected 6.3 -> 7.26, consistent with the corrected, higher seaLevel point." }
     },
-    "correctionVsOriginal": "seaLevel values were already close to accurate in the original (45: 5.8 vs 5.85, 55: 5.0 vs 5.14, 65: 4.5 vs 4.56, 75: 4.0 vs 4.0 exactly). The at16000 values were the main correction -- the original's uniform +1.0 hr assumption overstated every curve's altitude benefit, especially 75% (claimed 5.0, real extrapolated value ~4.5) and 65% (claimed 5.5, real ~4.7).",
+    "correctionVsOriginal": "seaLevel values are corrected upward for all four curves, by a large and consistent margin (45: 5.85->6.95, 55: 5.14->5.89, 65: 4.56->5.18, 75: 4.0->4.6, each +13-19%) -- directly confirmed by a gridline-overlay crop at the SL line, not just a pixel-fit number. This is a bigger and more consistent shift than the prior pass's stated confidence would suggest, and supersedes it. The at16000 values are revised accordingly, and the realCeilings are substantially restructured: 65% no longer shows the clean, separate 12000 ft termination the prior pass found (that termination was re-confirmed as real, but on fig5-13's range chart, not reproduced here) -- in the endurance chart, 65% instead runs continuously up to ~15000 ft alongside 55% and 45%, matching their termination altitude almost exactly. Only 75% keeps a distinct, much lower ceiling (~8000 ft).",
     "confidence": {
-      "75": "high",
-      "65": "high",
-      "55": "medium-high",
-      "45": "medium - seaLevel point solid, ceiling point approximate (see realCeilings note)"
+      "75": "high - seaLevel and ceiling both confirmed by tight fits and continuous, gap-free tracing",
+      "65": "high (upgraded from the prior pass, though the finding itself is a structural correction, not just a magnitude one) - confirmed by label-matched circle-marker overlay plus hundreds of rows of continuous, gap-free tracing from SL to termination",
+      "55": "high - seaLevel confirmed by tight fit and SL overlay; ceiling confirmed by continuous tracing with no overlap ambiguity found on the hi-res image",
+      "45": "high (upgraded from the prior pass's medium confidence) - the hi-res image resolves the 55%/45% overlap the prior pass flagged; both curves are cleanly distinguishable throughout"
     }
   }
 }

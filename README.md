@@ -350,6 +350,17 @@ never reaches a stabilized cruise segment — cruise is shown as zero and a
 warning explains why, rather than silently producing numbers that don't
 reflect reality.
 
+Each phase also shows the manifold pressure needed to hold its %power at
+2400 RPM, interpolated from Fig 5-17 at that phase's altitude — cockpit-
+actionable power-setting guidance alongside the time/distance/fuel numbers,
+not just an abstract %power figure. Cruise's %power snaps to whichever of
+55/65/75 is nearest the slider for this lookup specifically (that's all Fig
+5-17 tabulates), even though cruise fuel burn above still uses the slider's
+exact value. Above the highest altitude 2400 RPM has data for at a given
+%power (e.g. 75% tops out at 6,000 ft at 2400 RPM — a lower RPM holds it
+higher), it shows "full throttle*" with a note, rather than a number the
+chart doesn't support.
+
 The FD text format itself is a fixed-width bulletin with some real quirks
 handled here: a station can report wind with no temperature at low altitude,
 "light and variable" wind can still carry a temperature, and wind speeds at

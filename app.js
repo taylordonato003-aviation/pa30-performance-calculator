@@ -1251,6 +1251,29 @@
 
   // ---------- route: climb / cruise / descent planning ----------
 
+  function parseAltLabel(s) {
+    return s === 'Sea Level' ? 0 : parseFloat(s.replace(/,/g, ''));
+  }
+
+  // Manifold pressure (in Hg) needed to hold `power`% at `rpm` RPM, at altFt --
+  // interpolated between the table's altitude rows. Returns null above the
+  // highest altitude this power/RPM combination has data for (that altitude
+  // is usually full throttle already; holding this %power any higher would
+  // need a lower RPM instead, not more manifold pressure).
+  function manifoldPressureAt(altFt, power, rpm) {
+    var key = 'p' + power, rpmKey = String(rpm);
+    var pts = DATA['fig5-17'].rows
+      .filter(function (r) { return r[key] && r[key].mp && r[key].mp[rpmKey] !== undefined; })
+      .map(function (r) { return { x: parseAltLabel(r.altitude), y: r[key].mp[rpmKey] }; })
+      .sort(function (a, b) { return a.x - b.x; });
+    if (!pts.length || altFt > pts[pts.length - 1].x) return null;
+    if (altFt <= pts[0].x) return pts.length > 1 ? lerp(pts[0].x, pts[0].y, pts[1].x, pts[1].y, altFt) : pts[0].y;
+    for (var i = 0; i < pts.length - 1; i++) {
+      if (altFt <= pts[i + 1].x) return lerp(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y, altFt);
+    }
+    return null;
+  }
+
   function fuelGphAtPower(power) {
     var fig = DATA['fig5-17'];
     var points = [55, 65, 75].map(function (p) {
@@ -1322,17 +1345,33 @@
     var cruiseTimeHr = cruiseGsKt > 0 ? cruiseDistNm / cruiseGsKt : null;
     var cruiseFuelGal = cruiseTimeHr !== null ? cruiseTimeHr * fuelGphAtPower(inp.power) : null;
 
+    // Manifold pressure needed to hold each phase's %power at 2400 RPM, at
+    // that phase's representative altitude -- cockpit-actionable power
+    // setting guidance alongside the time/distance/fuel numbers, since the
+    // Power Setting Table only tabulates 55/65/75% (nearest of those three
+    // is used for cruise's MP lookup even if the cruise %power slider is set
+    // to something in between -- fuel burn above still uses the slider's
+    // exact value via interpolation, only this MP figure is snapped).
+    var CRUISE_RPM = 2400;
+    var cruisePowerCol = [55, 65, 75].reduce(function (best, p) {
+      return Math.abs(p - inp.power) < Math.abs(best - inp.power) ? p : best;
+    });
+    var climbMp = manifoldPressureAt((depPa + cruisePa) / 2, 75, CRUISE_RPM);
+    var cruiseMp = manifoldPressureAt(cruisePa, cruisePowerCol, CRUISE_RPM);
+    var descentMp = manifoldPressureAt((destPa + cruisePa) / 2, 55, CRUISE_RPM);
+
     function hm(hr) {
       if (hr === null || isNaN(hr)) return '—';
       var totalMin = Math.round(hr * 60);
       var h = Math.floor(totalMin / 60), m = totalMin % 60;
       return (h > 0 ? h + 'h ' : '') + m + 'm';
     }
-    function phaseRow(label, timeHr, distNm, fuelGal, gsKt) {
+    function phaseRow(label, timeHr, distNm, fuelGal, gsKt, mp) {
       return '<tr><td>' + label + '</td><td>' + hm(timeHr) + '</td>' +
         '<td>' + (distNm === null || isNaN(distNm) ? '—' : Math.round(distNm) + ' nm') + '</td>' +
         '<td>' + (gsKt === null || isNaN(gsKt) ? '—' : Math.round(gsKt) + ' kt') + '</td>' +
-        '<td>' + (fuelGal === null || isNaN(fuelGal) ? '—' : fuelGal.toFixed(1) + ' gal') + '</td></tr>';
+        '<td>' + (fuelGal === null || isNaN(fuelGal) ? '—' : fuelGal.toFixed(1) + ' gal') + '</td>' +
+        '<td>' + (mp === null ? 'full throttle*' : mp.toFixed(1) + ' in Hg') + '</td></tr>';
     }
 
     var totalTimeHr = (climbTimeHr || 0) + (cruiseTimeHr || 0) + descentTimeHr;
@@ -1340,14 +1379,17 @@
     var fuelOnBoard = inp.fuel;
 
     var html = '<div class="table-scroll"><table class="leg-table"><thead><tr>' +
-      '<th>Phase</th><th>Time</th><th>Distance</th><th>Avg GS</th><th>Fuel</th>' +
+      '<th>Phase</th><th>Time</th><th>Distance</th><th>Avg GS</th><th>Fuel</th><th>MP @ 2400 RPM</th>' +
       '</tr></thead><tbody>' +
-      phaseRow('Climb (75% pwr)', climbTimeHr, climbDistNm, climbFuelGal, climbGsKt) +
-      phaseRow('Cruise (' + inp.power + '% pwr)', cruiseTimeHr, cruiseDistNm, cruiseFuelGal, cruiseGsKt) +
-      phaseRow('Descent (55% pwr)', descentTimeHr, descentDistNm, descentFuelGal, descentGsKt) +
+      phaseRow('Climb (75% pwr)', climbTimeHr, climbDistNm, climbFuelGal, climbGsKt, climbMp) +
+      phaseRow('Cruise (' + inp.power + '% pwr)', cruiseTimeHr, cruiseDistNm, cruiseFuelGal, cruiseGsKt, cruiseMp) +
+      phaseRow('Descent (55% pwr)', descentTimeHr, descentDistNm, descentFuelGal, descentGsKt, descentMp) +
       '<tr class="wb-subtotal"><td>Total</td><td>' + hm(totalTimeHr) + '</td><td>' + Math.round(totalNm) + ' nm</td><td>—</td>' +
-      '<td>' + totalFuelGal.toFixed(1) + ' gal</td></tr>' +
+      '<td>' + totalFuelGal.toFixed(1) + ' gal</td><td>—</td></tr>' +
       '</tbody></table></div>';
+    if (climbMp === null || cruiseMp === null || descentMp === null) {
+      html += '<p class="route-status">* 2400 RPM can\'t hold that %power at that altitude per Fig 5-17 (its highest tabulated altitude for that combination has already been reached) — use a lower RPM instead to hold it higher, or expect less than the stated %power at full throttle.</p>';
+    }
 
     var notes = [];
     if (tooShort) {

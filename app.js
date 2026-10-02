@@ -295,88 +295,12 @@
     // Weight & balance
     renderCg(inp);
 
-    // Personal minimums
-    renderPersonalMinimums(inp);
-
     // Climb/cruise/descent plan depends on several Conditions-card fields
     // (weight, wind-derived PA, power, fuel) in addition to the Route card's
     // own inputs, so refresh it here too rather than only on route-specific
     // field changes. computeRoute()'s winds-aloft fetch is cached (55 min),
     // so this is cheap after the first call.
     computeRoute();
-  }
-
-  // ---------- personal minimums ----------
-
-  var lastAirportInfo = { dep: null, dest: null }; // { elev, longestRwy } | null, set from the Airports card lookup
-
-  function getAvailableRunwayLength(prefix) {
-    var sel = $(prefix + 'Runway');
-    if (sel && sel.value) {
-      var len = parseFloat(sel.value.split('|')[2]);
-      if (!isNaN(len)) return len;
-    }
-    var info = lastAirportInfo[prefix];
-    return (info && typeof info.longestRwy === 'number') ? info.longestRwy : null;
-  }
-
-  function pmRow(label, value, ok) {
-    var cls = ok === null ? '' : (ok ? 'cg-status-ok' : 'cg-status-bad');
-    var mark = ok === null ? '' : (ok ? '✓ ' : '✗ ');
-    return '<div class="result"><div class="label">' + label + '</div>' +
-      '<div class="value ' + cls + '" style="font-size:1rem;">' + mark + value + '</div></div>';
-  }
-
-  function renderPersonalMinimums(inp) {
-    var el = $('pmResults');
-    if (!el) return;
-    var rows = [];
-    var toFactor = clamp(parseFloat($('pmTakeoffFactor').value) || 1.5, 1, 5);
-    var ldgFactor = clamp(parseFloat($('pmLandingFactor').value) || 1.5, 1, 5);
-    var noFlapMin = parseFloat($('pmNoFlapMinLda').value) || 4000;
-    var ceilMargin = parseFloat($('pmCeilingMargin').value) || 1000;
-    var noFlap = $('pmNoFlapLanding').checked;
-
-    // Takeoff: accelerate-stop must fit the runway, and 50ft takeoff distance
-    // times your safety factor must also fit.
-    var depRwy = getAvailableRunwayLength('dep');
-    if (depRwy === null) {
-      rows.push(pmRow('Takeoff runway check', 'Select/confirm a departure runway (or airport) above to check', null));
-    } else {
-      var asd = ladderResult('fig5-08', inp.depAltFt, inp.depOatF, inp.toWeight, inp.depWind);
-      var tod50 = ladderResult('fig5-07', inp.depAltFt, inp.depOatF, inp.toWeight, inp.depWind);
-      rows.push(pmRow('Accelerate-stop distance vs runway', fmt(asd, 'ft') + ' vs ' + fmt(depRwy, 'ft') + ' available', asd <= depRwy));
-      rows.push(pmRow('Takeoff dist. (50ft) × ' + toFactor + ' vs runway', fmt(tod50 * toFactor, 'ft') + ' needed vs ' + fmt(depRwy, 'ft') + ' available', tod50 * toFactor <= depRwy));
-    }
-
-    // Landing: either the no-flap minimum-runway rule, or 50ft landing distance times your factor.
-    var destRwy = getAvailableRunwayLength('dest');
-    if (destRwy === null) {
-      rows.push(pmRow('Landing runway check', 'Select/confirm a destination runway (or airport) above to check', null));
-    } else if (noFlap) {
-      rows.push(pmRow('No-flap landing minimum runway', fmt(destRwy, 'ft') + ' available vs ' + fmt(noFlapMin, 'ft') + ' minimum', destRwy >= noFlapMin));
-    } else {
-      var lnd50 = ladderResult('fig5-16', inp.destAltFt, inp.destOatF, inp.ldgWeight, inp.destWind);
-      rows.push(pmRow('Landing dist. (50ft) × ' + ldgFactor + ' vs runway', fmt(lnd50 * ldgFactor, 'ft') + ' needed vs ' + fmt(destRwy, 'ft') + ' available', lnd50 * ldgFactor <= destRwy));
-    }
-
-    // Highest airport: single-engine service ceiling, less your margin, must stay
-    // above the actual density altitude at departure, destination, and cruise.
-    var seCeilSvc = ceilingDa(DATA['fig5-10'].weightCurves, inp.toWeight, 50);
-    var threshold = seCeilSvc - ceilMargin;
-    function daCheck(label, daVal) {
-      if (daVal === null || isNaN(daVal)) { rows.push(pmRow(label, 'Enter OAT to compute', null)); return; }
-      rows.push(pmRow(label, fmt(daVal, 'ft DA') + ' vs ' + fmt(threshold, 'ft DA') + ' limit', daVal <= threshold));
-    }
-    daCheck('Departure DA vs SE service ceiling − margin', densityAltitude(inp.depAltFt, inp.depOatC));
-    daCheck('Destination DA vs SE service ceiling − margin', densityAltitude(inp.destAltFt, inp.destOatC));
-    var cruiseOatRaw = parseFloat($('cruiseOat').value);
-    if (!isNaN(cruiseOatRaw)) {
-      var cruiseOatC = $('cruiseOatUnit').value === 'F' ? (cruiseOatRaw - 32) * 5 / 9 : cruiseOatRaw;
-      daCheck('Cruise DA vs SE service ceiling − margin', densityAltitude(cruisePaFt(), cruiseOatC));
-    }
-
-    el.innerHTML = rows.join('');
   }
 
   // ---------- weight & balance worksheet ----------
@@ -789,7 +713,6 @@
     var infoEl = $(infoElId);
     clearWeather(prefix);
     lastWind[prefix] = null;
-    lastAirportInfo[prefix] = null;
     $(rwyFieldWrapId).hidden = true;
     $(rwySelectId).innerHTML = '<option value="">— select —</option>';
     computeWindComponent(prefix);
@@ -808,7 +731,6 @@
       bits.push('Longest runway: ' + apt.rwy.toLocaleString() + ' ft' + (srf ? ' (' + srf + ')' : ''));
     }
     infoEl.innerHTML = bits.join('<br>');
-    lastAirportInfo[prefix] = { elev: apt.elev, longestRwy: apt.rwy };
     if (apt.elev !== undefined) {
       $(paFieldId).value = apt.elev;
       render();

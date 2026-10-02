@@ -47,8 +47,7 @@ features were added: **Weight & Balance** (know your weight/C.G. first) →
 **Route** (when/where/how high) → **Airports** (make PA/OAT/wind real
 instead of guesses) → **Conditions** (manual overrides for all of the
 above) → **Takeoff → Climb → Cruise → Descent → Landing** (the flight
-itself, in order) → **Personal Minimums** (final check, now that there's
-something to check against). Each of Climb/Cruise/Descent has both a
+itself, in order). Each of Climb/Cruise/Descent has both a
 quick-reference block (Vx/Vy, ROC, ceilings; TAS/range/endurance) and that
 phase's slice of the route-based time/distance/fuel breakdown — see "Climb /
 Cruise / Descent" below. There's no dedicated Power Setting Table card —
@@ -201,18 +200,6 @@ as a straight line from sea level down to 0 at `daAtZero`, and interpolating
 between two weight curves at a fixed DA stays linear, the ceiling for any
 target ROC is solved directly (two-point line fit, not a search) rather than
 approximated.
-
-### Personal minimums
-
-A dedicated card lets you set your own safety margins — none of this is a
-POH limit, just a convenience for checking the computed numbers above against
-the actual runway/airport before you fly: accelerate-stop distance and (your
-factor) × takeoff distance over 50 ft against the departure runway; (your
-factor) × landing distance over 50 ft against the destination runway (or a
-flat no-flap-landing minimum runway, if you check that box); and departure/
-destination/cruise density altitude against the single-engine service ceiling
-less your chosen margin. It uses the specific runway selected above if you
-picked one, otherwise the airport's longest runway.
 
 ### Weight & balance worksheet
 

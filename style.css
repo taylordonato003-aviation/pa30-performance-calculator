@@ -254,21 +254,6 @@ input[type="number"]:focus, select:focus {
   padding-top: 14px;
 }
 
-.results-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 10px;
-}
-
-.result {
-  background: var(--surface-2);
-  border-radius: 10px;
-  padding: 10px 12px;
-}
-.result .label { font-size: 0.78rem; color: var(--text-dim); }
-.result .value { font-size: 1.25rem; font-weight: 600; font-variant-numeric: tabular-nums; }
-.result .value small { font-weight: 400; font-size: 0.7rem; color: var(--text-dim); display: block; }
-
 .results-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 4px; }
 .results-table td { padding: 5px 4px; border-bottom: 1px solid var(--border); }
 .results-table tr:last-child td { border-bottom: none; }
@@ -315,11 +300,3 @@ table { border-collapse: collapse; width: 100%; font-size: 0.78rem; }
 th, td { border: 1px solid var(--border); padding: 4px 6px; text-align: right; white-space: nowrap; }
 th:first-child, td:first-child { text-align: left; }
 thead th { background: var(--surface-2); position: sticky; top: 0; }
-
-footer {
-  color: var(--text-dim);
-  font-size: 0.78rem;
-  text-align: center;
-  padding: 24px 16px 8px;
-}
-footer a { color: var(--accent); }

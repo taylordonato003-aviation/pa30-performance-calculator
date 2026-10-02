@@ -305,27 +305,41 @@ real-world station (navaid idents aren't globally unique the way ICAO codes
 are), a dropdown lets you pick the right one by name/country.
 
 Set a cruise altitude and an altimeter setting (defaults to standard, 29.92)
-to get cruise pressure altitude, and an enroute OAT (manual entry — estimate
-it from the per-leg temperature-aloft readings, a briefing, or the ISA lapse
-rate) to get a cruise density altitude — reference only, same as the DA
-columns in the Conditions table below: the POH charts this calculator uses
-are indexed by pressure altitude and OAT directly, not density altitude.
-For each leg, the app computes true
-course and distance from the waypoints' coordinates, finds the nearest
-winds-aloft forecast station to that leg's midpoint, interpolates its
-forecast to your cruise altitude, and shows the resulting headwind/tailwind
-and crosswind component along that leg's course.
+to get cruise pressure altitude. For each leg, the app computes true course
+and distance from the waypoints' coordinates. With more than one leg, the
+leg table's total line also shows a distance-weighted average course for
+the whole route (a circular/vector mean, not a plain average of the
+numbers — it correctly handles a route that crosses the 360°/0°T line).
 
-**This is forecast data, not an observation** — NOAA's winds/temps-aloft
-product ("FD") is valid for a ~6-hour window and only exists at a sparse
-network of ~170 stations nationwide (not every airport), so distance to the
-nearest station is shown alongside each result — treat it as a planning
-estimate, not a substitute for a real weather briefing. It's fetched through
-the same Cloudflare Worker proxy as METAR (a `/windtemp` endpoint added
-alongside `/metar` and `/taf`), for the same CORS reason. Winds aloft are
-reported in **true** heading by NOAA convention (unlike METAR surface wind,
-which is magnetic) — course is computed in true heading too, so the
-comparison is apples-to-apples with no conversion needed.
+**Winds aloft** come from one of two sources:
+
+- **Manual entry** (the Winds Aloft fields below cruise altitude): direction,
+  speed, and temperature, same numbers you'd read off a ForeFlight (or any)
+  winds-aloft briefing. When filled in, these are applied uniformly to every
+  leg and to the Climb/Descent cards' headwind component too — no network
+  call at all. This is the one to use when the app's own nearest-station
+  lookup (below) is too far from your actual route to be useful; temperature
+  also drives the cruise density altitude figure (reference only, same as
+  the DA columns in the Conditions table: the POH charts this calculator
+  uses are indexed by pressure altitude and OAT directly, not density
+  altitude).
+- **Automatic lookup** (when the manual fields are left blank): for each
+  leg, the app finds the nearest winds-aloft forecast station to that leg's
+  midpoint and interpolates its forecast to your cruise altitude, showing
+  the resulting headwind/tailwind and crosswind component along that leg's
+  course. **This is forecast data, not an observation** — NOAA's
+  winds/temps-aloft product ("FD") is valid for a ~6-hour window and only
+  exists at a sparse network of ~170 stations nationwide (not every
+  airport), so distance to the nearest station is shown alongside each
+  result — treat it as a planning estimate, not a substitute for a real
+  weather briefing. It's fetched through the same Cloudflare Worker proxy as
+  METAR (a `/windtemp` endpoint added alongside `/metar` and `/taf`), for
+  the same CORS reason.
+
+Winds aloft are reported in **true** heading by NOAA convention (unlike
+METAR surface wind, which is magnetic) — course is computed in true heading
+too, so the comparison is apples-to-apples with no conversion needed. This
+applies the same way to a manually-entered direction.
 
 ### Climb / Cruise / Descent
 

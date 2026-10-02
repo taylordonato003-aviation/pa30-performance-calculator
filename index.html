@@ -173,7 +173,23 @@
         <div class="value" id="cruisePA" style="font-size:1.1rem">—</div>
       </div>
       <div class="field">
-        <label for="cruiseOat">Enroute outside air temperature</label>
+        <label>Cruise density altitude</label>
+        <div class="value" id="cruiseDA" style="font-size:1.1rem">—</div>
+      </div>
+    </div>
+
+    <h3 class="subhead">Winds Aloft (manual entry)</h3>
+    <div class="input-grid">
+      <div class="field">
+        <label for="manualWindDir">Direction (°T)</label>
+        <input type="number" id="manualWindDir" value="" step="10" min="0" max="360" placeholder="e.g. 270">
+      </div>
+      <div class="field">
+        <label for="manualWindSpeed">Speed (kt)</label>
+        <input type="number" id="manualWindSpeed" value="" step="1" min="0" placeholder="e.g. 20">
+      </div>
+      <div class="field">
+        <label for="cruiseOat">Temperature</label>
         <div class="row">
           <input type="number" id="cruiseOat" value="" step="1" placeholder="e.g. -5">
           <select id="cruiseOatUnit" style="max-width:80px">
@@ -181,10 +197,6 @@
             <option value="F">&deg;F</option>
           </select>
         </div>
-      </div>
-      <div class="field">
-        <label>Cruise density altitude</label>
-        <div class="value" id="cruiseDA" style="font-size:1.1rem">—</div>
       </div>
     </div>
 

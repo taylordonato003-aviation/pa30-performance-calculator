@@ -1055,6 +1055,29 @@
     daEl.textContent = fmt(densityAltitude(pa, oatC), 'ft');
   }
 
+  // Manually-entered winds aloft (e.g. from a ForeFlight briefing) take
+  // priority over the app's own nearest-station lookup, which can be a long
+  // way from the actual route. Direction+speed drive every headwind
+  // component in the Route/Climb/Cruise/Descent cards uniformly (one
+  // reading applied route-wide, same simplification as a pilot would make
+  // from a single winds-aloft briefing); temperature is optional and only
+  // affects what's displayed per leg (it was already display-only before).
+  function manualWindsAloft() {
+    var dirRaw = parseFloat($('manualWindDir').value);
+    var spdRaw = parseFloat($('manualWindSpeed').value);
+    if (isNaN(dirRaw) || isNaN(spdRaw)) return null;
+    var oatRaw = parseFloat($('cruiseOat').value);
+    var tempC = isNaN(oatRaw) ? null : ($('cruiseOatUnit').value === 'F' ? (oatRaw - 32) * 5 / 9 : oatRaw);
+    return { dir: ((dirRaw % 360) + 360) % 360, spd: Math.max(0, spdRaw), temp: tempC };
+  }
+
+  function windComponentHtml(headwindKt, xwKt) {
+    var hwMph = headwindKt * 1.15078, xwMph = Math.abs(xwKt) * 1.15078;
+    var cls = hwMph < 0 ? 'leg-head tailwind' : 'leg-head';
+    var lbl = hwMph < 0 ? 'Tailwind' : 'Headwind';
+    return '<span class="' + cls + '">' + lbl + ' ' + Math.abs(Math.round(hwMph)) + ' mph</span><br>Xwind ' + Math.round(xwMph) + ' mph';
+  }
+
   function orderedResolvedWaypoints() {
     var rows = Array.prototype.slice.call(document.querySelectorAll('#routeWaypoints .route-row'))
       .filter(function (row) { return row.id !== 'routeDepRow' && row.id !== 'routeDestRow'; });
@@ -1078,6 +1101,12 @@
       return;
     }
     var wps = orderedResolvedWaypoints();
+    if (manualWindsAloft()) {
+      // Manually-entered winds aloft need no network fetch at all.
+      var manualLegsResult = renderLegs(wps);
+      renderClimbCruiseDescent(wps, manualLegsResult, false);
+      return;
+    }
     ensureWindTemp().then(function () {
       var legsResult = renderLegs(wps);
       renderClimbCruiseDescent(wps, legsResult, false);
@@ -1090,20 +1119,33 @@
   function renderLegs(wps, windUnavailable) {
     var legsEl = $('routeLegs');
     var pa = cruisePaFt();
+    var manual = manualWindsAloft();
     var rows = [];
     var totalNm = 0;
+    var sumX = 0, sumY = 0; // for the distance-weighted average course, below
     var legData = []; // {distNm, course, gsKt (TAS-independent -- headwind component only, in kt; null if unavailable)}
     for (var i = 0; i < wps.length - 1; i++) {
       var from = wps[i], to = wps[i + 1];
       var distNm = haversineNm(from.lat, from.lon, to.lat, to.lon);
       var course = initialBearingDeg(from.lat, from.lon, to.lat, to.lon);
       totalNm += distNm;
+      var courseRad = course * Math.PI / 180;
+      sumX += distNm * Math.sin(courseRad);
+      sumY += distNm * Math.cos(courseRad);
       var mid = midpoint(from.lat, from.lon, to.lat, to.lon);
 
       var windCell = '<span class="bad">unavailable</span>';
       var compCell = '—';
       var headwindKt = null;
-      if (!windUnavailable) {
+      if (manual) {
+        windCell = Math.round(manual.dir) + '°T @ ' + Math.round(manual.spd) + ' kt' +
+          (manual.temp !== null ? ', ' + Math.round(manual.temp) + '°C' : '') +
+          '<br><span class="wx-note">manually entered</span>';
+        var mDiff = angleDiff(manual.dir, course);
+        var mRad = mDiff * Math.PI / 180;
+        headwindKt = manual.spd * Math.cos(mRad);
+        compCell = windComponentHtml(headwindKt, manual.spd * Math.sin(mRad));
+      } else if (!windUnavailable) {
         var ns = nearestStation(mid.lat, mid.lon);
         if (ns) {
           var wx = interpolateLevels(ns.station.levels, pa);
@@ -1115,11 +1157,7 @@
               var diff = angleDiff(wx.dir, course);
               var rad = diff * Math.PI / 180;
               headwindKt = wx.spd * Math.cos(rad);
-              var xwKt = wx.spd * Math.sin(rad);
-              var hwMph = headwindKt * 1.15078, xwMph = Math.abs(xwKt) * 1.15078;
-              var cls = hwMph < 0 ? 'leg-head tailwind' : 'leg-head';
-              var lbl = hwMph < 0 ? 'Tailwind' : 'Headwind';
-              compCell = '<span class="' + cls + '">' + lbl + ' ' + Math.abs(Math.round(hwMph)) + ' mph</span><br>Xwind ' + Math.round(xwMph) + ' mph';
+              compCell = windComponentHtml(headwindKt, wx.spd * Math.sin(rad));
             } else {
               compCell = 'Calm/variable';
               headwindKt = 0;
@@ -1134,10 +1172,15 @@
         '<td>' + windCell + '</td><td>' + compCell + '</td></tr>');
     }
 
+    var totalLine = 'Total distance: ' + Math.round(totalNm) + ' nm over ' + rows.length + ' leg' + (rows.length > 1 ? 's' : '') + '.';
+    if (rows.length > 1) {
+      var avgCourse = (Math.atan2(sumX, sumY) * 180 / Math.PI + 360) % 360;
+      totalLine += ' Weighted avg course: ' + Math.round(avgCourse) + '°T.';
+    }
     var html = '<div class="table-scroll"><table class="leg-table"><thead><tr>' +
       '<th>Leg</th><th>Course</th><th>Distance</th><th>Wind/temp aloft</th><th>Component</th>' +
       '</tr></thead><tbody>' + rows.join('') + '</tbody></table></div>' +
-      '<p class="route-status">Total distance: ' + Math.round(totalNm) + ' nm over ' + rows.length + ' leg' + (rows.length > 1 ? 's' : '') + '.</p>';
+      '<p class="route-status">' + totalLine + '</p>';
     if (windUnavailable) {
       html += '<p class="route-status bad">Winds/temps aloft unavailable right now (network or Worker issue) — course and distance are still shown.</p>';
     }
@@ -1280,6 +1323,11 @@
   // station to (lat, lon) at altFt, along courseDeg. Returns null if wind data
   // isn't available there (caller should fall back to TAS-only / no wind).
   function headwindAt(lat, lon, altFt, courseDeg) {
+    var manual = manualWindsAloft();
+    if (manual) {
+      var mRad = angleDiff(manual.dir, courseDeg) * Math.PI / 180;
+      return manual.spd * Math.cos(mRad);
+    }
     var ns = nearestStation(lat, lon);
     if (!ns) return null;
     var wx = interpolateLevels(ns.station.levels, altFt);

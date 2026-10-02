@@ -132,8 +132,12 @@
         <input type="number" id="fuel" value="84" step="1" max="84" min="0">
       </div>
       <div class="field">
-        <label for="cg">Loaded C.G. (in aft of datum, optional)</label>
+        <label for="cg">Takeoff C.G. (in aft of datum, optional)</label>
         <input type="number" id="cg" value="" step="0.1" placeholder="e.g. 88.5">
+      </div>
+      <div class="field">
+        <label for="ldgCg">Landing C.G. (in aft of datum, optional)</label>
+        <input type="number" id="ldgCg" value="" step="0.1" placeholder="e.g. 87.2">
       </div>
     </div>
     <p class="hint">Positive wind = headwind, negative = tailwind. Picking a runway above computes these automatically from live wind — editing them by hand overrides that until you change the runway or airport again. Weights are capped at 3600 lb (standard, non tip-tank gross weight). Leave landing weight blank to use takeoff weight (e.g. a short local flight with negligible fuel burn).</p>

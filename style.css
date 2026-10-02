@@ -334,6 +334,7 @@ input[type="number"]:focus, select:focus {
 .cg-envelope { fill: rgba(95, 165, 132, 0.15); fill: color-mix(in srgb, var(--accent) 12%, transparent); stroke: var(--accent); stroke-width: 2; }
 .cg-point-ok { fill: var(--ok); stroke: var(--surface); stroke-width: 2; }
 .cg-point-bad { fill: var(--bad); stroke: var(--surface); stroke-width: 2; }
+.cg-point-label { fill: var(--text); font-size: 11px; font-weight: 600; font-family: var(--sans); }
 
 .cg-status { margin-top: 8px; font-size: 0.9rem; font-weight: 600; }
 .cg-status-ok { color: var(--ok); }

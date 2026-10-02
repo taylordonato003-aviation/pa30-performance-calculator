@@ -211,7 +211,8 @@
     var power = clamp(parseFloat($('power').value) || 65, 45, 75);
     var fuel = clamp(parseFloat($('fuel').value) || 84, 0, 84);
     var cg = parseFloat($('cg').value);
-    return { depAltFt: depAltFt, destAltFt: destAltFt, depOatF: depOatF, destOatF: destOatF, toWeight: toWeight, ldgWeight: ldgWeight, depWind: depWind, destWind: destWind, power: power, fuel: fuel, cg: cg };
+    var ldgCg = parseFloat($('ldgCg').value);
+    return { depAltFt: depAltFt, destAltFt: destAltFt, depOatF: depOatF, destOatF: destOatF, toWeight: toWeight, ldgWeight: ldgWeight, depWind: depWind, destWind: destWind, power: power, fuel: fuel, cg: cg, ldgCg: ldgCg };
   }
 
   function fmt(n, unit) {
@@ -462,16 +463,20 @@
     }
     if (descWt > 0) {
       $('ldgWeight').value = Math.round(descWt * 10) / 10;
+      $('ldgCg').value = ldgArmExt.toFixed(2);
     }
     render();
+  }
+
+  function cgCheck(cg, weight, poly) {
+    if (isNaN(cg) || isNaN(weight)) return null;
+    return pointInPolygon([cg, weight], poly) || pointInPolygon([cg, Math.min(weight, 3600)], poly);
   }
 
   function renderCg(inp) {
     var poly = DATA['fig6-01'].polygon;
     var svg = $('cgSvg');
     var statusEl = $('cgStatus');
-    var cg = inp.cg;
-    var weight = inp.toWeight;
 
     var xs = poly.map(function (p) { return p[0]; });
     var ys = poly.map(function (p) { return p[1]; });
@@ -494,30 +499,42 @@
         '<text x="' + sx(c) + '" y="345" class="cg-axis-label" text-anchor="middle">' + c + '</text>';
     });
 
-    var pointMarker = '';
-    var inLimits = null;
-    if (!isNaN(cg)) {
-      inLimits = pointInPolygon([cg, weight], poly) || pointInPolygon([cg, Math.min(weight, 3600)], poly);
-      var markerClass = inLimits ? 'cg-point-ok' : 'cg-point-bad';
-      pointMarker = '<circle cx="' + sx(cg) + '" cy="' + sy(weight) + '" r="7" class="' + markerClass + '"/>';
+    var toOk = cgCheck(inp.cg, inp.toWeight, poly);
+    var ldgOk = cgCheck(inp.ldgCg, inp.ldgWeight, poly);
+
+    var markers = '';
+    if (toOk !== null) {
+      var tx = sx(inp.cg), ty = sy(inp.toWeight);
+      markers += '<circle cx="' + tx + '" cy="' + ty + '" r="7" class="' + (toOk ? 'cg-point-ok' : 'cg-point-bad') + '"/>' +
+        '<text x="' + (tx + 11) + '" y="' + (ty + 4) + '" class="cg-point-label">T/O</text>';
+    }
+    if (ldgOk !== null) {
+      var lx = sx(inp.ldgCg), ly = sy(inp.ldgWeight);
+      var d = 7;
+      markers += '<polygon points="' + lx + ',' + (ly - d) + ' ' + (lx + d) + ',' + ly + ' ' + lx + ',' + (ly + d) + ' ' + (lx - d) + ',' + ly +
+        '" class="' + (ldgOk ? 'cg-point-ok' : 'cg-point-bad') + '"/>' +
+        '<text x="' + (lx + 11) + '" y="' + (ly + 4) + '" class="cg-point-label">LDG</text>';
     }
 
     svg.innerHTML =
       gridlines +
       '<polygon points="' + pts + '" class="cg-envelope"/>' +
-      pointMarker +
+      markers +
       '<text x="250" y="18" class="cg-axis-title" text-anchor="middle">Weight (lb) vs C.G. (in aft of datum)</text>';
 
-    if (isNaN(cg)) {
-      statusEl.textContent = 'Enter a C.G. value to plot it against the envelope.';
-      statusEl.className = 'cg-status';
-    } else if (inLimits) {
-      statusEl.textContent = '✓ Within the approved C.G. envelope at ' + weight + ' lb / ' + cg.toFixed(1) + ' in.';
-      statusEl.className = 'cg-status cg-status-ok';
+    var lines = [];
+    if (toOk === null) {
+      lines.push('Enter a takeoff C.G. (or fill in the worksheet below) to plot it against the envelope.');
     } else {
-      statusEl.textContent = '✗ Outside the approved C.G. envelope at ' + weight + ' lb / ' + cg.toFixed(1) + ' in. Do not fly without rebalancing.';
-      statusEl.className = 'cg-status cg-status-bad';
+      lines.push((toOk ? '✓' : '✗') + ' Takeoff: ' + fmt(inp.toWeight, 'lb') + ' / ' + inp.cg.toFixed(1) + ' in' + (toOk ? '' : ' — outside the approved envelope'));
     }
+    if (ldgOk === null) {
+      lines.push('Enter a landing C.G. (or fill in the worksheet below) to plot it against the envelope.');
+    } else {
+      lines.push((ldgOk ? '✓' : '✗') + ' Landing: ' + fmt(inp.ldgWeight, 'lb') + ' / ' + inp.ldgCg.toFixed(1) + ' in' + (ldgOk ? '' : ' — outside the approved envelope'));
+    }
+    statusEl.innerHTML = lines.join('<br>');
+    statusEl.className = 'cg-status' + ((toOk === false || ldgOk === false) ? ' cg-status-bad' : (toOk && ldgOk ? ' cg-status-ok' : ''));
   }
 
   function renderPowerTable() {

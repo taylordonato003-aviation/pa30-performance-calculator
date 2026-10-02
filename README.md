@@ -200,10 +200,13 @@ add a fixed +770 in-lb moment shift for gear retracted (the in-flight
 configuration); subtract fuel burned en route (also moment-weighted by tank
 arm) to get descent weight & C.G., gear retracted; subtract the same 770
 in-lb shift back out for landing weight & C.G., gear extended. Takeoff/
-landing weight and C.G. feed the Conditions card's weight fields and the
-envelope plot automatically whenever a worksheet field changes — those
-fields stay directly editable afterward for a quick what-if without
-re-touching the worksheet.
+landing weight and C.G. feed the Conditions card's weight/C.G. fields
+(separate fields for each) automatically whenever a worksheet field
+changes — those fields stay directly editable afterward for a quick
+what-if without re-touching the worksheet. The envelope plot shows both
+points at once (a circle for takeoff, a diamond for landing), each
+colored green/red for in/out of limits, so you can check that the
+airplane stays in C.G. through the whole flight, not just at the start.
 
 ### Why `data.js` duplicates `data/*.json`
 

@@ -223,6 +223,10 @@
     if (n === null || n === undefined || isNaN(n)) return '—';
     return n.toFixed(1) + (unit ? ' ' + unit : '');
   }
+  function resultTile(label, value, small) {
+    return '<div class="result"><div class="label">' + label + '</div><div class="value">' + value +
+      (small ? '<small>' + small + '</small>' : '') + '</div></div>';
+  }
 
   function render() {
     var inp = readInputs();
@@ -1222,7 +1226,10 @@
     var legsEl = $('routeLegs');
     if (!routeEndpoints.dep || !routeEndpoints.dest) {
       legsEl.innerHTML = '<p class="route-status">Enter departure and destination airports above to compute route distance.</p>';
-      $('cruisePlanResults').innerHTML = '<p class="route-status">Enter departure and destination airports above.</p>';
+      var pending = '<p class="route-status">Enter departure and destination airports above.</p>';
+      ['climbPhaseResults', 'cruisePhaseResults', 'descentPhaseResults', 'tripSummaryResults', 'etaForecastResults'].forEach(function (id) {
+        $(id).innerHTML = pending;
+      });
       return;
     }
     var wps = orderedResolvedWaypoints();
@@ -1438,7 +1445,6 @@
   }
 
   function renderClimbCruiseDescent(wps, legsResult, windUnavailable) {
-    var el = $('cruisePlanResults');
     var inp = readInputs();
     var depPa = inp.depAltFt, destPa = inp.destAltFt, cruisePa = cruisePaFt();
     var descentRate = Math.max(100, parseFloat($('descentRate').value) || 500);
@@ -1507,49 +1513,52 @@
       var h = Math.floor(totalMin / 60), m = totalMin % 60;
       return (h > 0 ? h + 'h ' : '') + m + 'm';
     }
-    function phaseRow(label, timeHr, distNm, fuelGal, gsKt, mp) {
-      return '<tr><td>' + label + '</td><td>' + hm(timeHr) + '</td>' +
-        '<td>' + (distNm === null || isNaN(distNm) ? '—' : Math.round(distNm) + ' nm') + '</td>' +
-        '<td>' + (gsKt === null || isNaN(gsKt) ? '—' : Math.round(gsKt) + ' kt') + '</td>' +
-        '<td>' + (fuelGal === null || isNaN(fuelGal) ? '—' : fuelGal.toFixed(1) + ' gal') + '</td>' +
-        '<td>' + (mp === null ? 'full throttle*' : mp.toFixed(1) + ' in Hg') + '</td></tr>';
+    function mpText(mp) {
+      return mp === null ? 'full throttle*' : mp.toFixed(1) + ' in Hg';
+    }
+    function phaseTiles(timeHr, distNm, gsKt, fuelGal, mp, mpLabel) {
+      return resultTile('Time', hm(timeHr)) +
+        resultTile('Distance', (distNm === null || isNaN(distNm)) ? '—' : Math.round(distNm) + ' nm') +
+        resultTile('Avg groundspeed', (gsKt === null || isNaN(gsKt)) ? '—' : Math.round(gsKt) + ' kt') +
+        resultTile('Fuel', (fuelGal === null || isNaN(fuelGal)) ? '—' : fuelGal.toFixed(1) + ' gal') +
+        resultTile('MP (' + mpLabel + ', 2400 RPM)', mpText(mp));
     }
 
     var totalTimeHr = (climbTimeHr || 0) + (cruiseTimeHr || 0) + descentTimeHr;
     var totalFuelGal = (climbFuelGal || 0) + (cruiseFuelGal || 0) + descentFuelGal;
     var fuelOnBoard = inp.fuel;
+    var mpFootnote = (climbMp === null || cruiseMp === null || descentMp === null)
+      ? '<p class="route-status">* 2400 RPM can\'t hold that %power at that altitude per Fig 5-17 (its highest tabulated altitude for that combination has already been reached) — use a lower RPM instead to hold it higher, or expect less than the stated %power at full throttle.</p>'
+      : '';
 
-    var html = '<div class="table-scroll"><table class="leg-table"><thead><tr>' +
-      '<th>Phase</th><th>Time</th><th>Distance</th><th>Avg GS</th><th>Fuel</th><th>MP @ 2400 RPM</th>' +
-      '</tr></thead><tbody>' +
-      phaseRow('Climb (75% pwr)', climbTimeHr, climbDistNm, climbFuelGal, climbGsKt, climbMp) +
-      phaseRow('Cruise (' + inp.power + '% pwr)', cruiseTimeHr, cruiseDistNm, cruiseFuelGal, cruiseGsKt, cruiseMp) +
-      phaseRow('Descent (55% pwr)', descentTimeHr, descentDistNm, descentFuelGal, descentGsKt, descentMp) +
-      '<tr class="wb-subtotal"><td>Total</td><td>' + hm(totalTimeHr) + '</td><td>' + Math.round(totalNm) + ' nm</td><td>—</td>' +
-      '<td>' + totalFuelGal.toFixed(1) + ' gal</td><td>—</td></tr>' +
-      '</tbody></table></div>';
-    if (climbMp === null || cruiseMp === null || descentMp === null) {
-      html += '<p class="route-status">* 2400 RPM can\'t hold that %power at that altitude per Fig 5-17 (its highest tabulated altitude for that combination has already been reached) — use a lower RPM instead to hold it higher, or expect less than the stated %power at full throttle.</p>';
-    }
-
-    var notes = [];
-    if (tooShort) {
-      notes.push('<p class="route-status bad">Climb + descent distance (' + Math.round(usedNm) + ' nm) exceeds the total route distance (' + Math.round(totalNm) + ' nm) — this flight never reaches a stabilized cruise segment; the numbers above are climb/descent only, cruise is zeroed out.</p>');
-    }
+    var climbHtml = phaseTiles(climbTimeHr, climbDistNm, climbGsKt, climbFuelGal, climbMp, '75%');
     if (climbAvgRoc <= 0) {
-      notes.push('<p class="route-status bad">Average climb rate is at or below zero at these conditions — climb time/distance/fuel can\'t be computed.</p>');
+      climbHtml += '<p class="route-status bad">Average climb rate is at or below zero at these conditions — climb time/distance/fuel can\'t be computed.</p>';
     }
+    $('climbPhaseResults').innerHTML = climbHtml + (climbMp === null ? mpFootnote : '');
+
+    var cruiseHtml = phaseTiles(cruiseTimeHr, cruiseDistNm, cruiseGsKt, cruiseFuelGal, cruiseMp, cruisePowerCol + '%');
+    if (tooShort) {
+      cruiseHtml += '<p class="route-status bad">Climb + descent distance (' + Math.round(usedNm) + ' nm) exceeds the total route distance (' + Math.round(totalNm) + ' nm) — this flight never reaches a stabilized cruise segment; cruise is zeroed out.</p>';
+    }
+    $('cruisePhaseResults').innerHTML = cruiseHtml + (cruiseMp === null ? mpFootnote : '');
+
+    var descentHtml = phaseTiles(descentTimeHr, descentDistNm, descentGsKt, descentFuelGal, descentMp, '55%');
+    $('descentPhaseResults').innerHTML = descentHtml + (descentMp === null ? mpFootnote : '');
+
+    var summaryHtml = resultTile('Total time', hm(totalTimeHr)) +
+      resultTile('Total distance', Math.round(totalNm) + ' nm') +
+      resultTile('Total fuel burn', totalFuelGal.toFixed(1) + ' gal') +
+      resultTile('Fuel remaining at destination', (fuelOnBoard - totalFuelGal).toFixed(1) + ' gal', 'of ' + fuelOnBoard + ' gal on board');
     if (totalFuelGal > fuelOnBoard) {
-      notes.push('<p class="route-status bad">Total fuel burn (' + totalFuelGal.toFixed(1) + ' gal) exceeds the ' + fuelOnBoard + ' gal entered above.</p>');
-    } else {
-      notes.push('<p class="route-status">Fuel remaining at destination: ' + (fuelOnBoard - totalFuelGal).toFixed(1) + ' gal, of ' + fuelOnBoard + ' gal on board.</p>');
+      summaryHtml += '<p class="route-status bad">Total fuel burn (' + totalFuelGal.toFixed(1) + ' gal) exceeds the ' + fuelOnBoard + ' gal entered above.</p>';
     }
     if (windUnavailable) {
-      notes.push('<p class="route-status bad">Winds/temps aloft unavailable — groundspeeds above are TAS only (no wind correction).</p>');
+      summaryHtml += '<p class="route-status bad">Winds/temps aloft unavailable — groundspeeds above are TAS only (no wind correction).</p>';
     }
+    $('tripSummaryResults').innerHTML = summaryHtml;
 
-    el.innerHTML = html + notes.join('') +
-      '<h3 class="subhead">Destination Forecast at ETA</h3>' + renderEtaForecast(totalTimeHr);
+    $('etaForecastResults').innerHTML = renderEtaForecast(totalTimeHr);
   }
 
   function runVerification() {

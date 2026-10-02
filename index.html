@@ -31,6 +31,171 @@
     Always verify against the actual, current, aircraft-specific POH before any real flight planning or dispatch decision.
   </div>
 
+  <p class="subtitle" style="margin:-8px 0 16px;">Laid out the way you'd actually plan a flight: know your weight first, then when/where/how high, then the airports involved, then walk the flight itself — takeoff, climb, cruise, descent, land.</p>
+
+  <section class="card">
+    <h2>Weight &amp; Balance <span class="fig">Fig 6-01</span></h2>
+    <p class="hint">Fillable loading worksheet, prefilled for N40DA (PA-30B, SN 30-904) — edit empty weight/arm for a different airplane. Filling this in sets the Takeoff/Landing weight and C.G. fields below automatically (gear-extended values); you can still edit those directly afterward for a quick what-if.</p>
+    <div class="table-scroll">
+      <table class="wb-table">
+        <thead><tr><th>Item</th><th>Weight (lb)</th><th>Arm (in)</th><th>Moment (in-lb)</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Empty weight (incl. unusable fuel &amp; full oil)</td>
+            <td><input type="number" id="wbEmptyWt" value="2400.9" step="0.1"></td>
+            <td><input type="number" id="wbEmptyArm" value="85.85" step="0.01"></td>
+            <td id="wbEmptyMoment">—</td>
+          </tr>
+          <tr>
+            <td>Pilot &amp; front passenger</td>
+            <td><input type="number" id="wbPilotWt" value="0" step="1" min="0"></td>
+            <td>84.8</td>
+            <td id="wbPilotMoment">—</td>
+          </tr>
+          <tr>
+            <td>Rear passengers</td>
+            <td><input type="number" id="wbRearWt" value="0" step="1" min="0"></td>
+            <td>120.5</td>
+            <td id="wbRearMoment">—</td>
+          </tr>
+          <tr>
+            <td>Baggage area (250 lb max)</td>
+            <td><input type="number" id="wbBagWt" value="0" step="1" min="0" max="250"></td>
+            <td>142</td>
+            <td id="wbBagMoment">—</td>
+          </tr>
+          <tr class="wb-subtotal">
+            <td>Total before fuel</td>
+            <td id="wbPreFuelWt">—</td><td id="wbPreFuelArm">—</td><td id="wbPreFuelMoment">—</td>
+          </tr>
+          <tr>
+            <td>Usable fuel, main tanks (6 lb/gal, 54 gal max)</td>
+            <td><input type="number" id="wbMainGal" value="54" step="1" min="0" max="54"> gal</td>
+            <td>90</td>
+            <td id="wbMainMoment">—</td>
+          </tr>
+          <tr>
+            <td>Usable fuel, aux tanks (6 lb/gal, 30 gal max)</td>
+            <td><input type="number" id="wbAuxGal" value="0" step="1" min="0" max="30"> gal</td>
+            <td>95</td>
+            <td id="wbAuxMoment">—</td>
+          </tr>
+          <tr class="wb-subtotal">
+            <td>Takeoff weight &amp; C.G., gear extended</td>
+            <td id="wbToWtExt">—</td><td id="wbToArmExt">—</td><td id="wbToMomentExt">—</td>
+          </tr>
+          <tr class="wb-subtotal">
+            <td>Takeoff weight &amp; C.G., gear retracted (+770 in-lb)</td>
+            <td id="wbToWtRet">—</td><td id="wbToArmRet">—</td><td id="wbToMomentRet">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="hint" id="wbToStatus"></p>
+
+    <h3 class="subhead">Fuel Burned En Route</h3>
+    <div class="table-scroll">
+      <table class="wb-table">
+        <tbody>
+          <tr>
+            <td>Less fuel burned, main tanks</td>
+            <td><input type="number" id="wbMainBurnGal" value="0" step="1" min="0"> gal</td>
+            <td>90</td>
+            <td id="wbMainBurnMoment">—</td>
+          </tr>
+          <tr>
+            <td>Less fuel burned, aux tanks</td>
+            <td><input type="number" id="wbAuxBurnGal" value="0" step="1" min="0"> gal</td>
+            <td>95</td>
+            <td id="wbAuxBurnMoment">—</td>
+          </tr>
+          <tr class="wb-subtotal">
+            <td>Descent weight &amp; C.G., gear retracted</td>
+            <td id="wbDescWtRet">—</td><td id="wbDescArmRet">—</td><td id="wbDescMomentRet">—</td>
+          </tr>
+          <tr class="wb-subtotal">
+            <td>Landing weight &amp; C.G., gear extended (−770 in-lb)</td>
+            <td id="wbLdgWtExt">—</td><td id="wbLdgArmExt">—</td><td id="wbLdgMomentExt">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="hint" id="wbLdgStatus"></p>
+
+    <div class="cg-wrap">
+      <svg id="cgSvg" viewBox="0 0 500 360" role="img" aria-label="C.G. envelope plot"></svg>
+    </div>
+    <div class="cg-status" id="cgStatus"></div>
+  </section>
+
+  <section class="card">
+    <h2>Route</h2>
+    <div class="input-grid">
+      <div class="field">
+        <label for="etdDate">Departure date</label>
+        <input type="date" id="etdDate" value="">
+      </div>
+      <div class="field">
+        <label for="etdTime">Departure time (local)</label>
+        <input type="time" id="etdTime" value="">
+      </div>
+      <div class="field">
+        <label for="etdTimezone">Departure time zone</label>
+        <select id="etdTimezone">
+          <option value="America/Los_Angeles" selected>Pacific</option>
+          <option value="America/Denver">Mountain</option>
+          <option value="America/Chicago">Central</option>
+          <option value="America/New_York">Eastern</option>
+        </select>
+      </div>
+    </div>
+    <p class="hint">Used to estimate time of arrival (departure time + total flight time from Climb/Cruise/Descent below) and match it against the destination's forecast for that time. Correctly accounts for daylight saving vs. standard time for the date entered.</p>
+    <div id="routeWaypoints">
+      <div class="route-row route-endpoint" id="routeDepRow">
+        <span class="route-endpoint-label">Departure</span>
+        <span class="route-wp-info" id="routeDepInfo">Enter departure airport below</span>
+      </div>
+      <div class="route-row route-endpoint" id="routeDestRow">
+        <span class="route-endpoint-label">Destination</span>
+        <span class="route-wp-info" id="routeDestInfo">Enter destination airport below</span>
+      </div>
+    </div>
+    <button type="button" class="btn-add" id="addWaypoint">+ Add fix along the route</button>
+
+    <div class="input-grid" style="margin-top:14px">
+      <div class="field">
+        <label for="cruiseAlt">Cruise altitude (ft MSL)</label>
+        <input type="number" id="cruiseAlt" value="6500" step="500">
+      </div>
+      <div class="field">
+        <label for="cruiseAltimeter">Altimeter setting for cruise PA (inHg)</label>
+        <input type="number" id="cruiseAltimeter" value="29.92" step="0.01">
+      </div>
+      <div class="field">
+        <label>Cruise pressure altitude</label>
+        <div class="value" id="cruisePA" style="font-size:1.1rem">—</div>
+      </div>
+      <div class="field">
+        <label for="cruiseOat">Enroute outside air temperature</label>
+        <div class="row">
+          <input type="number" id="cruiseOat" value="" step="1" placeholder="e.g. -5">
+          <select id="cruiseOatUnit" style="max-width:80px">
+            <option value="C" selected>&deg;C</option>
+            <option value="F">&deg;F</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Cruise density altitude</label>
+        <div class="value" id="cruiseDA" style="font-size:1.1rem">—</div>
+      </div>
+    </div>
+    <p class="hint">Enroute OAT is manual entry — estimate it from the per-leg temperature-aloft readings below, a weather briefing, or the ISA standard lapse rate (2&deg;C per 1,000 ft from 15&deg;C at sea level). Density altitude here is reference only, same as the per-airport breakdown below: this calculator's climb/cruise charts use pressure altitude + OAT directly, not density altitude.</p>
+    <p class="hint">Departure and destination here always match the airports entered below. With no fixes added, route distance is the direct great-circle distance between them. Each fix you add inserts a leg, point to point, in the order added. Fixes accept any airport in the bundled database (4-letter ICAO or local identifier), a VOR/NDB identifier, or a 5-letter RNAV/GPS fix — type one and press Enter or Tab. If more than one navaid shares that identifier, you'll get a dropdown to pick the right one by name/country. Winds/temps aloft are a forecast product (not a live observation) from the same live-data source as METAR, interpolated to your cruise altitude from the nearest reporting station to each leg — a convenience estimate for situational awareness, not a substitute for a real weather briefing.</p>
+
+    <div id="routeLegs"></div>
+  </section>
+
   <section class="card">
     <h2>Airports</h2>
     <div class="input-grid">
@@ -140,7 +305,7 @@
         <input type="number" id="ldgCg" value="" step="0.1" placeholder="e.g. 87.2">
       </div>
     </div>
-    <p class="hint">Positive wind = headwind, negative = tailwind. Picking a runway above computes these automatically from live wind — editing them by hand overrides that until you change the runway or airport again. Weights are capped at 3600 lb (standard, non tip-tank gross weight). Leave landing weight blank to use takeoff weight (e.g. a short local flight with negligible fuel burn).</p>
+    <p class="hint">Weight/C.G. fields are normally filled in by the Weight &amp; Balance worksheet above; pressure altitude/OAT/wind are normally filled in by the Airports lookup above. All stay directly editable here for a quick what-if without re-touching those. Positive wind = headwind, negative = tailwind. Weights are capped at 3600 lb (standard, non tip-tank gross weight). Leave landing weight blank to use takeoff weight (e.g. a short local flight with negligible fuel burn).</p>
   </section>
 
   <section class="card">
@@ -172,6 +337,82 @@
         <div class="value" id="irDist50">—</div>
       </div>
     </div>
+  </section>
+
+  <section class="card">
+    <h2>Climb</h2>
+    <div class="results-grid">
+      <div class="result">
+        <div class="label">V<sub>X</sub> / V<sub>Y</sub>, both engines <span class="fig">Fig 5-11</span></div>
+        <div class="value"><span id="vxMulti">—</span> / <span id="vyMulti">—</span><small id="vxyMultiCas"></small></div>
+      </div>
+      <div class="result">
+        <div class="label">V<sub>X</sub> / V<sub>Y</sub>, single engine <span class="fig">Fig 5-11</span></div>
+        <div class="value"><span id="vxSingle">—</span> / <span id="vySingle">—</span><small id="vxySingleCas"></small></div>
+      </div>
+      <div class="result">
+        <div class="label">Rate of climb, both engines <span class="fig">Fig 5-09</span></div>
+        <div class="value" id="rocMulti">—</div>
+      </div>
+      <div class="result">
+        <div class="label">Rate of climb, single engine <span class="fig">Fig 5-10</span></div>
+        <div class="value" id="rocSingle">—</div>
+      </div>
+      <div class="result">
+        <div class="label">Absolute / service ceiling, both engines <span class="fig">Fig 5-09</span></div>
+        <div class="value" id="ceilMulti">—</div>
+      </div>
+      <div class="result">
+        <div class="label">Absolute / service ceiling, single engine <span class="fig">Fig 5-10</span></div>
+        <div class="value" id="ceilSingle">—</div>
+      </div>
+    </div>
+    <p class="hint">Ceilings are density altitude, at takeoff weight — service ceiling is 100 ft/min ROC (both engines) or 50 ft/min (single engine); absolute ceiling is 0 ft/min. CAS shown under V<sub>X</sub>/V<sub>Y</sub> is corrected from IAS via <span class="fig">Fig 5-02</span>, flaps retracted.</p>
+
+    <h3 class="subhead">Climb Phase (Departure Elevation → Cruise Altitude)</h3>
+    <p class="hint">75% power, at takeoff weight — average of rate of climb/true airspeed at the two endpoints, headwind from the station nearest departure along the route's initial course.</p>
+    <div class="results-grid" id="climbPhaseResults"></div>
+  </section>
+
+  <section class="card">
+    <h2>Cruise</h2>
+    <div class="results-grid">
+      <div class="result">
+        <div class="label">True airspeed <span class="fig">Fig 5-12</span></div>
+        <div class="value" id="tas">—</div>
+      </div>
+      <div class="result">
+        <div class="label">Range on fuel entered <span class="fig">Fig 5-13</span></div>
+        <div class="value" id="range">—</div>
+      </div>
+      <div class="result">
+        <div class="label">Endurance on fuel entered <span class="fig">Fig 5-14</span></div>
+        <div class="value" id="endurance">—</div>
+      </div>
+    </div>
+    <p class="hint">Range/endurance are scaled from the 84-gal basic-fuel chart by the fuel you entered; both already include the chart's built-in 45-minute reserve and give no credit for wind.</p>
+
+    <h3 class="subhead">Cruise Phase</h3>
+    <p class="hint">Whatever route distance is left after climb and descent, at the cruise power set in Conditions — groundspeed is the route's own per-leg winds above, distance-weighted.</p>
+    <div class="results-grid" id="cruisePhaseResults"></div>
+  </section>
+
+  <section class="card">
+    <h2>Descent</h2>
+    <div class="input-grid">
+      <div class="field">
+        <label for="descentRate">Planned descent rate (ft/min)</label>
+        <input type="number" id="descentRate" value="500" step="50" min="100">
+      </div>
+    </div>
+    <p class="hint">There's no POH chart for descent rate — it's a pilot technique choice, not a performance limit, so set your own plan above. Descent phase is cruise altitude down to destination field elevation at 55% power, headwind from the station nearest destination along the route's final course.</p>
+    <div class="results-grid" id="descentPhaseResults"></div>
+
+    <h3 class="subhead">Trip Summary</h3>
+    <div class="results-grid" id="tripSummaryResults"></div>
+
+    <h3 class="subhead">Destination Forecast at ETA</h3>
+    <div id="etaForecastResults"></div>
   </section>
 
   <section class="card">
@@ -218,137 +459,6 @@
   </section>
 
   <section class="card">
-    <h2>Climb</h2>
-    <div class="results-grid">
-      <div class="result">
-        <div class="label">V<sub>X</sub> / V<sub>Y</sub>, both engines <span class="fig">Fig 5-11</span></div>
-        <div class="value"><span id="vxMulti">—</span> / <span id="vyMulti">—</span><small id="vxyMultiCas"></small></div>
-      </div>
-      <div class="result">
-        <div class="label">V<sub>X</sub> / V<sub>Y</sub>, single engine <span class="fig">Fig 5-11</span></div>
-        <div class="value"><span id="vxSingle">—</span> / <span id="vySingle">—</span><small id="vxySingleCas"></small></div>
-      </div>
-      <div class="result">
-        <div class="label">Rate of climb, both engines <span class="fig">Fig 5-09</span></div>
-        <div class="value" id="rocMulti">—</div>
-      </div>
-      <div class="result">
-        <div class="label">Rate of climb, single engine <span class="fig">Fig 5-10</span></div>
-        <div class="value" id="rocSingle">—</div>
-      </div>
-      <div class="result">
-        <div class="label">Absolute / service ceiling, both engines <span class="fig">Fig 5-09</span></div>
-        <div class="value" id="ceilMulti">—</div>
-      </div>
-      <div class="result">
-        <div class="label">Absolute / service ceiling, single engine <span class="fig">Fig 5-10</span></div>
-        <div class="value" id="ceilSingle">—</div>
-      </div>
-    </div>
-    <p class="hint">Ceilings are density altitude, at takeoff weight — service ceiling is 100 ft/min ROC (both engines) or 50 ft/min (single engine); absolute ceiling is 0 ft/min.</p>
-    <p class="hint">CAS shown under V<sub>X</sub>/V<sub>Y</sub> is corrected from IAS via <span class="fig">Fig 5-02</span>, flaps retracted.</p>
-  </section>
-
-  <section class="card">
-    <h2>Cruise</h2>
-    <div class="results-grid">
-      <div class="result">
-        <div class="label">True airspeed <span class="fig">Fig 5-12</span></div>
-        <div class="value" id="tas">—</div>
-      </div>
-      <div class="result">
-        <div class="label">Range on fuel entered <span class="fig">Fig 5-13</span></div>
-        <div class="value" id="range">—</div>
-      </div>
-      <div class="result">
-        <div class="label">Endurance on fuel entered <span class="fig">Fig 5-14</span></div>
-        <div class="value" id="endurance">—</div>
-      </div>
-    </div>
-    <p class="hint">Range/endurance are scaled from the 84-gal basic-fuel chart by the fuel you entered; both already include the chart's built-in 45-minute reserve and give no credit for wind.</p>
-  </section>
-
-  <section class="card">
-    <h2>Route</h2>
-    <div class="input-grid">
-      <div class="field">
-        <label for="etdDate">Departure date</label>
-        <input type="date" id="etdDate" value="">
-      </div>
-      <div class="field">
-        <label for="etdTime">Departure time (local)</label>
-        <input type="time" id="etdTime" value="">
-      </div>
-      <div class="field">
-        <label for="etdTimezone">Departure time zone</label>
-        <select id="etdTimezone">
-          <option value="America/Los_Angeles" selected>Pacific</option>
-          <option value="America/Denver">Mountain</option>
-          <option value="America/Chicago">Central</option>
-          <option value="America/New_York">Eastern</option>
-        </select>
-      </div>
-    </div>
-    <p class="hint">Used to estimate time of arrival (departure time + total flight time from Climb/Cruise/Descent below) and match it against the destination's TAF or hourly forecast period. Correctly accounts for daylight saving vs. standard time for the date entered.</p>
-    <div id="routeWaypoints">
-      <div class="route-row route-endpoint" id="routeDepRow">
-        <span class="route-endpoint-label">Departure</span>
-        <span class="route-wp-info" id="routeDepInfo">Enter departure airport above</span>
-      </div>
-      <div class="route-row route-endpoint" id="routeDestRow">
-        <span class="route-endpoint-label">Destination</span>
-        <span class="route-wp-info" id="routeDestInfo">Enter destination airport above</span>
-      </div>
-    </div>
-    <button type="button" class="btn-add" id="addWaypoint">+ Add fix along the route</button>
-
-    <div class="input-grid" style="margin-top:14px">
-      <div class="field">
-        <label for="cruiseAlt">Cruise altitude (ft MSL)</label>
-        <input type="number" id="cruiseAlt" value="6500" step="500">
-      </div>
-      <div class="field">
-        <label for="cruiseAltimeter">Altimeter setting for cruise PA (inHg)</label>
-        <input type="number" id="cruiseAltimeter" value="29.92" step="0.01">
-      </div>
-      <div class="field">
-        <label>Cruise pressure altitude</label>
-        <div class="value" id="cruisePA" style="font-size:1.1rem">—</div>
-      </div>
-      <div class="field">
-        <label for="cruiseOat">Enroute outside air temperature</label>
-        <div class="row">
-          <input type="number" id="cruiseOat" value="" step="1" placeholder="e.g. -5">
-          <select id="cruiseOatUnit" style="max-width:80px">
-            <option value="C" selected>&deg;C</option>
-            <option value="F">&deg;F</option>
-          </select>
-        </div>
-      </div>
-      <div class="field">
-        <label>Cruise density altitude</label>
-        <div class="value" id="cruiseDA" style="font-size:1.1rem">—</div>
-      </div>
-    </div>
-    <p class="hint">Enroute OAT is manual entry — estimate it from the per-leg temperature-aloft readings below, a weather briefing, or the ISA standard lapse rate (2&deg;C per 1,000 ft from 15&deg;C at sea level). Density altitude here is reference only, same as the per-airport breakdown above: this calculator's climb/cruise charts use pressure altitude + OAT directly, not density altitude.</p>
-    <p class="hint">Departure and destination here always match the airports entered above. With no fixes added, route distance is the direct great-circle distance between them. Each fix you add inserts a leg, point to point, in the order added. Fixes accept any airport in the bundled database (4-letter ICAO or local identifier), a VOR/NDB identifier, or a 5-letter RNAV/GPS fix — type one and press Enter or Tab. If more than one navaid shares that identifier, you'll get a dropdown to pick the right one by name/country. Winds/temps aloft are a forecast product (not a live observation) from the same live-data source as METAR, interpolated to your cruise altitude from the nearest reporting station to each leg — a convenience estimate for situational awareness, not a substitute for a real weather briefing.</p>
-
-    <div id="routeLegs"></div>
-  </section>
-
-  <section class="card">
-    <h2>Climb / Cruise / Descent</h2>
-    <p class="hint">Splits the route above into three phases: climb from departure field elevation to cruise altitude (75% power, at takeoff weight), a stabilized cruise segment at the cruise power set in Conditions, and descent from cruise altitude to destination field elevation (55% power). Climb and descent each use the average of true airspeed/rate at their two endpoints and the winds aloft nearest the departure/destination airport along the initial/final route course; cruise uses the route's own per-leg winds, distance-weighted. There's no POH chart for descent rate (it's a pilot technique choice, not a performance limit) — set your own planned rate below.</p>
-    <div class="input-grid">
-      <div class="field">
-        <label for="descentRate">Planned descent rate (ft/min)</label>
-        <input type="number" id="descentRate" value="500" step="50" min="100">
-      </div>
-    </div>
-    <div id="cruisePlanResults" style="margin-top:14px;"></div>
-  </section>
-
-  <section class="card">
     <h2>Personal Minimums</h2>
     <p class="hint">Your own safety margins, checked against the numbers computed above. Nothing here is a POH limit — adjust the factors to match your own standards. Select a specific departure/destination runway above for the runway checks to compare against; otherwise the airport's longest runway is used.</p>
     <div class="input-grid">
@@ -373,101 +483,6 @@
       <label><input type="checkbox" id="pmNoFlapLanding"> Planning a no-flap landing at destination</label>
     </div>
     <div id="pmResults" class="results-grid" style="margin-top:14px;"></div>
-  </section>
-
-  <section class="card">
-    <h2>Weight &amp; Balance <span class="fig">Fig 6-01</span></h2>
-    <p class="hint">Fillable loading worksheet, prefilled for N40DA (PA-30B, SN 30-904) — edit empty weight/arm for a different airplane. Filling this in sets the Takeoff/Landing weight and C.G. fields above automatically (gear-extended values); you can still edit those directly afterward for a quick what-if.</p>
-    <div class="table-scroll">
-      <table class="wb-table">
-        <thead><tr><th>Item</th><th>Weight (lb)</th><th>Arm (in)</th><th>Moment (in-lb)</th></tr></thead>
-        <tbody>
-          <tr>
-            <td>Empty weight (incl. unusable fuel &amp; full oil)</td>
-            <td><input type="number" id="wbEmptyWt" value="2400.9" step="0.1"></td>
-            <td><input type="number" id="wbEmptyArm" value="85.85" step="0.01"></td>
-            <td id="wbEmptyMoment">—</td>
-          </tr>
-          <tr>
-            <td>Pilot &amp; front passenger</td>
-            <td><input type="number" id="wbPilotWt" value="0" step="1" min="0"></td>
-            <td>84.8</td>
-            <td id="wbPilotMoment">—</td>
-          </tr>
-          <tr>
-            <td>Rear passengers</td>
-            <td><input type="number" id="wbRearWt" value="0" step="1" min="0"></td>
-            <td>120.5</td>
-            <td id="wbRearMoment">—</td>
-          </tr>
-          <tr>
-            <td>Baggage area (250 lb max)</td>
-            <td><input type="number" id="wbBagWt" value="0" step="1" min="0" max="250"></td>
-            <td>142</td>
-            <td id="wbBagMoment">—</td>
-          </tr>
-          <tr class="wb-subtotal">
-            <td>Total before fuel</td>
-            <td id="wbPreFuelWt">—</td><td id="wbPreFuelArm">—</td><td id="wbPreFuelMoment">—</td>
-          </tr>
-          <tr>
-            <td>Usable fuel, main tanks (6 lb/gal, 54 gal max)</td>
-            <td><input type="number" id="wbMainGal" value="54" step="1" min="0" max="54"> gal</td>
-            <td>90</td>
-            <td id="wbMainMoment">—</td>
-          </tr>
-          <tr>
-            <td>Usable fuel, aux tanks (6 lb/gal, 30 gal max)</td>
-            <td><input type="number" id="wbAuxGal" value="0" step="1" min="0" max="30"> gal</td>
-            <td>95</td>
-            <td id="wbAuxMoment">—</td>
-          </tr>
-          <tr class="wb-subtotal">
-            <td>Takeoff weight &amp; C.G., gear extended</td>
-            <td id="wbToWtExt">—</td><td id="wbToArmExt">—</td><td id="wbToMomentExt">—</td>
-          </tr>
-          <tr class="wb-subtotal">
-            <td>Takeoff weight &amp; C.G., gear retracted (+770 in-lb)</td>
-            <td id="wbToWtRet">—</td><td id="wbToArmRet">—</td><td id="wbToMomentRet">—</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="hint" id="wbToStatus"></p>
-
-    <h3 class="subhead">Fuel Burned En Route</h3>
-    <div class="table-scroll">
-      <table class="wb-table">
-        <tbody>
-          <tr>
-            <td>Less fuel burned, main tanks</td>
-            <td><input type="number" id="wbMainBurnGal" value="0" step="1" min="0"> gal</td>
-            <td>90</td>
-            <td id="wbMainBurnMoment">—</td>
-          </tr>
-          <tr>
-            <td>Less fuel burned, aux tanks</td>
-            <td><input type="number" id="wbAuxBurnGal" value="0" step="1" min="0"> gal</td>
-            <td>95</td>
-            <td id="wbAuxBurnMoment">—</td>
-          </tr>
-          <tr class="wb-subtotal">
-            <td>Descent weight &amp; C.G., gear retracted</td>
-            <td id="wbDescWtRet">—</td><td id="wbDescArmRet">—</td><td id="wbDescMomentRet">—</td>
-          </tr>
-          <tr class="wb-subtotal">
-            <td>Landing weight &amp; C.G., gear extended (−770 in-lb)</td>
-            <td id="wbLdgWtExt">—</td><td id="wbLdgArmExt">—</td><td id="wbLdgMomentExt">—</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="hint" id="wbLdgStatus"></p>
-
-    <div class="cg-wrap">
-      <svg id="cgSvg" viewBox="0 0 500 360" role="img" aria-label="C.G. envelope plot"></svg>
-    </div>
-    <div class="cg-status" id="cgStatus"></div>
   </section>
 
   <section class="card">

@@ -40,6 +40,19 @@ No build step, no server, no account, no internet connection required.
 
 It also works as an installable app — see **Install on iPhone** below.
 
+### Card order
+
+The cards run in the order you'd actually plan a flight, not the order
+features were added: **Weight & Balance** (know your weight/C.G. first) →
+**Route** (when/where/how high) → **Airports** (make PA/OAT/wind real
+instead of guesses) → **Conditions** (manual overrides for all of the
+above) → **Takeoff → Climb → Cruise → Descent → Landing** (the flight
+itself, in order) → **Personal Minimums** (final check, now that there's
+something to check against) → **Power Setting Table** (reference). Each of
+Climb/Cruise/Descent has both a quick-reference block (Vx/Vy, ROC, ceilings;
+TAS/range/endurance) and that phase's slice of the route-based time/
+distance/fuel breakdown — see "Climb / Cruise / Descent" below.
+
 ## What's in this repo
 
 ```
@@ -320,7 +333,11 @@ comparison is apples-to-apples with no conversion needed.
 
 ### Climb / Cruise / Descent
 
-Breaks the route into three phases, each with its own time/distance/fuel:
+Breaks the route into three phases, each with its own time/distance/fuel.
+The three phases' results appear under their respective Climb/Cruise/Descent
+cards (in the same flight-sequence order as the rest of the app — see "Card
+order" below) rather than one combined table, with a Trip Summary and the
+destination-forecast-at-ETA lookup under Descent, right before Landing:
 
 - **Climb** — departure field elevation to cruise altitude, 75% power, at
   takeoff weight. Rate of climb is the average of Fig 5-09's value at each

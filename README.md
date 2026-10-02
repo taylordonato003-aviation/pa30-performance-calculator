@@ -372,19 +372,26 @@ time) and shows the destination forecast that actually covers it:
 1. **TAF**, if the destination has one and it extends that far out — the
    specific forecast period in effect at ETA (not just the whole TAF dumped
    out for you to find it yourself), plus any TEMPO/PROB conditions that
-   overlap it.
-2. Otherwise, **NWS hourly forecast** (`api.weather.gov`, already used for
-   the extended outlook above) — wind and temperature only, US airports
-   only, up to 4 days out.
-3. If neither covers it, says so plainly rather than guessing.
+   overlap it. A TAF never forecasts altimeter/pressure, so this is always
+   paired with an Open-Meteo altimeter estimate (below) alongside it.
+2. **Open-Meteo** (`api.open-meteo.com`, free, no key, full CORS, no proxy
+   needed) otherwise, or alongside the TAF for altimeter specifically —
+   wind, temperature, *and* sea-level pressure (converted to inHg as an
+   altimeter-setting estimate), global coverage, hourly out to 16 days. It's
+   a blended model forecast, not an aviation-specific product, so trust the
+   TAF over it for anything TAF actually covers (wind/sky/visibility) — it's
+   there for the one thing TAF can't give you at all.
+3. If neither covers it (ETA too far even for Open-Meteo's 16-day window, or
+   both fetches failed), says so plainly rather than guessing.
 
-**Neither source forecasts altimeter/pressure at all** — not TAF, and not
-NWS's hourly or raw gridpoint data (confirmed directly against their API).
-A MOS (Model Output Statistics) fallback was considered since it's what
-ForeFlight uses for exactly this gap, but NOAA's free public MOS feed has
-been retired — there's no current free, public, machine-readable source for
-it anymore. Use standard pressure (29.92) for planning beyond what a live
-METAR close to departure can tell you.
+A MOS (Model Output Statistics) fallback was considered first, since it's
+what ForeFlight uses for this same gap, but NOAA's free public MOS feed has
+been retired (confirmed by direct query against the current
+aviationweather.gov API) — no current free source exists for it. NWS's own
+hourly forecast was used here briefly too, but Open-Meteo supersedes it for
+this purpose (global instead of US-only, has pressure, longer horizon), so
+it was dropped rather than kept as a second, now-redundant fallback. The
+NWS extended outlook above is unrelated and unchanged.
 
 The FD text format itself is a fixed-width bulletin with some real quirks
 handled here: a station can report wind with no temperature at low altitude,

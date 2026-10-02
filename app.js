@@ -574,7 +574,7 @@
   var wxRequestSeq = {};
   var lastWind = {}; // keyed by prefix ('dep'/'dest') -> { dirDeg, speedKt } | null
   var lastTaf = {}; // keyed by prefix -> parsed TAF object ({fcsts: [...], ...}) | null, for ETA cross-reference
-  var lastHourly = {}; // keyed by prefix -> NWS hourly forecast periods array | null (US only, wind+temp, no altimeter)
+  var lastOpenMeteo = {}; // keyed by prefix -> {time:[], tempC:[], windKt:[], windDirDeg:[], altimIn:[]} | null (global, wind+temp+pressure, no auth/CORS needed)
 
   function hpaToInHg(hpa) { return hpa / 33.8639; }
 
@@ -833,15 +833,6 @@
       .then(function (r) { if (!r.ok) throw new Error('not covered'); return r.json(); })
       .then(function (d) {
         var forecastUrl = d.properties && d.properties.forecast;
-        var hourlyUrl = d.properties && d.properties.forecastHourly;
-        if (hourlyUrl) {
-          fetch(hourlyUrl).then(function (rh) { return rh.ok ? rh.json() : null; }).then(function (hd) {
-            lastHourly[prefix] = (hd && hd.properties && hd.properties.periods) || null;
-            computeRoute();
-          }).catch(function () { lastHourly[prefix] = null; computeRoute(); });
-        } else {
-          lastHourly[prefix] = null;
-        }
         if (!forecastUrl) throw new Error('no forecast url');
         return fetch(forecastUrl);
       })
@@ -860,6 +851,45 @@
         wrap.hidden = false;
       })
       .catch(function () { wrap.hidden = true; });
+  }
+
+  // Open-Meteo: free, no key, full CORS (Access-Control-Allow-Origin: *),
+  // global coverage, hourly out to 16 days -- unlike TAF/NWS hourly, it also
+  // has sea-level pressure, which is the one thing neither of those sources
+  // forecasts at all. Default units (km/h, hPa) are converted to kt/inHg
+  // here to match the rest of the app. Times are requested in GMT (the
+  // default when no `timezone` param is given), so they compare directly
+  // against the UTC-based ETA computed elsewhere without extra conversion.
+  function fetchOpenMeteo(lat, lon, prefix) {
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat.toFixed(4) + '&longitude=' + lon.toFixed(4) +
+      '&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,pressure_msl&forecast_days=16';
+    fetch(url)
+      .then(function (r) { if (!r.ok) throw new Error('bad status'); return r.json(); })
+      .then(function (d) {
+        var h = d.hourly;
+        if (!h || !h.time) { lastOpenMeteo[prefix] = null; computeRoute(); return; }
+        lastOpenMeteo[prefix] = {
+          time: h.time.map(function (t) { return new Date(t + 'Z').getTime(); }),
+          tempC: h.temperature_2m,
+          windKt: h.wind_speed_10m.map(function (kmh) { return kmh / 1.852; }),
+          windDirDeg: h.wind_direction_10m,
+          altimIn: h.pressure_msl.map(function (hpa) { return hpa / 33.8639; })
+        };
+        computeRoute();
+      })
+      .catch(function () { lastOpenMeteo[prefix] = null; computeRoute(); });
+  }
+
+  function findOpenMeteoForTime(data, targetDate) {
+    if (!data) return null;
+    var t = targetDate.getTime();
+    var best = -1, bestDiff = Infinity;
+    for (var i = 0; i < data.time.length; i++) {
+      var diff = Math.abs(data.time[i] - t);
+      if (diff < bestDiff) { bestDiff = diff; best = i; }
+    }
+    if (best < 0 || bestDiff > 90 * 60000) return null; // more than 90 min from any hourly point -- outside the 16-day window
+    return { tempC: data.tempC[best], windKt: data.windKt[best], windDirDeg: data.windDirDeg[best], altimIn: data.altimIn[best] };
   }
 
   function lookupAirport(prefix, icaoFieldId, infoElId, paFieldId, wxElId, rwySelectId, rwyFieldWrapId, applyOat) {
@@ -901,6 +931,7 @@
       fetchWeather(raw, prefix, wxElId, paFieldId, apt.elev, applyOat);
       fetchTaf(raw, prefix);
       fetchOutlook(apt.lat, apt.lon, prefix);
+      fetchOpenMeteo(apt.lat, apt.lon, prefix);
     }, 500);
   }
 
@@ -1347,11 +1378,10 @@
     return (base || overlays.length) ? { base: base, overlays: overlays } : null;
   }
 
-  function findHourlyPeriodForTime(periods, targetDate) {
-    var t = targetDate.getTime();
-    return (periods || []).find(function (p) {
-      return new Date(p.startTime).getTime() <= t && t < new Date(p.endTime).getTime();
-    }) || null;
+  function fmtOpenMeteo(om, label) {
+    return '<div class="taf-period"><span class="tp-change">' + label + '</span><br>' +
+      Math.round(om.windDirDeg) + '°T @ ' + Math.round(om.windKt) + ' kt, ' + Math.round(om.tempC) + '°C, altimeter ' + om.altimIn.toFixed(2) + ' inHg' +
+      '<br><span class="wx-note">Source: Open-Meteo (open-meteo.com) — a blend of national weather-service models, not an aviation-specific product; treat like the extended outlook above, not a substitute for a real briefing.</span></div>';
   }
 
   function renderEtaForecast(totalTimeHr) {
@@ -1363,7 +1393,9 @@
     var etaUnixSec = Math.round(eta.getTime() / 1000);
     var html = '<p class="route-status"><strong>ETA: ' + fmtZulu(etaUnixSec) + '</strong> (departure ' + fmtZulu(Math.round(etd.getTime() / 1000)) + ' + ' + Math.round(totalTimeHr * 60) + ' min total flight time)</p>';
 
+    var om = findOpenMeteoForTime(lastOpenMeteo.dest, eta);
     var taf = lastTaf.dest ? findTafPeriodForTime(lastTaf.dest.fcsts, etaUnixSec) : null;
+
     if (taf && taf.base) {
       var cat = flightCategory(taf.base.visib, taf.base.clouds);
       html += '<div class="taf-period"><span class="tp-change">TAF forecast at ETA (' + tafPeriodLabel(taf.base) + ')</span>' +
@@ -1374,20 +1406,21 @@
         html += '<div class="taf-period"><span class="tp-change">Also possible: ' + tafPeriodLabel(f) + '</span><br>' +
           fmtTafWind(f) + (f.visib ? (' · Vis ' + f.visib + ' SM') : '') + (f.wxString ? (' · ' + f.wxString) : '') + '</div>';
       });
-      html += '<p class="wx-note">No altimeter/pressure forecast exists in a TAF (or anywhere else free/public) — use standard pressure (29.92) for planning beyond what a live METAR close to departure can tell you.</p>';
+      if (om) {
+        html += '<p class="wx-note">A TAF never forecasts altimeter/pressure — estimated from Open-Meteo below instead.</p>' + fmtOpenMeteo(om, 'Open-Meteo estimate at ETA (altimeter only — trust the TAF above for wind/sky/visibility)');
+      } else {
+        html += '<p class="wx-note">No altimeter/pressure estimate available either — use standard pressure (29.92) for planning beyond what a live METAR close to departure can tell you.</p>';
+      }
       return html;
     }
 
-    var hourly = lastHourly.dest ? findHourlyPeriodForTime(lastHourly.dest, eta) : null;
-    if (hourly) {
-      html += '<p class="route-status bad">ETA is outside this TAF\'s coverage (or no TAF exists for this airport) — falling back to the NWS hourly forecast (US only, wind + temperature only, no altimeter/pressure data exists in this source either).</p>';
-      html += '<div class="taf-period"><span class="tp-change">NWS hourly forecast at ETA (' + hourly.name + ')</span><br>' +
-        hourly.temperature + '°' + hourly.temperatureUnit + ', wind ' + hourly.windSpeed + ' ' + hourly.windDirection +
-        '<br>' + hourly.shortForecast + '</div>';
+    if (om) {
+      html += '<p class="route-status bad">' + (lastTaf.dest ? 'ETA is outside this airport\'s TAF coverage' : 'This airport has no TAF') + ' — falling back to Open-Meteo (global model blend, not an aviation-specific product).</p>';
+      html += fmtOpenMeteo(om, 'Open-Meteo forecast at ETA');
       return html;
     }
 
-    html += '<p class="route-status bad">No automated forecast (TAF or NWS hourly) covers this ETA — it\'s likely too far out, or this airport/area isn\'t covered by either source. Check a fresh briefing closer to departure.</p>';
+    html += '<p class="route-status bad">No automated forecast covers this ETA — it\'s likely too far out (Open-Meteo\'s own limit is 16 days), or the forecast fetch hasn\'t finished/failed. Check a fresh briefing closer to departure.</p>';
     return html;
   }
 

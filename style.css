@@ -94,6 +94,21 @@ h1 {
   gap: 8px;
 }
 
+.card > details > summary {
+  cursor: pointer;
+  list-style: none;
+}
+.card > details > summary::-webkit-details-marker { display: none; }
+.card > details > summary::marker { content: ''; }
+.card > details > summary h2::after {
+  content: '\25B8';
+  margin-left: auto;
+  font-size: 0.85em;
+  color: var(--text-dim);
+  transition: transform 0.15s ease;
+}
+.card > details[open] > summary h2::after { transform: rotate(90deg); }
+
 .card h2 .fig {
   font-family: var(--mono);
   font-size: 0.72rem;

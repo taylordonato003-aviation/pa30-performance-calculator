@@ -127,84 +127,7 @@
   </section>
 
   <section class="card">
-    <h2>Route</h2>
-    <div class="input-grid">
-      <div class="field">
-        <label for="etdDate">Departure date</label>
-        <input type="date" id="etdDate" value="">
-      </div>
-      <div class="field">
-        <label for="etdTime">Departure time (local)</label>
-        <input type="time" id="etdTime" value="">
-      </div>
-      <div class="field">
-        <label for="etdTimezone">Departure time zone</label>
-        <select id="etdTimezone">
-          <option value="America/Los_Angeles" selected>Pacific</option>
-          <option value="America/Denver">Mountain</option>
-          <option value="America/Chicago">Central</option>
-          <option value="America/New_York">Eastern</option>
-        </select>
-      </div>
-    </div>
-    <div id="routeWaypoints">
-      <div class="route-row route-endpoint" id="routeDepRow">
-        <span class="route-endpoint-label">Departure</span>
-        <span class="route-wp-info" id="routeDepInfo">Enter departure airport below</span>
-      </div>
-      <div class="route-row route-endpoint" id="routeDestRow">
-        <span class="route-endpoint-label">Destination</span>
-        <span class="route-wp-info" id="routeDestInfo">Enter destination airport below</span>
-      </div>
-    </div>
-    <button type="button" class="btn-add" id="addWaypoint">+ Add fix along the route</button>
-
-    <div class="input-grid" style="margin-top:14px">
-      <div class="field">
-        <label for="cruiseAlt">Cruise altitude (ft MSL)</label>
-        <input type="number" id="cruiseAlt" value="6500" step="500">
-      </div>
-      <div class="field">
-        <label for="cruiseAltimeter">Altimeter setting for cruise PA (inHg)</label>
-        <input type="number" id="cruiseAltimeter" value="29.92" step="0.01">
-      </div>
-      <div class="field">
-        <label>Cruise pressure altitude</label>
-        <div class="value" id="cruisePA" style="font-size:1.1rem">—</div>
-      </div>
-      <div class="field">
-        <label>Cruise density altitude</label>
-        <div class="value" id="cruiseDA" style="font-size:1.1rem">—</div>
-      </div>
-    </div>
-
-    <h3 class="subhead">Winds Aloft (manual entry)</h3>
-    <div class="input-grid">
-      <div class="field">
-        <label for="manualWindDir">Direction (°T)</label>
-        <input type="number" id="manualWindDir" value="" step="10" min="0" max="360" placeholder="e.g. 270">
-      </div>
-      <div class="field">
-        <label for="manualWindSpeed">Speed (kt)</label>
-        <input type="number" id="manualWindSpeed" value="" step="1" min="0" placeholder="e.g. 20">
-      </div>
-      <div class="field">
-        <label for="cruiseOat">Temperature</label>
-        <div class="row">
-          <input type="number" id="cruiseOat" value="" step="1" placeholder="e.g. -5">
-          <select id="cruiseOatUnit" style="max-width:80px">
-            <option value="C" selected>&deg;C</option>
-            <option value="F">&deg;F</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <div id="routeLegs"></div>
-  </section>
-
-  <section class="card">
-    <h2>Airports</h2>
+    <h2>Flight Plan</h2>
     <div class="input-grid">
       <div class="field">
         <label for="depIcao">Departure airport</label>
@@ -225,10 +148,55 @@
         </div>
       </div>
     </div>
+
+    <div id="routeWaypoints">
+      <div class="route-row route-endpoint" id="routeDepRow">
+        <span class="route-endpoint-label">Departure</span>
+        <span class="route-wp-info" id="routeDepInfo">Enter departure airport above</span>
+      </div>
+      <div class="route-row route-endpoint" id="routeDestRow">
+        <span class="route-endpoint-label">Destination</span>
+        <span class="route-wp-info" id="routeDestInfo">Enter destination airport above</span>
+      </div>
+    </div>
+    <button type="button" class="btn-add" id="addWaypoint">+ Add fix along the route</button>
+    <div id="routeLegs"></div>
+
+    <div class="input-grid" style="margin-top:14px">
+      <div class="field">
+        <label for="cruiseAlt">Cruise altitude (ft MSL)</label>
+        <input type="number" id="cruiseAlt" value="6500" step="500">
+      </div>
+      <div class="field">
+        <label for="cruiseAltimeter">Altimeter setting for cruise PA (inHg)</label>
+        <input type="number" id="cruiseAltimeter" value="29.92" step="0.01">
+      </div>
+      <div class="field">
+        <label>Cruise pressure altitude</label>
+        <div class="value" id="cruisePA" style="font-size:1.1rem">—</div>
+      </div>
+      <div class="field">
+        <label for="etdDate">Departure date</label>
+        <input type="date" id="etdDate" value="">
+      </div>
+      <div class="field">
+        <label for="etdTime">Departure time (local)</label>
+        <input type="time" id="etdTime" value="">
+      </div>
+      <div class="field">
+        <label for="etdTimezone">Departure time zone</label>
+        <select id="etdTimezone">
+          <option value="America/Los_Angeles" selected>Pacific</option>
+          <option value="America/Denver">Mountain</option>
+          <option value="America/Chicago">Central</option>
+          <option value="America/New_York">Eastern</option>
+        </select>
+      </div>
+    </div>
   </section>
 
   <section class="card">
-    <h2>Conditions</h2>
+    <h2>Environment</h2>
     <div class="table-scroll">
       <table class="wb-table">
         <colgroup><col class="wb-col-item"><col class="wb-col-num"><col class="wb-col-num"><col class="wb-col-num"><col class="wb-col-num"><col class="wb-col-num"><col class="wb-col-num"></colgroup>
@@ -255,10 +223,41 @@
         </tbody>
       </table>
     </div>
+
+    <h3 class="subhead">Winds Aloft (manual entry)</h3>
+    <div class="input-grid">
+      <div class="field">
+        <label for="manualWindDir">Direction (°T)</label>
+        <input type="number" id="manualWindDir" value="" step="10" min="0" max="360" placeholder="e.g. 270">
+      </div>
+      <div class="field">
+        <label for="manualWindSpeed">Speed (kt)</label>
+        <input type="number" id="manualWindSpeed" value="" step="1" min="0" placeholder="e.g. 20">
+      </div>
+      <div class="field">
+        <label for="cruiseOat">Temperature</label>
+        <div class="row">
+          <input type="number" id="cruiseOat" value="" step="1" placeholder="e.g. -5">
+          <select id="cruiseOatUnit" style="max-width:80px">
+            <option value="C" selected>&deg;C</option>
+            <option value="F">&deg;F</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Cruise density altitude</label>
+        <div class="value" id="cruiseDA" style="font-size:1.1rem">—</div>
+      </div>
+    </div>
+
+    <h3 class="subhead">Destination Forecast at ETA</h3>
+    <div id="etaForecastResults"></div>
   </section>
 
   <section class="card">
-    <h2>Takeoff</h2>
+    <h2>Performance</h2>
+
+    <h3 class="subhead">Takeoff</h3>
     <table class="results-table">
       <tbody>
         <tr><td>Ground run <span class="fig">Fig 5-06</span></td><td id="toGroundRun">—</td></tr>
@@ -274,10 +273,8 @@
         <tr><td>Landing distance over 50 ft at takeoff weight <span class="fig">Fig 5-16</span></td><td id="irDist50">—</td></tr>
       </tbody>
     </table>
-  </section>
 
-  <section class="card">
-    <h2>Climb</h2>
+    <h3 class="subhead">Climb</h3>
     <table class="results-table">
       <tbody>
         <tr><td>V<sub>X</sub>/V<sub>Y</sub> <span class="fig">Fig 5-11</span></td><td><span id="vxMulti">—</span> / <span id="vyMulti">—</span><small id="vxyMultiCas"></small></td></tr>
@@ -288,12 +285,9 @@
         <tr><td>ABS/SVC Ceiling,SE <span class="fig">Fig 5-10</span></td><td id="ceilSingle">—</td></tr>
       </tbody>
     </table>
-
     <div id="climbPhaseResults"></div>
-  </section>
 
-  <section class="card">
-    <h2>Cruise</h2>
+    <h3 class="subhead">Cruise</h3>
     <div class="input-grid">
       <div class="field">
         <label for="power">Cruise power (%)</label>
@@ -307,13 +301,9 @@
         <tr><td>Endurance <span class="fig">Fig 5-14</span></td><td id="endurance">—</td></tr>
       </tbody>
     </table>
-
-    <h3 class="subhead">Cruise Phase</h3>
     <div id="cruisePhaseResults"></div>
-  </section>
 
-  <section class="card">
-    <h2>Descent</h2>
+    <h3 class="subhead">Descent</h3>
     <div class="input-grid">
       <div class="field">
         <label for="descentRate">Planned descent rate (ft/min)</label>
@@ -325,12 +315,7 @@
     <h3 class="subhead">Trip Summary</h3>
     <div id="tripSummaryResults"></div>
 
-    <h3 class="subhead">Destination Forecast at ETA</h3>
-    <div id="etaForecastResults"></div>
-  </section>
-
-  <section class="card">
-    <h2>Landing</h2>
+    <h3 class="subhead">Landing</h3>
     <table class="results-table">
       <tbody>
         <tr><td>Ground roll <span class="fig">Fig 5-15</span></td><td id="ldgGroundRoll">—</td></tr>
@@ -348,7 +333,6 @@
       </tbody>
     </table>
   </section>
-
 
 </div>
 

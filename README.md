@@ -42,27 +42,38 @@ It also works as an installable app — see **Install on iPhone** below.
 
 ### Card order
 
-The cards run in the order you'd actually plan a flight, not the order
-features were added: **Weight & Balance** (know your weight/C.G. first) →
-**Route** (when/where/how high) → **Airports** (make PA/OAT/wind real
-instead of guesses) → **Conditions** (manual overrides for all of the
-above) → **Takeoff → Climb → Cruise → Descent → Landing** (the flight
-itself, in order). Each of Climb/Cruise/Descent has both a
-quick-reference block (Vx/Vy, ROC, ceilings; TAS/range/endurance) and that
-phase's slice of the route-based time/distance/fuel breakdown — see "Climb /
-Cruise / Descent" below. There's no dedicated Power Setting Table card —
-Fig 5-17 is used internally (fuel burn and the manifold-pressure guidance
-under each phase) but the raw table itself didn't earn a place in the UI.
+Four cards, in the order you'd actually plan a flight, not the order
+features were added:
 
-Conditions is a compact two-row table (departure/destination) rather than a
-grid of labeled fields: pressure altitude, density altitude (computed,
-read-only), OAT, headwind component, weight, and C.G. — the takeoff pair in
-the departure row, landing pair in the destination row. OAT is Celsius-only
-(no F/C toggle). Usable fuel on board isn't a separate field here or
-anywhere else — it's always whatever's loaded in the Weight & Balance
-worksheet's main + aux tanks, so there's one number to keep in sync instead
-of two. Cruise power moved to the Cruise card, next to the numbers it
-actually drives.
+- **Weight & Balance** — know your weight/C.G. first. Collapsible (open by
+  default) so it can be tucked away once filled in.
+- **Flight Plan** — what you're flying and when: departure/destination
+  airports, the route (waypoints/fixes and the resulting leg table), cruise
+  altitude, and departure date/time/time zone.
+- **Environment** — what the atmosphere is doing: the Conditions table
+  (pressure altitude, density altitude, OAT, headwind component, weight,
+  C.G. for departure and destination), manually-entered winds aloft (and the
+  cruise density altitude that depends on its temperature field), and the
+  destination forecast at ETA.
+- **Performance** — the flight itself, Takeoff → Climb → Cruise → Descent →
+  Landing in order, each as its own labeled subsection in one card rather
+  than five separate ones. Each of Climb/Cruise/Descent has both a
+  quick-reference block (Vx/Vy, ROC, ceilings; TAS/range/endurance) and that
+  phase's slice of the route-based time/distance/fuel breakdown — see
+  "Climb / Cruise / Descent" below. There's no dedicated Power Setting Table
+  subsection — Fig 5-17 is used internally (fuel burn and the
+  manifold-pressure guidance under each phase) but the raw table itself
+  didn't earn a place in the UI.
+
+The Conditions table (in Environment) is a compact two-row table
+(departure/destination) rather than a grid of labeled fields: pressure
+altitude, density altitude (computed, read-only), OAT, headwind component,
+weight, and C.G. — the takeoff pair in the departure row, landing pair in
+the destination row. OAT is Celsius-only (no F/C toggle). Usable fuel on
+board isn't a separate field here or anywhere else — it's always whatever's
+loaded in the Weight & Balance worksheet's main + aux tanks, so there's one
+number to keep in sync instead of two. Cruise power lives in Performance's
+Cruise subsection, next to the numbers it actually drives.
 
 ## What's in this repo
 
@@ -116,11 +127,12 @@ climb charts), linearly interpolated/extrapolated between the given curves
 Altitude and Weight"), so the app always converts to actual DA before
 looking them up, never pressure altitude alone — a hot day degrades climb/
 TAS/range/endurance even at a pressure altitude that hasn't changed. The
-Climb/Go-Around cards' quick-reference numbers (Vx/Vy, ROC) and the Cruise
-card's TAS/range/endurance use the Conditions table's own departure/
-destination OAT fields; the Climb/Cruise/Descent phase block's climb-top and
-descent-top points (and the Cruise phase's own TAS) use the Route card's
-manually-entered enroute temperature if you've set one, else ISA standard
+Climb/Go-Around subsections' quick-reference numbers (Vx/Vy, ROC) and the
+Cruise subsection's TAS/range/endurance use the Conditions table's own
+departure/destination OAT fields; the Climb/Cruise/Descent phase block's
+climb-top and descent-top points (and the Cruise phase's own TAS) use the
+Environment card's manually-entered enroute temperature if you've set one,
+else ISA standard
 temperature at that altitude (i.e. DA defaults to PA when no enroute
 temperature is known, same as before this was fixed).
 
@@ -194,16 +206,16 @@ Re-run the self-check anytime by opening the browser console after loading
 
 Fig 5-02 gives the correction to add to Indicated Airspeed to get Calibrated
 Airspeed, as two curves (flaps retracted / flaps fully extended) over the
-chart's charted IAS range. The Climb and Go-Around cards show this CAS value
-under each V<sub>X</sub>/V<sub>Y</sub> reading (flaps-retracted curve, matching
-Fig 5-11's own "wing flaps retracted" condition). The Cruise card's true
-airspeed is still read directly off Fig 5-12 (TAS vs density altitude at a
+chart's charted IAS range. The Climb and Go-Around subsections show this CAS
+value under each V<sub>X</sub>/V<sub>Y</sub> reading (flaps-retracted curve,
+matching Fig 5-11's own "wing flaps retracted" condition). The Cruise
+subsection's true airspeed is still read directly off Fig 5-12 (TAS vs density altitude at a
 given % power) rather than derived from CAS — that chart already gives TAS
 directly, so there's no CAS step in that particular chain.
 
 ### Absolute and service ceiling
 
-The Climb card derives the both-engines and single-engine absolute and
+The Climb subsection derives the both-engines and single-engine absolute and
 service ceilings directly from the same rate-of-climb data (Fig 5-09 / 5-10)
 used for the ROC readings above them, at your takeoff weight. Per the POH's
 own definitions: absolute ceiling is the density altitude where ROC reaches
@@ -227,16 +239,17 @@ arm) to get descent weight & C.G., gear retracted; subtract the same 770
 in-lb shift back out for landing weight & C.G., gear extended.
 
 **Fuel burned en route is computed automatically**, not entered by hand: a
-fixed 3 gal start/runup/taxi allowance plus the Climb and Descent cards'
-computed fuel burn always comes from the main tanks; the Cruise card's fuel
-burn comes from the aux tanks, down to a 4 gal/side (8 gal total) reserve,
-then spills over to the main tanks for whatever cruise fuel the aux tanks
-can't cover past that reserve (e.g. with 0 aux gal loaded, as N40DA defaults
-to, cruise burns entirely from the mains). This updates live as the route,
-weight, power setting, or fuel loaded change — it's recomputed from the
-Climb/Cruise/Descent cards' own numbers below, not a separate estimate.
-Takeoff/
-landing weight and C.G. feed the Conditions card's weight/C.G. fields
+fixed 3 gal start/runup/taxi allowance plus the Climb and Descent
+subsections' computed fuel burn always comes from the main tanks; the
+Cruise subsection's fuel burn comes from the aux tanks, down to a 4 gal/side
+(8 gal total) reserve, then spills over to the main tanks for whatever
+cruise fuel the aux tanks can't cover past that reserve (e.g. with 0 aux gal
+loaded, as N40DA defaults to, cruise burns entirely from the mains). This
+updates live as the route, weight, power setting, or fuel loaded change —
+it's recomputed from the Climb/Cruise/Descent subsections' own numbers
+below, not a separate estimate. Takeoff/
+landing weight and C.G. feed the Environment card's Conditions table's
+weight/C.G. fields
 (separate fields for each) automatically whenever a worksheet field
 changes — those fields stay directly editable afterward for a quick
 what-if without re-touching the worksheet. The envelope plot shows both
@@ -301,16 +314,18 @@ origin.
 
 **TAF** is also fetched (through the same Worker's `/taf` endpoint) and
 cached silently — it isn't shown under each airport either, for the same
-double-data reason, but it's what powers the Descent card's "destination
-forecast at ETA" lookup (see below), which is the one place a forecast
-actually matters rather than just duplicating the current conditions.
+double-data reason, but it's what powers the Environment card's
+"destination forecast at ETA" lookup (see below), which is the one place a
+forecast actually matters rather than just duplicating the current
+conditions.
 
 ## Route planning (winds/temps aloft)
 
-The Route card's departure and destination always mirror whatever you've
-entered in the Airports card above — no retyping. With no fixes added, route
-distance is the direct great-circle distance between those two airports.
-Each fix you add (any airport in the bundled database, ICAO or local
+The Flight Plan card's route waypoints always mirror whatever departure/
+destination airports you've entered at the top of that same card — no
+retyping. With no fixes added, route distance is the direct great-circle
+distance between those two airports. Each fix you add (any airport in the
+bundled database, ICAO or local
 identifier; a VOR/NDB identifier; or a 5-letter RNAV/GPS fix — press
 Enter/Tab to resolve it) inserts a leg, point
 to point, in the order added. If an identifier matches more than one
@@ -326,10 +341,10 @@ numbers — it correctly handles a route that crosses the 360°/0°T line).
 
 **Winds aloft** come from one of two sources:
 
-- **Manual entry** (the Winds Aloft fields below cruise altitude): direction,
+- **Manual entry** (the Environment card's Winds Aloft fields): direction,
   speed, and temperature, same numbers you'd read off a ForeFlight (or any)
   winds-aloft briefing. When filled in, these are applied uniformly to every
-  leg and to the Climb/Descent cards' headwind component too — no network
+  leg and to the Climb/Descent subsections' headwind component too — no network
   call at all. This is the one to use when the app's own nearest-station
   lookup (below) is too far from your actual route to be useful; temperature
   also drives the cruise density altitude figure (reference only, same as
@@ -358,9 +373,12 @@ applies the same way to a manually-entered direction.
 
 Breaks the route into three phases, each with its own time/distance/fuel.
 The three phases' results appear under their respective Climb/Cruise/Descent
-cards (in the same flight-sequence order as the rest of the app — see "Card
-order" below) rather than one combined table, with a Trip Summary and the
-destination-forecast-at-ETA lookup under Descent, right before Landing:
+subsections of the Performance card (in the same flight-sequence order as
+the rest of the app — see "Card order" below) rather than one combined
+table, with a Trip Summary right after Descent. The destination forecast at
+ETA lives in the Environment card instead (see below) — it's forecast
+weather, the same category of thing as the rest of that card, not a
+performance number:
 
 - **Climb** — departure field elevation to cruise altitude, 75% power, at
   takeoff weight. Rate of climb is the average of Fig 5-09's value at each
@@ -370,7 +388,7 @@ destination-forecast-at-ETA lookup under Descent, right before Landing:
   departure airport, at the midpoint climb altitude, along the route's
   initial course.
 - **Cruise** — whatever route distance is left after climb and descent, at
-  the cruise power set in the Cruise card. Groundspeed is the route's own per-leg
+  the cruise power set in the Performance card's Cruise subsection. Groundspeed is the route's own per-leg
   winds (from the table above), distance-weighted across however many legs
   the cruise segment actually spans.
 - **Descent** — cruise altitude to destination field elevation, 55% power,
@@ -406,8 +424,9 @@ chart doesn't support.
 Set a departure date, time, and time zone (Pacific/Mountain/Central/Eastern
 — correctly handles daylight saving vs. standard time for the date entered,
 via the browser's own IANA timezone database, not a fixed UTC offset) and
-the Climb/Cruise/Descent card computes an ETA (departure + total flight
-time) and shows the destination forecast that actually covers it:
+the Climb/Cruise/Descent phase block computes an ETA (departure + total
+flight time), shown in the Environment card alongside the destination
+forecast that actually covers it:
 
 1. **TAF**, if the destination has one and it extends that far out — the
    specific forecast period in effect at ETA (not just the whole TAF dumped

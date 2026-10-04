@@ -790,12 +790,8 @@
       return;
     }
     var bits = [];
-    bits.push('<span class="ok">' + apt.n + (apt.c ? ', ' + apt.c : '') + (apt.co ? ' (' + apt.co + ')' : '') + '</span>');
+    bits.push('<span class="ok">' + apt.n + '</span>');
     if (apt.elev !== undefined) bits.push('Field elevation: ' + apt.elev + ' ft');
-    if (apt.rwy) {
-      var srf = apt.srf ? (SURFACE_NAMES[apt.srf] || apt.srf) : null;
-      bits.push('Longest runway: ' + apt.rwy.toLocaleString() + ' ft' + (srf ? ' (' + srf + ')' : ''));
-    }
     infoEl.innerHTML = bits.join('<br>');
     if (apt.elev !== undefined) {
       $(paFieldId).value = apt.elev;
@@ -1064,10 +1060,7 @@
   // ---------- route: compute & render ----------
 
   function cruisePaFt() {
-    var alt = parseFloat($('cruiseAlt').value) || 0;
-    var altimeter = parseFloat($('cruiseAltimeter').value);
-    if (isNaN(altimeter)) altimeter = 29.92;
-    return Math.round(alt + (29.92 - altimeter) * 1000);
+    return parseFloat($('cruiseAlt').value) || 0;
   }
 
   // The manually-entered enroute temperature (Route card), in Celsius, or
@@ -1090,8 +1083,6 @@
 
   function renderCruisePa() {
     var pa = cruisePaFt();
-    $('cruisePA').textContent = fmt(pa, 'ft');
-
     var oatC = manualCruiseOatC();
     var daEl = $('cruiseDA');
     if (oatC === null) { daEl.textContent = '—'; return; }
@@ -1547,7 +1538,6 @@
 
     $('addWaypoint').addEventListener('click', createWaypointRow);
     $('cruiseAlt').addEventListener('input', computeRoute);
-    $('cruiseAltimeter').addEventListener('input', computeRoute);
     $('cruiseOat').addEventListener('input', computeRoute);
     $('cruiseOatUnit').addEventListener('change', computeRoute);
     computeRoute();

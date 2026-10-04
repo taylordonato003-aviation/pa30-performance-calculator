@@ -274,10 +274,10 @@ you hand-correct a digitized value there, make the same edit in `data.js`.
 
 Type an ICAO identifier (e.g. `KSEA`) or a local/domestic identifier for a
 smaller field that doesn't have one (e.g. `C80`) into the Departure or
-Destination field, and the app looks up that airport's name, field elevation, and longest
-runway (length + surface) from a bundled offline database (`airports.js`) —
-see "Data source" below for its provenance. Field elevation immediately
-fills in as a standard-day pressure altitude guess.
+Destination field, and the app looks up that airport's name and field
+elevation from a bundled offline database (`airports.js`) — see "Data
+source" below for its provenance. Field elevation immediately fills in as a
+standard-day pressure altitude guess.
 
 A runway dropdown also appears, listing every runway end at that airport
 (e.g. "Rwy 34R (340°) — 11,901 ft asphalt/concrete") sourced from the same
@@ -336,9 +336,9 @@ to point, in the order added. If an identifier matches more than one
 real-world station (navaid idents aren't globally unique the way ICAO codes
 are), a dropdown lets you pick the right one by name/country.
 
-Set a cruise altitude and an altimeter setting (defaults to standard, 29.92)
-to get cruise pressure altitude. For each leg, the app computes true course
-and distance from the waypoints' coordinates. With more than one leg, the
+Set a cruise altitude (treated directly as the cruise reference altitude —
+there's no separate altimeter-setting correction for it). For each leg, the
+app computes true course and distance from the waypoints' coordinates. With more than one leg, the
 leg table's total line also shows a distance-weighted average course for
 the whole route (a circular/vector mean, not a plain average of the
 numbers — it correctly handles a route that crosses the 360°/0°T line).

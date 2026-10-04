@@ -236,9 +236,9 @@ input[type="number"]:focus, select:focus {
 }
 .btn-add:hover { background: var(--surface-2); }
 
-.leg-table { width: 100%; margin-top: 14px; font-size: 0.82rem; border-collapse: collapse; }
-.leg-table th, .leg-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; }
-.leg-table th { color: var(--text-dim); font-weight: 600; font-size: 0.74rem; text-transform: uppercase; }
+.leg-table { width: 100%; margin-top: 10px; font-size: 0.8rem; border-collapse: collapse; }
+.leg-table th, .leg-table td { padding: 4px 6px; border: 1px solid var(--border); text-align: left; white-space: normal; }
+.leg-table th { color: var(--text-dim); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; background: var(--surface-2); }
 .leg-table .leg-head { font-weight: 600; }
 .leg-table .leg-head.tailwind { color: var(--bad); }
 .route-status { font-size: 0.82rem; color: var(--text-dim); margin-top: 10px; }

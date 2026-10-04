@@ -49,7 +49,8 @@ features were added:
   default) so it can be tucked away once filled in.
 - **Flight Plan** — what you're flying and when: departure/destination
   airports, the route (waypoints/fixes and the resulting leg table), cruise
-  altitude, and departure date/time/time zone.
+  altitude, and departure date/time (local time, wherever you are — no time
+  zone picker; see "Destination forecast at ETA" below).
 - **Environment** — what the atmosphere is doing: the Conditions table
   (pressure altitude, density altitude, OAT, headwind component, weight,
   C.G. for departure and destination), manually-entered winds aloft (and the
@@ -427,12 +428,13 @@ chart doesn't support.
 
 ### Destination forecast at ETA
 
-Set a departure date, time, and time zone (Pacific/Mountain/Central/Eastern
-— correctly handles daylight saving vs. standard time for the date entered,
-via the browser's own IANA timezone database, not a fixed UTC offset) and
-the Climb/Cruise/Descent phase block computes an ETA (departure + total
-flight time), shown in the Environment card alongside the destination
-forecast that actually covers it:
+Set a departure date and time (local time, wherever you are — no time zone
+picker; the app reads your device's own IANA time zone via the browser's
+`Intl` API, so it's always correct for wherever you're actually sitting,
+including daylight saving vs. standard time for the date entered) and the
+Climb/Cruise/Descent phase block computes an ETA (departure + total flight
+time), shown in the Environment card alongside the destination forecast
+that actually covers it:
 
 1. **TAF**, if the destination has one and it extends that far out — the
    specific forecast period in effect at ETA (not just the whole TAF dumped

@@ -1280,13 +1280,16 @@
     return new Date(actualUtc);
   }
 
-  // Reads the Route card's date/time/timezone fields and returns the
-  // departure instant as a UTC Date, or null if date/time haven't been entered.
+  // Reads the Flight Plan card's date/time fields and returns the departure
+  // instant as a UTC Date, or null if date/time haven't been entered. Time
+  // zone is the browser's own local zone (Intl), not a manual picker -- the
+  // entered time is always "local time, wherever you are."
   function getEtdUtc() {
     var dateStr = $('etdDate').value, timeStr = $('etdTime').value;
     if (!dateStr || !timeStr) return null;
     var dp = dateStr.split('-').map(Number), tp = timeStr.split(':').map(Number);
-    return localWallClockToUtc(dp[0], dp[1], dp[2], tp[0], tp[1], $('etdTimezone').value);
+    var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return localWallClockToUtc(dp[0], dp[1], dp[2], tp[0], tp[1], tz);
   }
 
   // The TAF "base" forecast is whichever FM/BECMG/initial period has the

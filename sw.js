@@ -3,7 +3,7 @@
 // registration accordingly, so this file is simply never loaded when the
 // app is opened directly from disk.
 
-var CACHE_NAME = 'pa30-calc-v39';
+var CACHE_NAME = 'pa30-calc-v40';
 var ASSETS = [
   './index.html',
   './style.css',
@@ -51,15 +51,19 @@ self.addEventListener('activate', function (event) {
 self.addEventListener('fetch', function (event) {
   if (event.request.method !== 'GET') return;
 
-  // index.html and app.js must always be the same version -- app.js reads
-  // element IDs that only that exact index.html defines, so a stale app.js
-  // served alongside a fresh index.html (or vice versa) silently breaks the
-  // whole page. Network-first for just these two (falling back to cache only
-  // when offline) guarantees they're always fetched and cached together;
-  // everything else keeps the fast cache-first/background-update strategy.
+  // index.html, app.js, and style.css must always be the same version --
+  // app.js reads element IDs that only that exact index.html defines, and
+  // index.html's markup assumes that exact style.css, so any stale one of
+  // the three served alongside fresh versions of the others silently breaks
+  // or visually un-updates the page (e.g. a CSS tweak that "doesn't seem to
+  // apply" because the old stylesheet is still cached). Network-first for
+  // these three (falling back to cache only when offline) guarantees
+  // they're always fetched and cached together; everything else keeps the
+  // fast cache-first/background-update strategy.
   var url = new URL(event.request.url);
   var isAppShellEntry = event.request.mode === 'navigate' ||
-    /\/(index\.html)?$/.test(url.pathname) || /\/app\.js$/.test(url.pathname);
+    /\/(index\.html)?$/.test(url.pathname) || /\/app\.js$/.test(url.pathname) ||
+    /\/style\.css$/.test(url.pathname);
 
   if (isAppShellEntry) {
     // `cache: 'reload'` forces an actual round-trip to the server, bypassing
